@@ -1,0 +1,27 @@
+{
+  "buildFiles": [
+    "D:\\AndroidProject\\go-robot\\OpenCVLib\\libcxx_helper\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "D:\\Android\\AndroidSDK\\cmake\\3.18.1\\bin\\ninja.exe",
+      "-C",
+      "D:\\AndroidProject\\go-robot\\OpenCVLib\\.cxx\\RelWithDebInfo\\4p4f5c6s\\x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "D:\\Android\\AndroidSDK\\cmake\\3.18.1\\bin\\ninja.exe",
+    "-C",
+    "D:\\AndroidProject\\go-robot\\OpenCVLib\\.cxx\\RelWithDebInfo\\4p4f5c6s\\x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "opencv_jni_shared::@6890427a1f51a3e7e1df": {
+      "artifactName": "opencv_jni_shared",
+      "abi": "x86",
+      "output": "D:\\AndroidProject\\go-robot\\OpenCVLib\\.cxx\\RelWithDebInfo\\4p4f5c6s\\x86\\libopencv_jni_shared.a",
+      "runtimeFiles": []
+    }
+  }
+}

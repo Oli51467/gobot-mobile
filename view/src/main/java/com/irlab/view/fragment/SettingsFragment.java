@@ -51,6 +51,6 @@ public class SettingsFragment extends Fragment {
         super.onStart();
         // 在SharedPreferences中获取用户数据
         userName = preferences.getString("userName", null);
-        showInfo.setText("Hi! : " + userName);
+        showInfo.setText("Hi! " + userName);
     }
 }

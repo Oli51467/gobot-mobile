@@ -49,12 +49,17 @@ public class MyApplication extends Application {
     }
 
     // 提供获取自己实例的唯一方法
-    public static MyApplication getInstance() {
+    public synchronized static MyApplication getInstance() {
         return MyApp;
     }
 
     // 提供获取数据库实例的方法
-    public UserDatabase getUserDatabase() {
+    public synchronized UserDatabase getUserDatabase() {
         return userDatabase;
+    }
+
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
     }
 }

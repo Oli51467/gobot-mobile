@@ -1,0 +1,168 @@
+{
+  "abi": "ARM64_V8A",
+  "info": {
+    "abi": "ARM64_V8A",
+    "bitness": 64,
+    "deprecated": false,
+    "default": true
+  },
+  "cxxBuildFolder": "D:\\AndroidProject\\go-robot\\OpenCVLib\\.cxx\\Debug\\526g6o5r\\arm64-v8a",
+  "soFolder": "D:\\AndroidProject\\go-robot\\OpenCVLib\\build\\intermediates\\cxx\\Debug\\526g6o5r\\obj\\arm64-v8a",
+  "soRepublishFolder": "D:\\AndroidProject\\go-robot\\OpenCVLib\\build\\intermediates\\cmake\\debug\\obj\\arm64-v8a",
+  "abiPlatformVersion": 21,
+  "cmake": {
+    "effectiveConfiguration": {
+      "inheritEnvironments": [],
+      "variables": []
+    }
+  },
+  "variant": {
+    "buildSystemArgumentList": [
+      "-DANDROID_STL\u003dc++_shared"
+    ],
+    "cFlagsList": [],
+    "cppFlagsList": [],
+    "variantName": "debug",
+    "isDebuggableEnabled": true,
+    "validAbiList": [
+      "ARM64_V8A"
+    ],
+    "buildTargetSet": [
+      "opencv_jni_shared"
+    ],
+    "implicitBuildTargetSet": [],
+    "cmakeSettingsConfiguration": "android-gradle-plugin-predetermined-name",
+    "module": {
+      "cxxFolder": "D:\\AndroidProject\\go-robot\\OpenCVLib\\.cxx",
+      "intermediatesBaseFolder": "D:\\AndroidProject\\go-robot\\OpenCVLib\\build\\intermediates",
+      "intermediatesFolder": "D:\\AndroidProject\\go-robot\\OpenCVLib\\build\\intermediates\\cxx",
+      "gradleModulePathName": ":OpenCVLib",
+      "moduleRootFolder": "D:\\AndroidProject\\go-robot\\OpenCVLib",
+      "moduleBuildFile": "D:\\AndroidProject\\go-robot\\OpenCVLib\\build.gradle",
+      "makeFile": "D:\\AndroidProject\\go-robot\\OpenCVLib\\libcxx_helper\\CMakeLists.txt",
+      "buildSystem": "CMAKE",
+      "ndkFolder": "D:\\Android\\AndroidSDK\\ndk\\21.4.7075529",
+      "ndkVersion": "21.4.7075529",
+      "ndkSupportedAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "ndkDefaultAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "ndkDefaultStl": "LIBCXX_STATIC",
+      "ndkMetaPlatforms": {
+        "min": 16,
+        "max": 30,
+        "aliases": {
+          "20": 19,
+          "25": 24,
+          "J": 16,
+          "J-MR1": 17,
+          "J-MR2": 18,
+          "K": 19,
+          "L": 21,
+          "L-MR1": 22,
+          "M": 23,
+          "N": 24,
+          "N-MR1": 24,
+          "O": 26,
+          "O-MR1": 27,
+          "P": 28,
+          "Q": 29,
+          "R": 30
+        }
+      },
+      "ndkMetaAbiList": [
+        {
+          "abi": "ARMEABI_V7A",
+          "bitness": 32,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "ARM64_V8A",
+          "bitness": 64,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "X86",
+          "bitness": 32,
+          "deprecated": false,
+          "default": true
+        },
+        {
+          "abi": "X86_64",
+          "bitness": 64,
+          "deprecated": false,
+          "default": true
+        }
+      ],
+      "cmakeToolchainFile": "D:\\Android\\AndroidSDK\\ndk\\21.4.7075529\\build\\cmake\\android.toolchain.cmake",
+      "cmake": {
+        "isValidCmakeAvailable": true,
+        "cmakeExe": "D:\\Android\\AndroidSDK\\cmake\\3.18.1\\bin\\cmake.exe",
+        "minimumCmakeVersion": "3.18.1"
+      },
+      "stlSharedObjectMap": {
+        "LIBCXX_SHARED": {
+          "ARMEABI_V7A": "D:\\Android\\AndroidSDK\\ndk\\21.4.7075529\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\arm-linux-androideabi\\libc++_shared.so",
+          "ARM64_V8A": "D:\\Android\\AndroidSDK\\ndk\\21.4.7075529\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\aarch64-linux-android\\libc++_shared.so",
+          "X86": "D:\\Android\\AndroidSDK\\ndk\\21.4.7075529\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\i686-linux-android\\libc++_shared.so",
+          "X86_64": "D:\\Android\\AndroidSDK\\ndk\\21.4.7075529\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\x86_64-linux-android\\libc++_shared.so"
+        },
+        "LIBCXX_STATIC": {},
+        "NONE": {},
+        "SYSTEM": {}
+      },
+      "project": {
+        "rootBuildGradleFolder": "D:\\AndroidProject\\go-robot",
+        "sdkFolder": "D:\\Android\\AndroidSDK",
+        "isBuildOnlyTargetAbiEnabled": true,
+        "ideBuildTargetAbi": "arm64-v8a,armeabi-v7a,armeabi",
+        "isCmakeBuildCohabitationEnabled": false,
+        "isPrefabEnabled": false
+      },
+      "outputOptions": [],
+      "ninjaExe": "D:\\Android\\AndroidSDK\\cmake\\3.18.1\\bin\\ninja.exe"
+    },
+    "prefabClassPaths": [],
+    "prefabPackages": [],
+    "prefabPackageConfigurations": [],
+    "stlType": "c++_shared",
+    "optimizationTag": "Debug"
+  },
+  "buildSettings": {
+    "environmentVariables": []
+  },
+  "prefabFolder": "D:\\AndroidProject\\go-robot\\OpenCVLib\\.cxx\\Debug\\526g6o5r\\prefab\\arm64-v8a",
+  "isActiveAbi": true,
+  "fullConfigurationHash": "526g6o5r4e3627433114236p2s4m5d05z5g6y3j2z1pb4v71jt335b2o1y4a",
+  "configurationArguments": [
+    "-HD:\\AndroidProject\\go-robot\\OpenCVLib\\libcxx_helper",
+    "-DCMAKE_SYSTEM_NAME\u003dAndroid",
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS\u003dON",
+    "-DCMAKE_SYSTEM_VERSION\u003d21",
+    "-DANDROID_PLATFORM\u003dandroid-21",
+    "-DANDROID_ABI\u003darm64-v8a",
+    "-DCMAKE_ANDROID_ARCH_ABI\u003darm64-v8a",
+    "-DANDROID_NDK\u003dD:\\Android\\AndroidSDK\\ndk\\21.4.7075529",
+    "-DCMAKE_ANDROID_NDK\u003dD:\\Android\\AndroidSDK\\ndk\\21.4.7075529",
+    "-DCMAKE_TOOLCHAIN_FILE\u003dD:\\Android\\AndroidSDK\\ndk\\21.4.7075529\\build\\cmake\\android.toolchain.cmake",
+    "-DCMAKE_MAKE_PROGRAM\u003dD:\\Android\\AndroidSDK\\cmake\\3.18.1\\bin\\ninja.exe",
+    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY\u003dD:\\AndroidProject\\go-robot\\OpenCVLib\\build\\intermediates\\cxx\\Debug\\526g6o5r\\obj\\arm64-v8a",
+    "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY\u003dD:\\AndroidProject\\go-robot\\OpenCVLib\\build\\intermediates\\cxx\\Debug\\526g6o5r\\obj\\arm64-v8a",
+    "-DCMAKE_BUILD_TYPE\u003dDebug",
+    "-BD:\\AndroidProject\\go-robot\\OpenCVLib\\.cxx\\Debug\\526g6o5r\\arm64-v8a",
+    "-GNinja",
+    "-DANDROID_STL\u003dc++_shared"
+  ],
+  "stlLibraryFile": "D:\\Android\\AndroidSDK\\ndk\\21.4.7075529\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\lib\\aarch64-linux-android\\libc++_shared.so",
+  "intermediatesParentFolder": "D:\\AndroidProject\\go-robot\\OpenCVLib\\build\\intermediates\\cxx\\Debug\\526g6o5r"
+}

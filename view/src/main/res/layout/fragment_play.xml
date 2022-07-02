@@ -1,9 +1,16 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <TextView
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/btn_play"
+        android:layout_width="320dp"
         android:layout_height="wrap_content"
-        android:text="1212"/>
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/btn_normal"
+        android:text="对弈"
+        android:textColor="@color/white"
+        android:textSize="24sp" />
 </LinearLayout>

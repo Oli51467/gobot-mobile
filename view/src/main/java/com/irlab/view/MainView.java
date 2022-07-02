@@ -49,6 +49,8 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
 
     private Button logout = null;
 
+    private Button play = null;
+
     // 用于对 Fragment进行管理
     public FragmentManager fragmentManager = null;
 
@@ -70,7 +72,7 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
         // 初始化Fragment
         initFragment();
         // 设置默认的显示界面
-        setTabSelection(2);
+        setTabSelection(0);
     }
 
     @Override
@@ -122,9 +124,11 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
     public void initFragmentViewsAndEvents() {
         openBluetooth = findViewById(R.id.layout_bluetooth);
         logout = findViewById(R.id.btn_logout);
+        play = findViewById(R.id.btn_play);
 
         openBluetooth.setOnClickListener(this);
         logout.setOnClickListener(this);
+        play.setOnClickListener(this);
     }
 
     @Override
@@ -150,6 +154,10 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
             ARouter.getInstance().build("/auth/login")
                     .withFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     .navigation();
+        }
+        else if (vid == R.id.btn_play) {
+            Intent intent = new Intent(this, CameraActivity.class);
+            startActivity(intent);
         }
     }
 

@@ -3,19 +3,33 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/AndroidProject/go-robot/OpenCVLib/java/CVNativeImplement/CVNativeImplement/src/main/res/menu/activity_lab.xml" value="0.15625" />
+        <entry key="..\:/AndroidProject/go-robot/OpenCVLib/java/CVNativeImplement/src/main/res/menu/activity_lab.xml" value="0.15625" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/bar_normal.xml" value="0.157" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/bar_selector.xml" value="0.157" />
+        <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/btn_normal.xml" value="0.1335" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/btn_not_focus.xml" value="0.157" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/btn_pressed.xml" value="0.157" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/layout/activity_bluetooth.xml" value="0.2595108695652174" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/layout/activity_main.xml" value="0.2595108695652174" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/layout/layout_lv_devices_item.xml" value="0.2595108695652174" />
+        <entry key="..\:/AndroidProject/go-robot/camera/src/main/res/layout/activity_camera.xml" value="0.25" />
+        <entry key="..\:/AndroidProject/go-robot/camera/src/main/res/layout/activity_camera_change.xml" value="0.12135416666666667" />
+        <entry key="..\:/AndroidProject/go-robot/camera/src/main/res/layout/activity_demo.xml" value="0.109375" />
+        <entry key="..\:/AndroidProject/go-robot/camera/src/main/res/layout/camera_activity.xml" value="0.12135416666666667" />
+        <entry key="..\:/AndroidProject/go-robot/camera/src/main/res/menu/activity_camera.xml" value="0.15625" />
+        <entry key="..\:/AndroidProject/go-robot/camera/src/main/res/menu/activity_lab.xml" value="0.2265625" />
+        <entry key="..\:/AndroidProject/go-robot/login/src/main/res/layout/activity_login.xml" value="0.1" />
         <entry key="..\:/AndroidProject/go-robot/login/src/main/res/layout/activity_main.xml" value="0.2595108695652174" />
+        <entry key="..\:/AndroidProject/go-robot/view/src/main/res/drawable/btn_play.xml" value="0.1335" />
+        <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/activity_camera.xml" value="0.2265625" />
         <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/activity_main.xml" value="0.2595108695652174" />
         <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/activity_main_view.xml" value="0.2595108695652174" />
         <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/fragment_archive.xml" value="0.2595108695652174" />
-        <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/fragment_play.xml" value="0.2595108695652174" />
+        <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/fragment_play.xml" value="0.25" />
         <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/fragment_settings.xml" value="0.2595108695652174" />
+        <entry key="..\:/AndroidProject/go-robot/view/src/main/res/menu/activity_camera.xml" value="0.22708333333333333" />
+        <entry key="..\:/AndroidProject/go-robot/view/src/main/res/menu/activity_lab.xml" value="0.2265625" />
       </map>
     </option>
   </component>
