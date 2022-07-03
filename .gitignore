@@ -13,5 +13,4 @@
 .externalNativeBuild
 .cxx
 local.properties
-/OpenCVLib/build/intermediates/cxx/create_cxx_tasks_500_timing.txt
-/OpenCVLib/build/intermediates/cxx/Debug/526g6o5r/meta/arm64-v8a/generate_cxx_metadata_30_timing.txt
+/OpenCVLib/build/

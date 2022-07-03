@@ -152,7 +152,7 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
             editor.commit();
             ToastUtil.show(this, "退出登录");
             ARouter.getInstance().build("/auth/login")
-                    .withFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    .withFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     .navigation();
         }
         else if (vid == R.id.btn_play) {

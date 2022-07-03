@@ -69,7 +69,7 @@ public class Register extends Activity implements View.OnClickListener{
         password.addTextChangedListener(new HideTextWatcher(password, MAX_LENGTH, this));
         passwordConfirm.addTextChangedListener(new HideTextWatcher(passwordConfirm, MAX_LENGTH, this));
         userName.addTextChangedListener(new ValidationWatcher(userName, 3,8, "用户名"));
-        password.addTextChangedListener(new ValidationWatcher(password, 6, 12,"密码"));
+        password.addTextChangedListener(new ValidationWatcher(password, 3, 8,"密码"));
 
     }
 
@@ -89,7 +89,7 @@ public class Register extends Activity implements View.OnClickListener{
                     ToastUtil.show(this, "注册成功");
                     Intent intent = new Intent(this, Login.class);
                     // 同时设置 Flag_ACTIVITY_SINGLE_TOP, 则直接使用栈内的对应 Activity
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     startActivity(intent);
                 }
                 else {
@@ -102,7 +102,7 @@ public class Register extends Activity implements View.OnClickListener{
         }
         else if (vid == R.id.iv_return) {
             Intent intent = new Intent(this, Login.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         }
     }

@@ -19,7 +19,8 @@ public class ButtonListenerUtil {
     // 根据传来的EditText是否为空设置按钮可以被点击
     public static void buttonEnabled(Button button, EditText... editTexts) {
         for (EditText editText : editTexts) {
-            if (editText.getText().toString().equals("")) {
+            String content = editText.getText().toString();
+            if (content.equals("") || content.length() < 3 || content.length() > 8) {
                 button.setEnabled(false);
                 return;
             }
@@ -97,7 +98,9 @@ public class ButtonListenerUtil {
         //检查所有的edit是否输入了数据
         private boolean checkAllEdit() {
             for (EditText editText : editTexts) {
-                if (!TextUtils.isEmpty(editText.getText() + "")) {
+                if (!TextUtils.isEmpty(editText.getText() + "")
+                        && editText.getText().toString().length() >= 3
+                        && editText.getText().toString().length() <= 8) {
                     continue;
                 } else {
                     return false;

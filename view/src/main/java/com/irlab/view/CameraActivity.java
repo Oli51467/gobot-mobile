@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -151,6 +152,15 @@ public final class CameraActivity extends Activity implements CvCameraViewListen
         {
             mCameraView.disableView();
         }
+    }
+
+    /**
+     * 无论什么时候再次启动该Activity, 都会直接引用第一次创建的实例, 而且会回调该实例的onNewIntent()方法。
+     * @param intent
+     */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
     }
 
     private void requestPermissions() {
