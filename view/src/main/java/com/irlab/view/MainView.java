@@ -42,7 +42,7 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
     private View settingsLayout = null;
     private View archiveLayout = null;
 
-    /*声明组件变量*/
+    // 声明组件变量
     private ImageView playImg = null;
     private ImageView settingsImg = null;
     private ImageView archiveImg = null;
@@ -78,8 +78,11 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         // 要求窗口没有 title
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.setContentView(R.layout.activity_main_view);
+        // 注入Arouter
         ARouter.getInstance().inject(this);
+        // 获取操作SGF数据库的对象
         sgfDao = MyApplication.getInstance().getSgfDatabase().sgfDAO();
+        // 拿到SharedPreference
         preferences = MyApplication.getInstance().preferences;
         // 初始化布局元素
         initViews();
@@ -94,11 +97,12 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
     @Override
     protected void onStart() {
         super.onStart();
+        // 这里初始化Fragment的组件必须在onStart()中进行, 若在onCreate中初始化, 子fragment有可能未初始化完成, 导致找不到对应组件
         initFragmentViewsAndEvents();
     }
 
     /**
-     * 在这里面获取到每个需要用到的控件的实例，并给它们设置好必要的点击事件
+     * 在这里面获取到每个需要用到的控件的实例
      */
     public void initViews() {
         fragmentManager = getSupportFragmentManager();
@@ -117,8 +121,8 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         archiveText = findViewById(R.id.tv_archive);
     }
 
+    // 处理activity中控件的点击事件 fragment控件的点击事件必须在onStart()中进行
     public void setEvents() {
-        //处理点击事件
         playLayout.setOnClickListener(this);
         settingsLayout.setOnClickListener(this);
         archiveLayout.setOnClickListener(this);
@@ -130,12 +134,15 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         settingsFragment = new SettingsFragment();
         playFragment = new PlayFragment();
         archiveFragment = new ArchiveFragment();
+        // 通过事务将子fragment添加到主布局中
         transaction.add(R.id.fragment, settingsFragment,"settings");
         transaction.add(R.id.fragment, playFragment, "play");
         transaction.add(R.id.fragment, archiveFragment, "archive");
+        // 提交事务
         transaction.commit();
     }
 
+    // 初始化fragment中的控件并设置监听事件
     public void initFragmentViewsAndEvents() {
         openBluetooth = findViewById(R.id.layout_bluetooth);
         logout = findViewById(R.id.btn_logout);
@@ -164,16 +171,20 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
             ARouter.getInstance().build("/base/bluetooth").navigation();
         }
         else if (vid == R.id.btn_logout) {
+            // 退出登录时, 清空SharedPreferences中保存的用户信息, 下次登录时不再自动登录
             SharedPreferences.Editor editor = preferences.edit();
             editor.remove("userName");
             editor.commit();
             ToastUtil.show(this, "退出登录");
+            // 跳转到登录界面
             ARouter.getInstance().build("/auth/login")
                     .withFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     .navigation();
         }
+        // 跳转到下棋界面
         else if (vid == R.id.btn_play) {
             Intent intent = new Intent(this, CameraActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         }
     }
@@ -194,23 +205,23 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
             settingsText.setTextColor(Color.parseColor("#07c160"));//修改字体颜色
             transaction.show(settingsFragment);
         }
-        // 下棋界面
+        // 棋谱界面
         else if (index == 1) {
-            playImg.setImageResource(R.drawable.tab_play_pressed);
-            playText.setTextColor(Color.parseColor("#07c160"));
-            transaction.show(playFragment);
-        }
-        // 我的界面
-        else if (index == 2) {
             archiveImg.setImageResource(R.drawable.tab_archive_pressed);
             archiveText.setTextColor(Color.parseColor("#07c160"));
             transaction.show(archiveFragment);
+        }
+        // 下棋界面
+        else if (index == 2) {
+            playImg.setImageResource(R.drawable.tab_play_pressed);
+            playText.setTextColor(Color.parseColor("#07c160"));
+            transaction.show(playFragment);
         }
         transaction.commit();
     }
 
     /**
-     * 清除掉所有的选中状态
+     * 清除掉所有的选中状态 取消相应控件的颜色
      */
     private void clearSelection() {
         playImg.setImageResource(R.drawable.tab_play_normal);
@@ -238,13 +249,28 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         }
     }
 
+    /**
+     * 通过选中的棋谱list, 通过getItemAtPosition获取到对应的map数据
+     * 再通过get("id")获取到附加在该list上的sgf的数据库索引信息
+     * 再通过查找对应id获取该list对应的SGF
+     * 将该SGF的棋谱信息码code通过bundle传递到展示棋谱的界面中, 该界面只有一个, 根据每次的入参code的不同展示不同的棋谱
+     * @param adapterView
+     * @param view
+     * @param pos
+     * @param l
+     */
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
+        // 拿到对应item的map信息
         Map<String, Object> map = (Map<String, Object>) adapterView.getItemAtPosition(pos);
+        // 获取该条目的id 该id即对应SGF的id
         int id = (int) map.get("id");
+        // 在数据库中找到该id对应的SGF
         SGF sgf = sgfDao.findById(id);
+        // 跳转
         Intent intent = new Intent(this, SGFActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        // 在bundle中传递SGF的code给展示activity
         Bundle bundle = new Bundle();
         bundle.putString("code", sgf.getCode());
         intent.putExtras(bundle);

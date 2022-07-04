@@ -1,11 +1,8 @@
 package com.irlab.base;
 
-import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
-import android.os.Bundle;
 import android.util.Log;
 
 import androidx.room.Room;
@@ -15,12 +12,6 @@ import com.irlab.base.dao.SGFDAO;
 import com.irlab.base.database.SGFDatabase;
 import com.irlab.base.database.UserDatabase;
 import com.irlab.base.entity.SGF;
-import com.irlab.base.entity.User;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 
 public class MyApplication extends Application {
     public static final String TAG = "MyApplication";

@@ -9,7 +9,7 @@ import com.google.gson.Gson;
 import java.lang.reflect.Type;
 
 /**
- * 处理传递参数中自定义的Object---》withObject
+ * 处理传递参数中自定义的Object--->withObject
  */
 @Route(path = "/base/json")
 public class JsonSerializationUtil implements SerializationService {

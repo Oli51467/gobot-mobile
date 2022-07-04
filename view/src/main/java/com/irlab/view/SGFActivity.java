@@ -12,10 +12,13 @@ public class SGFActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sgfactivity);
+        // bundle接收跳转过来的Activity传递来的数据
         Bundle bundle = getIntent().getExtras();
         String code = bundle.getString("code");
+        // 通过第三方包获取SGF控制器
         SgfController sgfController = new SgfController(true, SgfController.InteractionMode.FREE_PLAY);
         SgfView sgfView = findViewById(R.id.sgfview);
+        // 将指定代码的棋谱加载到view中
         sgfController.load(code).into(sgfView);
     }
 }

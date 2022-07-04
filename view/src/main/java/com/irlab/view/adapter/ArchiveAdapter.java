@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.irlab.view.R;
@@ -13,6 +12,9 @@ import com.irlab.view.R;
 import java.util.List;
 import java.util.Map;
 
+/*
+棋谱ListView的适配器
+ */
 public class ArchiveAdapter extends BaseAdapter {
 
     // viewHolder将各个位置的元素安排到各自的位置
@@ -51,9 +53,11 @@ public class ArchiveAdapter extends BaseAdapter {
             viewHolder.divider = view.findViewById(R.id.divider);
             view.setTag(viewHolder);
         }
+        // 若已初始化过, 则不需要重新构建viewHolder
         else {
             viewHolder = (ViewHolder) view.getTag();
         }
+        // 通过viewHolder向布局填充数据
         Map<String, Object> map = data.get(position);
         viewHolder.title.setText(map.get("title").toString());
         viewHolder.description.setText(map.get("desc").toString());
@@ -62,6 +66,7 @@ public class ArchiveAdapter extends BaseAdapter {
         return view;
     }
 
+    // ViewHolder中的各个组件
     final static class ViewHolder {
         TextView title;
         TextView description;

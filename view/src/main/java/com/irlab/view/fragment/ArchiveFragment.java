@@ -1,35 +1,24 @@
 package com.irlab.view.fragment;
 
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.irlab.base.MyApplication;
 import com.irlab.base.dao.SGFDAO;
 import com.irlab.base.entity.SGF;
 import com.irlab.view.R;
-import com.irlab.view.SGFActivity;
 import com.irlab.view.adapter.ArchiveAdapter;
 
-import java.lang.ref.PhantomReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import onion.w4v3xrmknycexlsd.lib.sgfcharm.SgfController;
-import onion.w4v3xrmknycexlsd.lib.sgfcharm.view.SgfView;
 
 public class ArchiveFragment extends Fragment {
 
