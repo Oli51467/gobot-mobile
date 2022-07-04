@@ -6,12 +6,12 @@ else {
     apply plugin: 'com.android.library'
 }*/
 android {
-    compileSdk 32
+    compileSdk 29
 
     defaultConfig {
         //applicationId "com.irlab.view"
-        minSdk 21
-        targetSdk 32
+        minSdk 19
+        targetSdk 29
         versionCode 1
         versionName "1.0"
 
@@ -55,13 +55,18 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.4.2'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.room:room-runtime:2.4.2'
+    // if you want only the core including Go support, use:
+    implementation "com.github.w4v3.sgfcharm:sgfcharm:v0.3.1"
+    // to add Chess support, use:
+    implementation "com.github.w4v3.sgfcharm:sgfcharm-chess:v0.3.1"
+    implementation 'com.alibaba:arouter-api:1.5.2'
+
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-    /*rxpermission*/
-
-    implementation 'com.alibaba:arouter-api:1.5.2'
     annotationProcessor'com.alibaba:arouter-compiler:1.5.2'
+    annotationProcessor 'androidx.room:room-compiler:2.4.2'
     api 'com.alibaba:arouter-annotation:1.0.6'
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])

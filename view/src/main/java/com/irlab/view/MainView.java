@@ -10,21 +10,27 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.irlab.base.MyApplication;
+import com.irlab.base.dao.SGFDAO;
+import com.irlab.base.entity.SGF;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.fragment.PlayFragment;
 import com.irlab.view.fragment.ArchiveFragment;
 import com.irlab.view.fragment.SettingsFragment;
 
+import java.util.Map;
+
 @Route(path = "/view/main")
-public class MainView extends FragmentActivity implements View.OnClickListener {
+public class MainView extends FragmentActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
 
     // 三个布局界面
     private PlayFragment playFragment = null;
@@ -51,6 +57,15 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
 
     private Button play = null;
 
+    private ListView listView = null;
+
+    private SGFDAO sgfDao;
+
+    @Override
+    public boolean navigateUpTo(Intent upIntent) {
+        return super.navigateUpTo(upIntent);
+    }
+
     // 用于对 Fragment进行管理
     public FragmentManager fragmentManager = null;
 
@@ -64,6 +79,7 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.setContentView(R.layout.activity_main_view);
         ARouter.getInstance().inject(this);
+        sgfDao = MyApplication.getInstance().getSgfDatabase().sgfDAO();
         preferences = MyApplication.getInstance().preferences;
         // 初始化布局元素
         initViews();
@@ -99,7 +115,6 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
         playText = findViewById(R.id.tv_play);
         settingsText = findViewById(R.id.tv_settings);
         archiveText = findViewById(R.id.tv_archive);
-
     }
 
     public void setEvents() {
@@ -125,10 +140,12 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
         openBluetooth = findViewById(R.id.layout_bluetooth);
         logout = findViewById(R.id.btn_logout);
         play = findViewById(R.id.btn_play);
+        listView = findViewById(R.id.listView);
 
         openBluetooth.setOnClickListener(this);
         logout.setOnClickListener(this);
         play.setOnClickListener(this);
+        listView.setOnItemClickListener(this);
     }
 
     @Override
@@ -219,5 +236,18 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
         if (archiveFragment != null) {
             transaction.hide(archiveFragment);
         }
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
+        Map<String, Object> map = (Map<String, Object>) adapterView.getItemAtPosition(pos);
+        int id = (int) map.get("id");
+        SGF sgf = sgfDao.findById(id);
+        Intent intent = new Intent(this, SGFActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        Bundle bundle = new Bundle();
+        bundle.putString("code", sgf.getCode());
+        intent.putExtras(bundle);
+        startActivity(intent);
     }
 }
