@@ -35,4 +35,5 @@
     <color name="settingBarBackground">#dcf3d8</color>
     <color name="barPressed">#cccccc</color>
     <color name="barNotPressed">#ffffff</color>
+    <color name="board">#f7d889</color>
 </resources>

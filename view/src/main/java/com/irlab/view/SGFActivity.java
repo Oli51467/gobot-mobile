@@ -17,7 +17,8 @@ public class SGFActivity extends Activity {
         String code = bundle.getString("code");
         // 通过第三方包获取SGF控制器
         SgfController sgfController = new SgfController(true, SgfController.InteractionMode.FREE_PLAY);
-        SgfView sgfView = findViewById(R.id.sgfview);
+        sgfController.setShowVariations(false);
+        SgfView sgfView = findViewById(R.id.sgfView);
         // 将指定代码的棋谱加载到view中
         sgfController.load(code).into(sgfView);
     }

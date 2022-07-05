@@ -162,10 +162,10 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
             setTabSelection(0);
         }
         else if (vid == R.id.layout_play) {
-            setTabSelection(1);
+            setTabSelection(2);
         }
         else if (vid == R.id.layout_archive) {
-            setTabSelection(2);
+            setTabSelection(1);
         }
         else if (vid == R.id.layout_bluetooth) {
             ARouter.getInstance().build("/base/bluetooth").navigation();
