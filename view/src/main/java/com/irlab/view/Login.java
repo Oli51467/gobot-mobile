@@ -1,4 +1,4 @@
-package com.irlab.login;
+package com.irlab.view;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -58,15 +58,15 @@ public class Login extends Activity implements View.OnClickListener{
     private void setEvent() {
         login.setOnClickListener(this);
         register.setOnClickListener(this);
-        ButtonListenerUtil.buttonEnabled(login, 3, 8, userName, password);
-        ButtonListenerUtil.buttonChangeColor(3, 8, this, login, userName, password);
+        ButtonListenerUtil.buttonEnabled(login, 2, 8, userName, password);
+        ButtonListenerUtil.buttonChangeColor(2, 8, this, login, userName, password);
     }
 
     @Override
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.tv_register) {
-            Intent intent = new Intent(com.irlab.login.Login.this, Register.class);
+            Intent intent = new Intent(Login.this, Register.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         }

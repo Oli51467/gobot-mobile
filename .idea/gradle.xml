@@ -15,7 +15,6 @@
             <option value="$PROJECT_DIR$/OpenCVLib" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/base" />
-            <option value="$PROJECT_DIR$/login" />
             <option value="$PROJECT_DIR$/view" />
           </set>
         </option>

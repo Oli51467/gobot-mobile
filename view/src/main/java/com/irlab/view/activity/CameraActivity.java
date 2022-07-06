@@ -32,7 +32,7 @@ public final class CameraActivity extends Activity implements CvCameraViewListen
 
     private static final int MY_CAMERA_REQUEST_CODE = 100;
 
-    private int cameraindex = 0;
+    private int cameraIndex = 0;
 
     private CameraBridgeViewBase mCameraView;
 
@@ -67,7 +67,7 @@ public final class CameraActivity extends Activity implements CvCameraViewListen
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         mCameraView = findViewById(R.id.cameraView);
         requestPermissions();
-        mCameraView.setCameraIndex(cameraindex);
+        mCameraView.setCameraIndex(cameraIndex);
         mCameraView.setVisibility(SurfaceView.VISIBLE);
         mCameraView.setCvCameraViewListener(this);
 

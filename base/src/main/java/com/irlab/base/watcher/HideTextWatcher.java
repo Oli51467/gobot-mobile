@@ -1,11 +1,11 @@
-package com.irlab.login.watcher;
+package com.irlab.base.watcher;
 
 import android.app.Activity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.EditText;
 
-import com.irlab.login.utils.ViewUtil;
+import com.irlab.base.utils.ViewUtil;
 
 public class HideTextWatcher implements TextWatcher {
 

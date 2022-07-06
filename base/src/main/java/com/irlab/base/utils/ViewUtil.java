@@ -1,4 +1,4 @@
-package com.irlab.login.utils;
+package com.irlab.base.utils;
 
 import android.app.Activity;
 import android.content.Context;

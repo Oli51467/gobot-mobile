@@ -8,15 +8,14 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.irlab.base.MyApplication;
 import com.irlab.base.dao.ConfigDAO;
+import com.irlab.base.entity.CellData;
 import com.irlab.base.entity.Config;
-import com.irlab.view.CellData;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.adapter.RecyclerViewAdapter;

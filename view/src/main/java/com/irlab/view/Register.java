@@ -1,6 +1,4 @@
-package com.irlab.login;
-
-import androidx.annotation.Nullable;
+package com.irlab.view;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -10,13 +8,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
-import com.irlab.base.utils.ButtonListenerUtil;
-import com.irlab.login.watcher.HideTextWatcher;
-import com.irlab.login.watcher.ValidationWatcher;
+import androidx.annotation.Nullable;
+
 import com.irlab.base.MyApplication;
 import com.irlab.base.dao.UserDAO;
 import com.irlab.base.entity.User;
+import com.irlab.base.utils.ButtonListenerUtil;
 import com.irlab.base.utils.ToastUtil;
+import com.irlab.base.watcher.HideTextWatcher;
+import com.irlab.base.watcher.ValidationWatcher;
 
 public class Register extends Activity implements View.OnClickListener {
 
@@ -43,9 +43,9 @@ public class Register extends Activity implements View.OnClickListener {
         // 初始化布局元素
         initViews();
         // 设置注册按钮是否可点击
-        ButtonListenerUtil.buttonEnabled(register, 3, 8, userName, password, passwordConfirm);
+        ButtonListenerUtil.buttonEnabled(register, 2, 8, userName, password, passwordConfirm);
         // 监听按钮变色
-        ButtonListenerUtil.buttonChangeColor(3, 8, this, register, userName, password, passwordConfirm); // 监听登录按钮变色
+        ButtonListenerUtil.buttonChangeColor(2, 8, this, register, userName, password, passwordConfirm); // 监听登录按钮变色
         // 设置点击事件
         setListener();
     }

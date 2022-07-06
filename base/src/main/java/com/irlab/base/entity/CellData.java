@@ -1,4 +1,4 @@
-package com.irlab.view;
+package com.irlab.base.entity;
 
 import java.io.Serializable;
 

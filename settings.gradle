@@ -18,7 +18,6 @@ dependencyResolutionManagement {
 }
 rootProject.name = "go-robot"
 include ':app'
-include ':login'
 include ':base'
 include ':view'
 include ':OpenCVLib'

@@ -7,7 +7,7 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.irlab.view.CellData;
+import com.irlab.base.entity.CellData;
 import com.irlab.view.R;
 
 import java.util.List;

@@ -24,6 +24,15 @@
         android:theme="@style/Theme.Robotgo"
         tools:remove="android:appComponentFactory">
         <activity
+            android:name="com.irlab.view.Login"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.irlab.view.Register"
+            android:exported="true"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity
             android:name=".activity.EditConfigActivity"
             android:exported="false"
             android:screenOrientation="portrait"/>
