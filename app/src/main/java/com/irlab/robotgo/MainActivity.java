@@ -35,12 +35,14 @@ public class MainActivity extends Activity {
                     .build("/view/main")
                     .withFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     .navigation();
+            finish();
         }
         else {
             ARouter.getInstance()
                     .build("/auth/login")
                     .withFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     .navigation();
+            finish();
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.irlab.login.utils;
+package com.irlab.base.utils;
 
 import android.content.Context;
 import android.text.Editable;
@@ -17,10 +17,11 @@ public class ButtonListenerUtil {
     }
 
     // 根据传来的EditText是否为空设置按钮可以被点击
-    public static void buttonEnabled(Button button, EditText... editTexts) {
+    public static void buttonEnabled(Button button, int minLen, int maxLen, EditText... editTexts) {
         for (EditText editText : editTexts) {
+            if (editText == null) break;
             String content = editText.getText().toString();
-            if (content.equals("") || content.length() < 3 || content.length() > 8) {
+            if (content.equals("") || content.length() < minLen || content.length() > maxLen) {
                 button.setEnabled(false);
                 return;
             }
@@ -28,9 +29,9 @@ public class ButtonListenerUtil {
         button.setEnabled(true);
     }
 
-    public static void buttonChangeColor(Context context, Button button, EditText ... editTexts) {
+    public static void buttonChangeColor(int minLen, int maxLen, Context context, Button button, EditText ... editTexts) {
         // 创建工具类对象 把要改变颜色的Button先传过去
-        textChangeListener textChangeListener = new textChangeListener(button);
+        textChangeListener textChangeListener = new textChangeListener(button, minLen, maxLen);
 
         textChangeListener.addAllEditText(editTexts);//把所有要监听的EditText都添加进去
         // 接口回调 在这里拿到boolean变量 根据isHasContent的值决定 Button应该设置什么颜色
@@ -39,7 +40,7 @@ public class ButtonListenerUtil {
             public void textChange(boolean isHasContent) {
                 if (isHasContent) {
                     button.setEnabled(true);
-                    button.setBackgroundResource(R.drawable.btn_normal);
+                    button.setBackgroundResource(R.drawable.btn_login_normal);
                     button.setTextColor(context.getResources().getColor(R.color.loginButtonTextFouse));
                 } else {
                     button.setEnabled(false);
@@ -54,9 +55,12 @@ public class ButtonListenerUtil {
     public static class textChangeListener {
         private Button button;
         private EditText[] editTexts;
+        int minLen, maxLen;
 
-        public textChangeListener(Button button) {
+        public textChangeListener(Button button, int minLen, int maxLen) {
             this.button = button;
+            this.minLen = minLen;
+            this.maxLen = maxLen;
         }
 
         public textChangeListener addAllEditText(EditText... editTexts) {
@@ -68,18 +72,26 @@ public class ButtonListenerUtil {
         private void initEditListener() {
             //调用了遍历 ediText的方法
             for (EditText editText : editTexts) {
-                editText.addTextChangedListener(new textChange());
+                editText.addTextChangedListener(new textChange(minLen, maxLen));
             }
         }
 
         // edit输入的变化来改变按钮的是否点击
         private class textChange implements TextWatcher {
+
+            int minLen, maxLen;
+
+            private textChange(int minLen, int maxLen) {
+                this.minLen = minLen;
+                this.maxLen = maxLen;
+            }
+
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (checkAllEdit()) {
+                if (checkAllEdit(minLen, maxLen)) {
                     //所有EditText有值了
                     mChangeListener.textChange(true);
                     button.setEnabled(true);
@@ -96,11 +108,11 @@ public class ButtonListenerUtil {
         }
 
         //检查所有的edit是否输入了数据
-        private boolean checkAllEdit() {
+        private boolean checkAllEdit(int minLen, int maxLen) {
             for (EditText editText : editTexts) {
                 if (!TextUtils.isEmpty(editText.getText() + "")
-                        && editText.getText().toString().length() >= 3
-                        && editText.getText().toString().length() <= 8) {
+                        && editText.getText().toString().length() > minLen
+                        && editText.getText().toString().length() <= maxLen) {
                     continue;
                 } else {
                     return false;

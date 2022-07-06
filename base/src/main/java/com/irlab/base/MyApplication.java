@@ -9,9 +9,11 @@ import androidx.room.Room;
 
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.irlab.base.dao.SGFDAO;
+import com.irlab.base.database.ConfigDatabase;
 import com.irlab.base.database.SGFDatabase;
 import com.irlab.base.database.UserDatabase;
 import com.irlab.base.entity.SGF;
+import com.irlab.base.entity.User;
 
 public class MyApplication extends Application {
     public static final String TAG = "MyApplication";
@@ -24,6 +26,7 @@ public class MyApplication extends Application {
     // 声明数据库对象
     private UserDatabase userDatabase;
     private SGFDatabase sgfDatabase;
+    private ConfigDatabase configDatabase;
 
     // 声明公共的信息映射对象, 可当作全局变量使用 读内存比读磁盘快很多
     public SharedPreferences preferences;
@@ -41,16 +44,9 @@ public class MyApplication extends Application {
         }
         ARouter.init(MyApplication.this);
         // 建立数据库、初始化数据库对象
-        userDatabase = Room.databaseBuilder(this, UserDatabase.class, "User")
-                // 暂时允许在主线程中操作数据库 因为太耗时
-                .allowMainThreadQueries()
-                // 允许迁移数据库 数据库变更时默认删除原数据库再创建新数据库
-                .addMigrations()
-                .build();
-        sgfDatabase = Room.databaseBuilder(this, SGFDatabase.class, "SGF")
-                .allowMainThreadQueries()
-                .addMigrations()
-                .build();
+        userDatabase = UserDatabase.getInstance(context);
+        sgfDatabase = SGFDatabase.getInstance(context);
+        configDatabase = ConfigDatabase.getInstance(context);
 
         // 假数据测试
         SGFDAO sgfdao = getSgfDatabase().sgfDAO();
@@ -78,7 +74,9 @@ public class MyApplication extends Application {
         return userDatabase;
     }
 
-    public synchronized SGFDatabase getSgfDatabase() {return sgfDatabase; }
+    public synchronized SGFDatabase getSgfDatabase() { return sgfDatabase; }
+
+    public synchronized ConfigDatabase getConfigDatabase() { return configDatabase; }
 
     @Override
     public void onTerminate() {

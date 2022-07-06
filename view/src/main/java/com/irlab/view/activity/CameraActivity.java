@@ -1,4 +1,4 @@
-package com.irlab.view;
+package com.irlab.view.activity;
 
 import android.Manifest;
 import android.app.Activity;
@@ -13,6 +13,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.irlab.view.R;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;

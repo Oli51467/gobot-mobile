@@ -56,11 +56,14 @@ dependencies {
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.room:room-runtime:2.4.2'
-    // if you want only the core including Go support, use:
-    implementation "com.github.w4v3.sgfcharm:sgfcharm:v0.3.1"
-    // to add Chess support, use:
-    implementation "com.github.w4v3.sgfcharm:sgfcharm-chess:v0.3.1"
+    implementation 'com.github.rosefinches:smile-dialog:1.0.1'
     implementation 'com.alibaba:arouter-api:1.5.2'
+    // SGF
+    implementation "com.github.w4v3.sgfcharm:sgfcharm:v0.3.1"
+    implementation "com.github.w4v3.sgfcharm:sgfcharm-chess:v0.3.1"
+    // cardView and RecycleView
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

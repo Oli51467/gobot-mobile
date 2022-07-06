@@ -25,10 +25,11 @@ public abstract class SGFDatabase extends RoomDatabase {
     }
 
     private static SGFDatabase create(final Context context) {
-        return Room.databaseBuilder(
-                context,
-                SGFDatabase.class,
-                DB_NAME).build();
+        return Room.databaseBuilder(context, SGFDatabase.class, DB_NAME)
+                .allowMainThreadQueries()
+                .addMigrations()
+                .build();
+
     }
 
     public abstract SGFDAO sgfDAO();

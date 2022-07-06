@@ -1,12 +1,14 @@
-package com.irlab.view;
+package com.irlab.view.activity;
 
 import android.app.Activity;
 import android.os.Bundle;
 
+import com.irlab.view.R;
+
 import onion.w4v3xrmknycexlsd.lib.sgfcharm.SgfController;
 import onion.w4v3xrmknycexlsd.lib.sgfcharm.view.SgfView;
 
-public class SGFActivity extends Activity {
+public class SGFInfoActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

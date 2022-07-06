@@ -11,10 +11,10 @@ import android.widget.TextView;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
-import com.irlab.login.utils.ButtonListenerUtil;
 import com.irlab.base.MyApplication;
 import com.irlab.base.dao.UserDAO;
 import com.irlab.base.entity.User;
+import com.irlab.base.utils.ButtonListenerUtil;
 import com.irlab.base.utils.ToastUtil;
 
 @Route(path = "/auth/login")
@@ -58,8 +58,8 @@ public class Login extends Activity implements View.OnClickListener{
     private void setEvent() {
         login.setOnClickListener(this);
         register.setOnClickListener(this);
-        ButtonListenerUtil.buttonEnabled(login, userName, password);
-        ButtonListenerUtil.buttonChangeColor(this, login, userName, password);
+        ButtonListenerUtil.buttonEnabled(login, 3, 8, userName, password);
+        ButtonListenerUtil.buttonChangeColor(3, 8, this, login, userName, password);
     }
 
     @Override

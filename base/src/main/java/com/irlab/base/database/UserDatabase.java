@@ -24,10 +24,10 @@ public abstract class UserDatabase extends RoomDatabase {
     }
 
     private static UserDatabase create(final Context context) {
-        return Room.databaseBuilder(
-                context,
-                UserDatabase.class,
-                DB_NAME).build();
+        return Room.databaseBuilder(context, UserDatabase.class, DB_NAME)
+                .addMigrations()
+                .allowMainThreadQueries()
+                .build();
     }
 
     public abstract UserDAO userDAO();

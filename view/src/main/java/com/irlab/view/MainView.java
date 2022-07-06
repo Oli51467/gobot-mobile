@@ -23,6 +23,9 @@ import com.irlab.base.MyApplication;
 import com.irlab.base.dao.SGFDAO;
 import com.irlab.base.entity.SGF;
 import com.irlab.base.utils.ToastUtil;
+import com.irlab.view.activity.CameraActivity;
+import com.irlab.view.activity.PlayConfigActivity;
+import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.fragment.PlayFragment;
 import com.irlab.view.fragment.ArchiveFragment;
 import com.irlab.view.fragment.SettingsFragment;
@@ -53,9 +56,7 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
 
     private RelativeLayout openBluetooth = null;
 
-    private Button logout = null;
-
-    private Button play = null;
+    private Button logout = null, play = null, playSettings = null;
 
     private ListView listView = null;
 
@@ -91,7 +92,7 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         // 初始化Fragment
         initFragment();
         // 设置默认的显示界面
-        setTabSelection(0);
+        setTabSelection(2);
     }
 
     @Override
@@ -147,11 +148,13 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         openBluetooth = findViewById(R.id.layout_bluetooth);
         logout = findViewById(R.id.btn_logout);
         play = findViewById(R.id.btn_play);
+        playSettings = findViewById(R.id.btn_play_settings);
         listView = findViewById(R.id.listView);
 
         openBluetooth.setOnClickListener(this);
         logout.setOnClickListener(this);
         play.setOnClickListener(this);
+        playSettings.setOnClickListener(this);
         listView.setOnItemClickListener(this);
     }
 
@@ -186,6 +189,14 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
             Intent intent = new Intent(this, CameraActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
+            finish();
+        }
+        // 对局设置
+        else if (vid == R.id.btn_play_settings) {
+            Intent intent = new Intent(this, PlayConfigActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
         }
     }
 
@@ -268,7 +279,7 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         // 在数据库中找到该id对应的SGF
         SGF sgf = sgfDao.findById(id);
         // 跳转
-        Intent intent = new Intent(this, SGFActivity.class);
+        Intent intent = new Intent(this, SGFInfoActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         // 在bundle中传递SGF的code给展示activity
         Bundle bundle = new Bundle();

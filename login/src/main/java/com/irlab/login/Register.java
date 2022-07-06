@@ -10,7 +10,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
-import com.irlab.login.utils.ButtonListenerUtil;
+import com.irlab.base.utils.ButtonListenerUtil;
 import com.irlab.login.watcher.HideTextWatcher;
 import com.irlab.login.watcher.ValidationWatcher;
 import com.irlab.base.MyApplication;
@@ -18,7 +18,7 @@ import com.irlab.base.dao.UserDAO;
 import com.irlab.base.entity.User;
 import com.irlab.base.utils.ToastUtil;
 
-public class Register extends Activity implements View.OnClickListener{
+public class Register extends Activity implements View.OnClickListener {
 
     public static final int MAX_LENGTH = 10;
 
@@ -43,9 +43,9 @@ public class Register extends Activity implements View.OnClickListener{
         // 初始化布局元素
         initViews();
         // 设置注册按钮是否可点击
-        ButtonListenerUtil.buttonEnabled(register, userName, password, passwordConfirm);
+        ButtonListenerUtil.buttonEnabled(register, 3, 8, userName, password, passwordConfirm);
         // 监听按钮变色
-        ButtonListenerUtil.buttonChangeColor(this, register, userName, password, passwordConfirm); // 监听登录按钮变色
+        ButtonListenerUtil.buttonChangeColor(3, 8, this, register, userName, password, passwordConfirm); // 监听登录按钮变色
         // 设置点击事件
         setListener();
     }
@@ -85,12 +85,15 @@ public class Register extends Activity implements View.OnClickListener{
                     User user = new User();
                     user.setName(userName);
                     user.setPassWord(password);
-                    userDAO.insert(user);
-                    ToastUtil.show(this, "注册成功");
-                    Intent intent = new Intent(this, Login.class);
-                    // 同时设置 Flag_ACTIVITY_SINGLE_TOP, 则直接使用栈内的对应 Activity
-                    intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    startActivity(intent);
+                    //
+                    new Thread(() -> {
+                        userDAO.insert(user);
+                        ToastUtil.show(this, "注册成功");
+                        Intent intent = new Intent(this, Login.class);
+                        // 同时设置 Flag_ACTIVITY_SINGLE_TOP, 则直接使用栈内的对应 Activity
+                        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        startActivity(intent);
+                    }).start();
                 }
                 else {
                     ToastUtil.show(this, "两次输入的密码不一致!");

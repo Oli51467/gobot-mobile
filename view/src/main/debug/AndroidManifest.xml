@@ -24,7 +24,23 @@
         android:theme="@style/Theme.Robotgo"
         tools:remove="android:appComponentFactory">
         <activity
-            android:name=".SGFActivity"
+            android:name=".activity.EditConfigActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".activity.AddConfigActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activity.PlayConfigActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activity.CameraActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activity.SGFInfoActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
@@ -35,11 +51,6 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".CameraActivity"
-            android:exported="false"
-            android:launchMode="singleInstance"
-            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
