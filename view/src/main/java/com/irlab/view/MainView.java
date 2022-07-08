@@ -23,7 +23,6 @@ import com.irlab.base.MyApplication;
 import com.irlab.base.dao.SGFDAO;
 import com.irlab.base.entity.SGF;
 import com.irlab.base.utils.ToastUtil;
-import com.irlab.view.activity.CameraActivity;
 import com.irlab.view.activity.PlayConfigActivity;
 import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.activity.SelectConfigActivity;

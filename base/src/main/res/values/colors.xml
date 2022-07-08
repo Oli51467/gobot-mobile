@@ -37,4 +37,5 @@
     <color name="barNotPressed">#ffffff</color>
     <color name="board">#f7d889</color>
     <color name="delete">#d9534f</color>
+    <color name="normal_gray">#8a8a8a</color>
 </resources>

@@ -20,4 +20,4 @@ rootProject.name = "go-robot"
 include ':app'
 include ':base'
 include ':view'
-include ':OpenCVLib'
+include ':opencv'

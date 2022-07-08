@@ -1,18 +1,19 @@
 package com.irlab.view.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
+import android.Manifest;
 import android.content.Intent;
-import android.graphics.Color;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import com.irlab.base.MyApplication;
 import com.irlab.base.dao.ConfigDAO;
@@ -21,14 +22,13 @@ import com.irlab.base.entity.Config;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.adapter.RecyclerViewAdapter;
-import com.rosefinches.smiledialog.SmileDialog;
-import com.rosefinches.smiledialog.SmileDialogBuilder;
-import com.rosefinches.smiledialog.enums.SmileDialogType;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SelectConfigActivity extends AppCompatActivity implements View.OnClickListener, RecyclerViewAdapter.setClick {
+
+    public static final int PERMISSION_REQUEST_CODE = 123;
 
     RecyclerView mRecyclerView = null;
 
@@ -41,8 +41,6 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
     LinearLayoutManager linearLayoutManager = null;
 
     ConfigDAO configDAO;
-
-    public CellData DataToPass = null;
 
     // 每一条数据都是一个CellData实体 放到list中
     List<CellData> list = new ArrayList<>();
@@ -109,15 +107,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
             finish();
         }
         else if (vid == R.id.btn_begin) {
-            // 根据点击的位置 先拿到CellData 通过CellData拿到该配置信息的id
-            CellData cellData = list.get(mAdapter.getmPosition());
-            Intent intent = new Intent(this, CameraActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            // 通过bundle向下一个activity传递一个对象 该对象必须先实现序列化接口
-            Bundle bundle = new Bundle();
-            bundle.putSerializable("configItem", cellData);
-            intent.putExtras(bundle);
-            startActivity(intent);
+            checkCameraPermission();
         }
     }
 
@@ -127,5 +117,49 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         begin.setEnabled(true);
         mAdapter.setmPosition(position);
         mAdapter.notifyDataSetChanged();
+    }
+
+    private void checkCameraPermission() {
+        List<String> neededPermissions = new ArrayList<>();
+        if (ContextCompat.checkSelfPermission(SelectConfigActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            neededPermissions.add(Manifest.permission.CAMERA);
+        }
+        if (ContextCompat.checkSelfPermission(SelectConfigActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            neededPermissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+
+        if (!neededPermissions.isEmpty()) {
+            ActivityCompat.requestPermissions(SelectConfigActivity.this, neededPermissions.toArray(new String[neededPermissions.size()]), PERMISSION_REQUEST_CODE);
+        } else {
+            startDetectBoardAcitivity();
+        }
+    }
+
+    private void startDetectBoardAcitivity() {
+        // 根据点击的位置 先拿到CellData 通过CellData拿到配置信息
+        CellData cellData = list.get(mAdapter.getmPosition());
+        // 传递黑方、白方、贴目设置
+        String blackPlayer = cellData.getPlayerBlack();
+        String whitePlayer = cellData.getPlayerWhite();
+        String komi = cellData.getRule() == 0 ? "7.5" : "6.5";
+        Intent intent = new Intent(this, DetectBoardActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        // 通过bundle向下一个activity传递一个对象 该对象必须先实现序列化接口
+        intent.putExtra("blackPlayer", blackPlayer);
+        intent.putExtra("whitePlayer", whitePlayer);
+        intent.putExtra("komi", komi);
+        startActivity(intent);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startDetectBoardAcitivity();
+            } else {
+                Toast.makeText(SelectConfigActivity.this, getResources().getString(R.string.toast_camera_permission), Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

@@ -1,17 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">CameraFrame</string>
-    <string name="delete">Delete</string>
-    <string name="edit">Edit</string>
-    <string name="menu_next_camera">Next Cam</string>
-    <string name="menu_take_photo">Take Photo</string>
-    <string name="menu_image_size">Size</string>
-    <string name="photo_delete_prompt_message">This photo is saved in your Gallery. Do you want to delete it?</string>
-    <string name="photo_delete_prompt_title">Delete photo?</string>
-    <string name="photo_error_message">Failed to save photo</string>
-    <string name="photo_edit_chooser_title">Edit photo with&#8230;</string>
-    <string name="photo_send_chooser_title">Share photo with&#8230;</string>
-    <string name="photo_send_extra_subject">My photo from Second Sight</string>
-    <string name="photo_send_extra_text">Check out my photo from the Second Sight app! http://nummist.com/opencv/</string>
-    <string name="share">Share</string>
+    <string name="delete">删除</string>
+    <string name="edit">退出</string>
+    <string name="share">分享</string>
+    <string name="toast_camera_permission">访问相机的权限被拒绝。这个应用程序需要使用相机才能工作。</string>
+    <string name="lbl_instructions">当红色边框与棋盘边缘重合时，点击OK</string>
+    <string name="btn_start_recording">开始记录</string>
+    <string name="btn_tests">测试</string>
+    <string name="lbl_black_player">Black player</string>
+    <string name="lbl_white_player">White player</string>
+    <string name="btn_detect_board">Detect board</string>
+    <string name="btn_pass_turn">Pass</string>
+    <string name="btn_undo_last_move">Undo</string>
+    <string name="btn_pause">Pause</string>
+    <string name="btn_pause_continue">Continue</string>
+    <string name="btn_finish_record">完成</string>
+    <string name="btn_view_record">Visualize register</string>
+    <string name="btn_rotate_counter_clockwise">Counterclockwise</string>
+    <string name="btn_rotate_clockwise">Clockwise</string>
+    <string name="dialog_are_you_sure">Are you sure?</string>
+    <string name="dialog_undo_last_move">Do you want to undo the last move?</string>
+    <string name="dialog_finish_recording">Do you want to finish the recording?</string>
+    <string name="dialog_add_move">Add move to game</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
+    <string name="toast_activate_corner_tracking">Activated board tracking</string>
+    <string name="toast_deactivate_corner_tracking">Inactivated board tracking</string>
+    <string name="toast_restore_original_corner_positions">Restored original board position</string>
+    <string name="toast_save_snapshot">Saved snapshot</string>
 </resources>

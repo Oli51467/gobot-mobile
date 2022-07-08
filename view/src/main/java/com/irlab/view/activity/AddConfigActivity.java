@@ -131,6 +131,18 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         }
         else if (vid == R.id.btn_save) {
             // 获取输入框的数据
+            if (mPlayerBlack.getText().toString().trim().equals("")) {
+                mPlayerBlack.requestFocus();
+                return;
+            }
+            if (mPlayerWhite.getText().toString().trim().equals("")) {
+                mPlayerWhite.requestFocus();
+                return;
+            }
+            if (mDescription.getText().toString().trim().equals("")) {
+                mDescription.requestFocus();
+                return;
+            }
             String playerBlack = mPlayerBlack.getText().toString();
             String playerWhite = mPlayerWhite.getText().toString();
             String desc = mDescription.getText().toString();
