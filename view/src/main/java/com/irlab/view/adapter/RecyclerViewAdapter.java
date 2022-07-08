@@ -1,10 +1,14 @@
 package com.irlab.view.adapter;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.irlab.base.entity.CellData;
@@ -18,6 +22,8 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     // 数据容器
     private List<CellData> list;
 
+    private int mPosition = -1;
+
     public RecyclerViewAdapter(List<CellData> list) {
         this.list = list;
     }
@@ -28,13 +34,16 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     // 内部类实现viewHolder 拿到cardView中的布局元素
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView title, desc;
+        private ImageView check;
+        private TextView player, desc, rule;
         private View root;
 
         public ViewHolder(View root) {
             super(root);
             this.root = root;
-            title = root.findViewById(R.id.tv_title);
+            check = root.findViewById(R.id.iv_check);
+            player = root.findViewById(R.id.tv_player);
+            rule = root.findViewById(R.id.tv_rule);
             desc = root.findViewById(R.id.tv_desc);
         }
     }
@@ -44,15 +53,28 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         return list.size();
     }
 
+    public int getmPosition() { return this.mPosition; }
+
+    public void setmPosition(int mPosition) { this.mPosition = mPosition; }
+
     // 绑定视图管理者
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        // 设置title
-        holder.title.setText(list.get(position).getTitle());
-        // 设置description
+        // 双方信息
+        holder.player.setText(list.get(position).getPlayerBlack() + "  VS  " + list.get(position).getPlayerWhite());
+        // description
         holder.desc.setText(list.get(position).getDesc());
+        // 规则
+        holder.rule.setText(list.get(position).getRule() == 0 ? "中国规则" : "日本规则");
         // 设置tag
         holder.root.setTag(position);
+        if (position == getmPosition()) {
+            //選中的顔色就設成了  黃色
+            holder.check.setVisibility(View.VISIBLE);
+        } else {
+            //未選中的顔色 就設成了 白色
+            holder.check.setVisibility(View.INVISIBLE);
+        }
     }
 
     @Override

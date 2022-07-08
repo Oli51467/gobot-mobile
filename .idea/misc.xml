@@ -7,6 +7,7 @@
         <entry key="..\:/AndroidProject/go-robot/OpenCVLib/java/CVNativeImplement/src/main/res/menu/activity_lab.xml" value="0.15625" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/bar_normal.xml" value="0.157" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/bar_selector.xml" value="0.157" />
+        <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/btn_login_normal.xml" value="0.1485" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/btn_login_selector.xml" value="0.1335" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/btn_normal.xml" value="0.1335" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/btn_not_focus.xml" value="0.157" />
@@ -35,6 +36,7 @@
         <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/activity_main.xml" value="0.2595108695652174" />
         <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/activity_main_view.xml" value="0.2595108695652174" />
         <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/activity_play_config.xml" value="0.2128623188405797" />
+        <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/activity_select_config.xml" value="0.25815217391304346" />
         <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/activity_setting_item.xml" value="0.165" />
         <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/activity_sgfactivity.xml" value="0.1" />
         <entry key="..\:/AndroidProject/go-robot/view/src/main/res/layout/archive_item.xml" value="0.20598290598290597" />

@@ -26,6 +26,7 @@ import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.activity.CameraActivity;
 import com.irlab.view.activity.PlayConfigActivity;
 import com.irlab.view.activity.SGFInfoActivity;
+import com.irlab.view.activity.SelectConfigActivity;
 import com.irlab.view.fragment.PlayFragment;
 import com.irlab.view.fragment.ArchiveFragment;
 import com.irlab.view.fragment.SettingsFragment;
@@ -186,7 +187,7 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         }
         // 跳转到下棋界面
         else if (vid == R.id.btn_play) {
-            Intent intent = new Intent(this, CameraActivity.class);
+            Intent intent = new Intent(this, SelectConfigActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
             finish();

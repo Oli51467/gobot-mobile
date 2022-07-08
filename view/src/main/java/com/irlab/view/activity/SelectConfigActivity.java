@@ -5,10 +5,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -26,7 +28,7 @@ import com.rosefinches.smiledialog.enums.SmileDialogType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlayConfigActivity extends AppCompatActivity implements View.OnClickListener, RecyclerViewAdapter.setClick, RecyclerViewAdapter.setLongClick {
+public class SelectConfigActivity extends AppCompatActivity implements View.OnClickListener, RecyclerViewAdapter.setClick {
 
     RecyclerView mRecyclerView = null;
 
@@ -34,11 +36,13 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
 
     ImageView back = null;
 
-    TextView addSetting = null;
+    Button begin = null;
 
     LinearLayoutManager linearLayoutManager = null;
 
     ConfigDAO configDAO;
+
+    public CellData DataToPass = null;
 
     // 每一条数据都是一个CellData实体 放到list中
     List<CellData> list = new ArrayList<>();
@@ -46,7 +50,7 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_play_config);
+        setContentView(R.layout.activity_select_config);
         getSupportActionBar().hide();
         configDAO = MyApplication.getInstance().getConfigDatabase().configDAO();
         initData();
@@ -71,12 +75,11 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
     private void initViews() {
         mRecyclerView = findViewById(R.id.play_setting_item);
         back = findViewById(R.id.header_back);
-        addSetting = findViewById(R.id.header_add);
+        begin = findViewById(R.id.btn_begin);
 
         back.setOnClickListener(this);
-        addSetting.setOnClickListener(this);
+        begin.setOnClickListener(this);
         mAdapter.setOnItemClickListener(this);
-        mAdapter.setOnItemLongClickListener(this);
     }
 
     // 初始化数据
@@ -100,55 +103,29 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
     @Override
     public void onClick(View v) {
         int vid = v.getId();
-        if (vid == R.id.header_add) {
-            Intent intent = new Intent(this, AddConfigActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-        }
-        else if (vid == R.id.header_back) {
+        if (vid == R.id.header_back) {
             Intent intent = new Intent(this, MainView.class);
             startActivity(intent);
             finish();
+        }
+        else if (vid == R.id.btn_begin) {
+            // 根据点击的位置 先拿到CellData 通过CellData拿到该配置信息的id
+            CellData cellData = list.get(mAdapter.getmPosition());
+            Intent intent = new Intent(this, CameraActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            // 通过bundle向下一个activity传递一个对象 该对象必须先实现序列化接口
+            Bundle bundle = new Bundle();
+            bundle.putSerializable("configItem", cellData);
+            intent.putExtras(bundle);
+            startActivity(intent);
         }
     }
 
     @Override
     public void onItemClickListener(View view, int position) {
-        // 根据点击的位置 先拿到CellData 通过CellData拿到该配置信息的id
-        CellData cellData = list.get(position);
-        Intent intent = new Intent(this, EditConfigActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        // 通过bundle向下一个activity传递一个对象 该对象必须先实现序列化接口
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("configItem", cellData);
-        intent.putExtras(bundle);
-        startActivity(intent);
-        finish();
-    }
-
-    @Override
-    public boolean onItemLongClickListener(View view, int position) {
-        // 第三方的提示框
-        @SuppressLint("ResourceAsColor") SmileDialog dialog = new SmileDialogBuilder(this, SmileDialogType.ERROR)
-                .hideTitle(true)
-                .setContentText("你确定删除吗")
-                .setConformBgResColor(R.color.delete)
-                .setConformTextColor(Color.WHITE)
-                .setCancelTextColor(Color.BLACK)
-                .setCancelButton("取消")
-                .setCancelBgResColor(R.color.whiteSmoke)
-                .setWindowAnimations(R.style.dialog_style)
-                // 删除一条选中的数据 根据position拿到对应的cellData 再拿到配置的id
-                .setConformButton("删除", () -> {
-                    CellData cellData = list.get(position);
-                    int id = cellData.getId();
-                    configDAO.deleteById(id);
-                    finish();
-                    startActivity(new Intent(this, PlayConfigActivity.class));
-                })
-                .build();
-        dialog.show();
-        return false;
+        begin.setBackgroundResource(com.irlab.base.R.drawable.btn_login_normal);
+        begin.setEnabled(true);
+        mAdapter.setmPosition(position);
+        mAdapter.notifyDataSetChanged();
     }
 }
-

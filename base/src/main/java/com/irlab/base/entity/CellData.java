@@ -6,14 +6,36 @@ public class CellData implements Serializable {
 
     int id;
 
-    String title;
+    String playerBlack;
+
+    String playerWhite;
+
+    int rule;
 
     String desc;
 
-    public CellData(String title, String desc, int id) {
-        this.title = title;
+    public CellData(String playerBlack, String playerWhite, String desc, int id, int rule) {
+        this.playerBlack = playerBlack;
+        this.playerWhite = playerWhite;
         this.desc = desc;
+        this.rule = rule;
         this.id = id;
+    }
+
+    public String getPlayerBlack() {
+        return playerBlack;
+    }
+
+    public void setPlayerBlack(String playerBlack) {
+        this.playerBlack = playerBlack;
+    }
+
+    public String getPlayerWhite() {
+        return playerWhite;
+    }
+
+    public void setPlayerWhite(String playerWhite) {
+        this.playerWhite = playerWhite;
     }
 
     public int getId() {
@@ -24,12 +46,12 @@ public class CellData implements Serializable {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public int getRule() {
+        return rule;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setRule(int rule) {
+        this.rule = rule;
     }
 
     public String getDesc() {

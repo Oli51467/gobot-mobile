@@ -42,7 +42,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
 
     private ImageView back = null;
 
-    private EditText mPlayerBlack, mPlayerWhite, mTitle, mDescription;
+    private EditText mPlayerBlack, mPlayerWhite, mDescription;
 
     private CellData configInfo = null;
 
@@ -67,8 +67,8 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         // 初始化界面和数据
         initView();
         initData();
-        ButtonListenerUtil.buttonEnabled(save, 0, 100,mPlayerBlack, mPlayerWhite, mTitle, mDescription);
-        ButtonListenerUtil.buttonChangeColor(0, 100, this, save, mPlayerBlack, mPlayerWhite, mTitle, mDescription);
+        ButtonListenerUtil.buttonEnabled(save, 0, 100,mPlayerBlack, mPlayerWhite, mDescription);
+        ButtonListenerUtil.buttonChangeColor(0, 100, this, save, mPlayerBlack, mPlayerWhite, mDescription);
     }
 
     private void initView() {
@@ -78,7 +78,6 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         back = findViewById(R.id.header_back);
         mPlayerBlack = findViewById(R.id.et_player_black);
         mPlayerWhite = findViewById(R.id.et_player_white);
-        mTitle = findViewById(R.id.et_title);
         mDescription = findViewById(R.id.et_desc);
         chineseRule = findViewById(R.id.rb_chinese_rule);
         japaneseRule = findViewById(R.id.rb_japanese_rule);
@@ -86,7 +85,6 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         // 设置内容
         mPlayerBlack.setText(config.getPlayerBlack());
         mPlayerWhite.setText(config.getPlayerWhite());
-        mTitle.setText(config.getTitle());
         mDescription.setText(config.getDesc());
         pos = config.getT();
         if (config.getRule() == 0) {
@@ -121,10 +119,8 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
             // 获取输入框的数据
             String playerBlack = mPlayerBlack.getText().toString();
             String playerWhite = mPlayerWhite.getText().toString();
-            String title = mTitle.getText().toString();
             String desc = mDescription.getText().toString();
             // 将该配置封装成一个对象插入到数据库
-            config.setTitle(title);
             config.setDesc(desc);
             config.setPlayerBlack(playerBlack);
             config.setPlayerWhite(playerWhite);

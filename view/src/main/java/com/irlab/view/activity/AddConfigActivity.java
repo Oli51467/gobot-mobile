@@ -44,7 +44,7 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
 
     private Button buttonSave;
 
-    private EditText mPlayerBlack, mPlayerWhite, mTitle, mDescription;
+    private EditText mPlayerBlack, mPlayerWhite, mDescription;
 
     private RadioGroup mRule;
 
@@ -68,8 +68,8 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         initData();
         // 从sharedPreference加载上次填写的数据
         reload();
-        ButtonListenerUtil.buttonEnabled(buttonSave, 0, 100, mPlayerBlack, mPlayerWhite, mTitle, mDescription);
-        ButtonListenerUtil.buttonChangeColor(0, 100, this, buttonSave, mPlayerBlack, mPlayerWhite, mTitle, mDescription);
+        ButtonListenerUtil.buttonEnabled(buttonSave, 0, 100, mPlayerBlack, mPlayerWhite, mDescription);
+        ButtonListenerUtil.buttonChangeColor(0, 100, this, buttonSave, mPlayerBlack, mPlayerWhite, mDescription);
     }
 
     private void initViews() {
@@ -78,7 +78,6 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         buttonSave = findViewById(R.id.btn_save);
         mPlayerBlack = findViewById(R.id.et_player_black);
         mPlayerWhite = findViewById(R.id.et_player_white);
-        mTitle = findViewById(R.id.et_title);
         mDescription = findViewById(R.id.et_desc);
         mRule = findViewById(R.id.rg_rule);
         chineseRule = findViewById(R.id.rb_chinese_rule);
@@ -114,9 +113,6 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         if (playerWhite != null)  {
             mPlayerWhite.setText(playerWhite);
         }
-        if (title != null) {
-            mTitle.setText(title);
-        }
         if (desc != null) {
             mDescription.setText(desc);
         }
@@ -137,11 +133,9 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
             // 获取输入框的数据
             String playerBlack = mPlayerBlack.getText().toString();
             String playerWhite = mPlayerWhite.getText().toString();
-            String title = mTitle.getText().toString();
             String desc = mDescription.getText().toString();
             // 将该配置封装成一个对象插入到数据库
             Config config = new Config();
-            config.setTitle(title);
             config.setDesc(desc);
             config.setPlayerBlack(playerBlack);
             config.setPlayerWhite(playerWhite);
@@ -183,13 +177,11 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         // 将中途写了一半的数据加载到sharedPreference
         String playerBlack = mPlayerBlack.getText().toString();
         String playerWhite = mPlayerWhite.getText().toString();
-        String title = mTitle.getText().toString();
         String desc = mDescription.getText().toString();
         // 获得编辑器 用编辑器来保存
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString("playerBlack", playerBlack);
         editor.putString("playerWhite", playerWhite);
-        editor.putString("title", title);
         editor.putString("desc", desc);
         editor.putInt("rule", rule);
         editor.putInt("pos", pos);
@@ -200,7 +192,7 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
     protected void onResume() {
         super.onResume();
         buttonSave.setBackgroundResource(com.irlab.base.R.drawable.btn_login_normal);
-        ButtonListenerUtil.buttonEnabled(buttonSave, 0, 100, mPlayerBlack, mPlayerWhite, mTitle, mDescription);
-        ButtonListenerUtil.buttonChangeColor(0, 100, this, buttonSave, mPlayerBlack, mPlayerWhite, mTitle, mDescription);
+        ButtonListenerUtil.buttonEnabled(buttonSave, 0, 100, mPlayerBlack, mPlayerWhite, mDescription);
+        ButtonListenerUtil.buttonChangeColor(0, 100, this, buttonSave, mPlayerBlack, mPlayerWhite, mDescription);
     }
 }
