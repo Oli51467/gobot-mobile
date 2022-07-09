@@ -175,7 +175,7 @@ public class Game implements Serializable {
         StringBuilder sgf = new StringBuilder();
         writeHeader(sgf);
         for (Move move : moves) {
-            Log.i("KifuRecorder", "Building SGF - move " + move.sgf());
+            Log.i("Recorder", "Building SGF - move " + move.sgf());
             sgf.append(move.sgf());
         }
         sgf.append(")");

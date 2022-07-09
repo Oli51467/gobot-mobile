@@ -20,8 +20,6 @@ import android.widget.TextView;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.irlab.base.MyApplication;
-import com.irlab.base.dao.SGFDAO;
-import com.irlab.base.entity.SGF;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.activity.PlayConfigActivity;
 import com.irlab.view.activity.SGFInfoActivity;
@@ -60,8 +58,6 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
 
     private ListView listView = null;
 
-    private SGFDAO sgfDao;
-
     @Override
     public boolean navigateUpTo(Intent upIntent) {
         return super.navigateUpTo(upIntent);
@@ -81,8 +77,6 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         super.setContentView(R.layout.activity_main_view);
         // 注入Arouter
         ARouter.getInstance().inject(this);
-        // 获取操作SGF数据库的对象
-        sgfDao = MyApplication.getInstance().getSgfDatabase().sgfDAO();
         // 拿到SharedPreference
         preferences = MyApplication.getInstance().preferences;
         // 初始化布局元素
@@ -275,15 +269,13 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         // 拿到对应item的map信息
         Map<String, Object> map = (Map<String, Object>) adapterView.getItemAtPosition(pos);
         // 获取该条目的id 该id即对应SGF的id
-        int id = (int) map.get("id");
-        // 在数据库中找到该id对应的SGF
-        SGF sgf = sgfDao.findById(id);
+        String code = map.get("code").toString();
         // 跳转
         Intent intent = new Intent(this, SGFInfoActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         // 在bundle中传递SGF的code给展示activity
         Bundle bundle = new Bundle();
-        bundle.putString("code", sgf.getCode());
+        bundle.putString("code", code);
         intent.putExtras(bundle);
         startActivity(intent);
     }

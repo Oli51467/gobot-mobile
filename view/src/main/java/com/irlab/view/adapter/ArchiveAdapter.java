@@ -47,9 +47,8 @@ public class ArchiveAdapter extends BaseAdapter {
             // 获取Listview对应的item布局
             view = LayoutInflater.from(mContext).inflate(R.layout.archive_item, null);
             // 初始化组件
-            viewHolder.title = view.findViewById(R.id.title);
-            viewHolder.description = view.findViewById(R.id.description);
-            viewHolder.state = view.findViewById(R.id.state);
+            viewHolder.info = view.findViewById(R.id.info);
+            viewHolder.date = view.findViewById(R.id.date);
             viewHolder.divider = view.findViewById(R.id.divider);
             view.setTag(viewHolder);
         }
@@ -59,18 +58,18 @@ public class ArchiveAdapter extends BaseAdapter {
         }
         // 通过viewHolder向布局填充数据
         Map<String, Object> map = data.get(position);
-        viewHolder.title.setText(map.get("title").toString());
-        viewHolder.description.setText(map.get("desc").toString());
-        viewHolder.state.setText(map.get("result").toString());
+        viewHolder.info.setText(map.get("info").toString());
+        viewHolder.date.setText(map.get("date").toString());
+        viewHolder.code = map.get("code").toString();
         viewHolder.divider.setVisibility(View.VISIBLE);
         return view;
     }
 
     // ViewHolder中的各个组件
     final static class ViewHolder {
-        TextView title;
-        TextView description;
-        TextView state;
+        TextView info;
+        TextView date;
         View divider;
+        String code;
     }
 }

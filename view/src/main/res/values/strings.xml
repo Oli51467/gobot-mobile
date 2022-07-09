@@ -12,7 +12,7 @@
     <string name="lbl_white_player">White player</string>
     <string name="btn_detect_board">Detect board</string>
     <string name="btn_pass_turn">Pass</string>
-    <string name="btn_undo_last_move">Undo</string>
+    <string name="btn_undo_last_move">撤销上一步落子</string>
     <string name="btn_pause">Pause</string>
     <string name="btn_pause_continue">Continue</string>
     <string name="btn_finish_record">完成</string>

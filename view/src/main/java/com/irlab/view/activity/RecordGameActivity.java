@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Bundle;
@@ -16,6 +17,9 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.models.Board;
@@ -33,6 +37,9 @@ import com.irlab.view.processing.cornerDetector.Ponto;
 import com.irlab.view.processing.similarityCalculator.FingerprintMatching;
 import com.irlab.view.processing.similarityCalculator.SimilarityCalculatorInterface;
 import com.irlab.view.processing.stoneDetector.StoneDetector;
+import com.rosefinches.smiledialog.SmileDialog;
+import com.rosefinches.smiledialog.SmileDialogBuilder;
+import com.rosefinches.smiledialog.enums.SmileDialogType;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -44,7 +51,7 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
-public class RecordGameActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
+public class RecordGameActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
 
     public static final String TAG = "Recorder";
 
@@ -63,8 +70,11 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
     Board lastDetectedBoard;
 
     int moveCounter = 0;
-    // 检测到的电路板必须保持等于检测器注册的时间
-    long timeLimit = 2000;
+    int curX = -1;
+    int curY = -1;
+    int curPlayer = -1;
+    // 检测到的棋盘必须保持等于检测器注册的时间
+    long timeLimit = 1000;
     long timeOfLastBoardDetection;
     long timeSinceLastBoardChange;
     boolean paused = false;
@@ -124,6 +134,7 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_record_game);
+        getSupportActionBar().hide();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         state = STATE_RUNNING;
 
@@ -137,7 +148,7 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
 
     private void initializeCamera() {
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_view);
-//        mOpenCvCameraView.setMaxFrameSize(1000, 1000);
+        // mOpenCvCameraView.setMaxFrameSize(1000, 1000);
         mOpenCvCameraView.setCvCameraViewListener(this);
     }
 
@@ -161,11 +172,7 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
         originalBoardCorners[1] = new Corner(foundBoardCorners[2], foundBoardCorners[3]);
         originalBoardCorners[2] = new Corner(foundBoardCorners[4], foundBoardCorners[5]);
         originalBoardCorners[3] = new Corner(foundBoardCorners[6], foundBoardCorners[7]);
-        boardCorners = new Corner[4];
-        boardCorners[0] = new Corner(foundBoardCorners[0], foundBoardCorners[1]);
-        boardCorners[1] = new Corner(foundBoardCorners[2], foundBoardCorners[3]);
-        boardCorners[2] = new Corner(foundBoardCorners[4], foundBoardCorners[5]);
-        boardCorners[3] = new Corner(foundBoardCorners[6], foundBoardCorners[7]);
+        boardCorners = originalBoardCorners;
         cornerDetector = new CornerDetector[4];
         for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++) {
             cornerDetector[cornerIndex] = new CornerDetector();
@@ -312,7 +319,7 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
             return originalImage;
         }
 
-        // Throttling, processes twice per second
+        // 每秒处理两次
         if (System.currentTimeMillis() - timeOfLastImageProcessing < 500) {
             if (orthogonalBoard != null) {
                 orthogonalBoard.copyTo(originalImage.rowRange(0, 500).colRange(0, 500));
@@ -326,12 +333,8 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
         orthogonalBoard = ImageUtils.transformOrthogonally(originalImage, boardPositionInImage);
         logger.setOrtogonalBoardImage(orthogonalBoard.clone());
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // TODO: Check the size of the orthogonal board image here
-        //       This affects the radius size when calculating the average color around an intersection
-        // int imageWidth = (int)orthogonalBoard.size().width;
-        // int imageHeight = (int)orthogonalBoard.size().height;
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // TODO: 在此处检查正交棋盘图像的大小 会在计算交叉点周围的平均颜色时影响半径大小
+
         stoneDetector.setBoardImage(orthogonalBoard);
 
         Board board = stoneDetector.detect(
@@ -340,7 +343,7 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
                 game.canNextMoveBe(Board.WHITE_STONE)
         );
 
-//        snapshotAtual = stoneDetector.snapshot.toString();
+        // snapshotAtual = stoneDetector.snapshot.toString();
         logger.logCurrentBoardState();
 
         if (!paused) {
@@ -363,13 +366,13 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
         Drawer.drawBoardContour(originalImage, boardContour);
         logger.setCameraImageWithBoardContour(originalImage.clone());
 
-        // Draw the orthogonal board on the screen
+        // 在屏幕上绘制正交棋盘
         if (orthogonalBoard != null) {
             orthogonalBoard.copyTo(originalImage.rowRange(0, 500).colRange(0, 500));
         }
 
         if (paused) {
-            // When it's paused, draws stone detector's current output (useful for debugging)
+            // 当它暂停时，绘制棋子探测器的当前输出（用于调试）
             Drawer.drawBoard(originalImage, board, 0, 500, 400, null);
         } else {
             Drawer.drawBoard(originalImage, game.getLastBoard(), 0, 500, 400, game.getLastMove());
@@ -377,6 +380,21 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
 
         logger.log();
 
+        // 获得当前落子位置 由于同一图像可能识别多次才能识别出正确位置 所以要和上一次的已经确定的落子位置判重
+        if (game.getLastMove() != null) {
+            int moveX = game.getLastMove().column;
+            int moveY = game.getLastMove().row;
+            int movePlayer = game.getLastMove().color;
+            if (moveX != curX && moveY != curY && curPlayer != movePlayer) {
+                Log.d("testD", game.getLastMove().column + " " + game.getLastMove().row + " " + game.getLastMove().color);
+                curX = moveX;
+                curY = moveY;
+                curPlayer = movePlayer;
+                String movement = getAlphaIndex(curX, curY);
+                Log.d("testD", "gtp command: " + (movePlayer == 1 ? "B" : "W") + " play " + movement);
+            }
+
+        }
         return originalImage;
     }
 
@@ -418,8 +436,7 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
 
             for (int i = 0; i < 4; i++) {
                 if (numberOfCornersThatMoved < 4) {
-                    // Not all corners moved, so this is probably a corner adjustment
-                    // Update relative corner position of possible corners with stones
+                    // 不是所有的角落都移动了，所以这可能是一个角落调整用棋子更新可能角落的相对角落位置
                     if (possibleNewCorners[i].isStone) {
                         if (!boardCorners[i].isStone) {
                             possibleNewCorners[i].updateDisplacementVectorRelativeTo(boardCorners[i].position);
@@ -428,8 +445,7 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
                         }
                     }
                 } else if (possibleNewCorners[i].isStone) {
-                    // All corners moved together, so this is probably a board displacement and we
-                    // don't update the corners's relative position to the real corners
+                    // 所有角一起移动, 所以这可能是棋盘位移, 我但不会更新角与真实角的相对位置
                     possibleNewCorners[i].displacementToRealCorner = boardCorners[i].displacementToRealCorner;
                 }
             }
@@ -440,7 +456,7 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
             logger.setOrtogonalBoardImage2(orthogonalBoardImage2);
 
             if (logger.getFrameNumber() <= 3 || numberOfFramesWithDissimilarOrthogonalImages >= 5 || fingerprintMatching.areImagesSimilar(lastValidOrthogonalBoardImage, orthogonalBoardImage2)) {
-                // This condition should be time based and not frame based
+                // 此条件应基于时间而不是基于帧
                 if (numberOfFramesWithDissimilarOrthogonalImages >= 5) {
                     logger.addToLog("Forcing orthogonal image to be similar");
                 } else {
@@ -454,17 +470,15 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
                     }
 
                     if (!boardCorners[i].isStone && !possibleNewCorners[i].isStone && numberOfCornersThatMoved < 3 && numberOfEmptyCornersThatMoved == 1) {
-                        // This means a single empty corner moved by itself, which is not possible. This addresses a wrong
-                        // corner detection in frame 70 of sequence 16.
+                        // 这意味着一个单独的空角会自行移动, 这是不可能的
                         logger.addToLog("Corner " + i + " - This empty corner moved by itself");
                         continue;
                     }
                     if (!possibleNewCorners[i].isStone && boardCorners[i].isStone && possibleNewCorners[i].distanceTo(boardCorners[i].getRealCornerPosition()) > MOVEMENT_THRESHOLD
-                            // This condition should be time based instead of frame based, something like 2 or 3 seconds or so
+                            // 这个条件应该是基于时间而不是基于帧的, 比如 2 或 3 秒左右
                             && numberOfFramesWithoutStone[i] < 5
                     ) {
-                        // If a corner was a stone and is not anymore, the new empty corner should match the real corner
-                        // position that the stone was on. This addresses a wrong corner detection in frame 74 of sequence 14.
+                        // 如果一个角是原本棋子而被提掉, 则新的空角应该与棋子所在的真实角位置相匹配。
                         logger.addToLog("Corner " + i + " - This now empty corner is in a wrong position");
                         logger.addToLog("Number of frames without stone = " + numberOfFramesWithoutStone[i]);
                         continue;
@@ -549,28 +563,35 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
         });
     }
 
-    private void areYouSureYouWantToUndoTheLastMove(String mensagem) {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.dialog_are_you_sure)
-                .setMessage(mensagem)
-                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Move removida = game.undoLastMove();
-                        timeSinceLastBoardChange = 0;
-                        timeOfLastBoardDetection = SystemClock.elapsedRealtime();
-                        updateUndoButton();
-                        logger.addToLog("Undoing last move " + removida);
-                    }
+    private void areYouSureYouWantToUndoTheLastMove(String message) {
+        SmileDialog dialog = new SmileDialogBuilder(this, SmileDialogType.WARNING)
+                .hideTitle(true)
+                .setContentText(message)
+                .setConformBgResColor(com.irlab.base.R.color.warning)
+                .setConformTextColor(Color.WHITE)
+                .setCancelTextColor(Color.BLACK)
+                .setCancelButton("取消")
+                .setCancelBgResColor(R.color.whiteSmoke)
+                .setWindowAnimations(R.style.dialog_style)
+                .setConformButton("确定", () -> {
+                    Move move = game.undoLastMove();
+                    timeSinceLastBoardChange = 0;
+                    timeOfLastBoardDetection = SystemClock.elapsedRealtime();
+                    updateUndoButton();
+                    logger.addToLog("Undoing last move" + move);
                 })
-                .setNegativeButton(R.string.no, null)
-                .show();
+                .build();
+        dialog.show();
+        // 更新当前步
+        if (game.getLastMove() != null) {
+            int moveX = game.getLastMove().column;
+            int moveY = game.getLastMove().row;
+            int movePlayer = game.getLastMove().color;
+            curX = moveX;
+            curY = moveY;
+            curPlayer = movePlayer;
+        }
     }
-
-    /*private void takeSnapshot() {
-        logger.takeSnapshot(cameraFrame, orthogonalBoard);
-        Toast.makeText(RecordGameActivity.this, R.string.toast_save_snapshot, Toast.LENGTH_SHORT).show();
-    }*/
 
     private void rotate(int direction) {
         logger.addToLog("Rotated board in direction " + direction);
@@ -580,14 +601,14 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
             rotatedBoardCorners[i] = new Corner();
         }
 
-        // Counter-clockwise
+        // 逆时针旋转
         if (direction == -1) {
             rotatedBoardCorners[0] = boardCorners[1];
             rotatedBoardCorners[1] = boardCorners[2];
             rotatedBoardCorners[2] = boardCorners[3];
             rotatedBoardCorners[3] = boardCorners[0];
         }
-        // Clockwise
+        // 顺时针旋转
         else if (direction == 1) {
             rotatedBoardCorners[0] = boardCorners[3];
             rotatedBoardCorners[1] = boardCorners[0];
@@ -607,17 +628,20 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
     }
 
     private void areYouSureYouWantToFinishRecording() {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.dialog_are_you_sure)
-                .setMessage(getString(R.string.dialog_finish_recording))
-                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        saveGameRecordOnDiskAndExit();
-                    }
+        SmileDialog dialog = new SmileDialogBuilder((AppCompatActivity) this, SmileDialogType.WARNING)
+                .hideTitle(true)
+                .setContentText(getString(R.string.dialog_finish_recording))
+                .setConformBgResColor(com.irlab.base.R.color.warning)
+                .setConformTextColor(Color.WHITE)
+                .setCancelTextColor(Color.BLACK)
+                .setCancelButton("取消")
+                .setCancelBgResColor(R.color.whiteSmoke)
+                .setWindowAnimations(R.style.dialog_style)
+                .setConformButton("确定", () -> {
+                    saveGameRecordOnDiskAndExit();
                 })
-                .setNegativeButton(R.string.no, null)
-                .show();
+                .build();
+        dialog.show();
     }
 
     /**
@@ -625,7 +649,6 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
      */
     private void saveGameRecordOnDiskAndExit() {
         saveGameRecordOnDisk();
-
         Intent intent = new Intent(getApplicationContext(), MainView.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
@@ -633,10 +656,10 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
 
     private void saveGameRecordOnDisk() {
         if (fileHelper.saveGameFile(game)) {
-            // This has to run in the UI thread because the activity may be closed after the toast is shown
+            // 必须在 UI 线程中运行，因为在显示 toast 后可能会关闭活动
             runOnUiThread(new Runnable() {
                 public void run() {
-//                    Toast.makeText(RecordGameActivity.this, "Partida salva no arquivo: " + arquivoDeRegistro.getName() + ".", Toast.LENGTH_LONG).show();
+                    // ToastUtil.show(RecordGameActivity.this, "游戏保存已到文件");
                 }
             });
         }
@@ -651,9 +674,7 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
 
     private void addMoveToGameRecord() {
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-
         final EditText input = new EditText(RecordGameActivity.this);
-
         dialog.setTitle(R.string.dialog_add_move)
                 .setMessage(getString(R.string.dialog_add_move))
                 .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
@@ -699,21 +720,6 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
         });
     }
 
-    /*private void toggleCornerTracking() {
-        isCornerTrackingActive = !isCornerTrackingActive;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                btnToggleCornerTracking.setImageResource(isCornerTrackingActive ? R.drawable.corner_tracking_active : R.drawable.corner_tracking_inactive);
-                Toast.makeText(
-                        RecordGameActivity.this,
-                        isCornerTrackingActive ? R.string.toast_activate_corner_tracking : R.string.toast_deactivate_corner_tracking,
-                        Toast.LENGTH_LONG
-                ).show();
-            }
-        });
-    }*/
-
     private void resetCornersToTheirOriginalPositions() {
         logger.addToLog("Resetting corners to their original positions");
         for (int i = 0; i < 4; i++) {
@@ -725,5 +731,17 @@ public class RecordGameActivity extends Activity implements CameraBridgeViewBase
                 Toast.LENGTH_LONG
         ).show();
         processBoardCorners();
+    }
+
+    private String getAlphaIndex(int x, int y) {
+        String res = "";
+        int j = 0;
+        for (char i = 'A'; i <= 'S'; i ++, j ++ ) {
+            if (x == j) {
+                res += i + " " + (y + 1);
+                break;
+            }
+        }
+        return res;
     }
 }

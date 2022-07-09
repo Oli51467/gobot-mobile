@@ -24,31 +24,20 @@ public class FileHelper {
 
     private String gameName;
     private File gameRecordFolder;
-    private File gameRecordLogFolder;
+    //private File gameRecordLogFolder;
     private File gameFile;
 
     public FileHelper(Game game) {
         gameName = generateGameName(game);
-        gameRecordFolder = new File(Environment.getExternalStorageDirectory() + "/kifu_recorder");
-        gameRecordLogFolder = new File(Environment.getExternalStorageDirectory() + "/kifu_recorder/" + gameName);
+        gameRecordFolder = new File(Environment.getExternalStorageDirectory() + "/archive_recorder");
         gameFile = getGameFile();
-        createGameRecordFolder();
     }
 
     private String generateGameName(Game game) {
-        // http://stackoverflow.com/questions/10203924/displaying-date-in-a-double-digit-format
-        SimpleDateFormat sdf =  new SimpleDateFormat("yyyy-MM-dd_HHmm");
+        SimpleDateFormat sdf =  new SimpleDateFormat("yyyy-MM-dd-HH:mm");
         String timestamp = sdf.format(new Date(Calendar.getInstance().getTimeInMillis()));
 
         return timestamp + "_" + game.getWhitePlayer() + "-" + game.getBlackPlayer();
-    }
-
-    public void createGameRecordFolder() {
-        if (!gameRecordLogFolder.exists() && !gameRecordLogFolder.mkdirs()) {
-            // TODO: Throw an exception
-//            Toast.makeText(RecordGameActivity.this, "ERRO: Diretório " + gameRecordLogFolder.toString() + " não criado, verifique as configurações de armazenamento de seu dispositivo.", Toast.LENGTH_LONG).show();
-            Log.e("KifuRecorder", "Folder " + gameRecordLogFolder.toString() + " could not be created, check your device's available space and storage configuration.");
-        }
     }
 
     private File getGameFile() {
@@ -65,12 +54,12 @@ public class FileHelper {
     }
 
     public File getFile(String name, String extension) {
-        File file = new File(gameRecordLogFolder, generateFilename(0, name, extension));
+        File file = new File(gameRecordFolder, generateFilename(0, name, extension));
         int counter = 1;
 
         while (file.exists()) {
             String newFilename = generateFilename(counter, name, extension);
-            file = new File(gameRecordLogFolder, newFilename);
+            file = new File(gameRecordFolder, newFilename);
             counter++;
         }
 
@@ -86,7 +75,7 @@ public class FileHelper {
         if (!filename.isEmpty()) {
             string.append("_").append(filename);
         }
-        string.append("_").append(counter).append(".").append(extension);
+        string.append(counter).append(".").append(extension);
         return string.toString();
     }
 
@@ -104,7 +93,7 @@ public class FileHelper {
                 fos.flush();
                 fos.close();
 
-                Log.i("KifuRecorder", "Game saved: " + gameFile.getName());
+                Log.i("Recorder", "Game saved: " + gameFile.getName());
                 return true;
             }
             catch (IOException e) {
@@ -112,13 +101,6 @@ public class FileHelper {
             }
         }
         return false;
-//
-//        else {
-//            // TODO: Throw exception
-////            Toast.makeText(RecordGameActivity.this, "ERRO: Armazenamento externo nao disponivel.", Toast.LENGTH_LONG).show();
-////            Log.e("KifuRecorder", "Armazenamento externo não disponível.");
-//            return false
-//        }
     }
 
     private boolean isExternalStorageWritable() {
@@ -126,33 +108,32 @@ public class FileHelper {
         return Environment.MEDIA_MOUNTED.equals(state);
     }
 
-    public void storeGameTemporarily(Game game, Corner[] cantosDoTabuleiro) {
+    public void storeGameTemporarily(Game game, Corner[] corners) {
         File file = getTempFile();
         if (isExternalStorageWritable()) {
             try {
                 FileOutputStream fos = new FileOutputStream(file, false);
                 ObjectOutputStream oos = new ObjectOutputStream(fos);
                 oos.writeObject(game);
-                oos.writeObject(cantosDoTabuleiro);
+                oos.writeObject(corners);
                 oos.close();
                 fos.close();
-                Log.i("KifuRecorder", "Game temporarily saved in " + file.getName());
+                Log.i("Recorder", "Game temporarily saved in " + file.getName());
             }
             catch (IOException e) {
                 e.printStackTrace();
             }
         }
         else {
-            Log.e("KifuRecorder", "External storage not available to store temporary game state.");
+            Log.e("Recorder", "External storage not available to store temporary game state.");
         }
     }
 
     public void restoreGameStoredTemporarily(Game game, Corner[] boardCorners) {
-        File arquivo = getTempFile();
-        // TODO: Precisa fazer esta checagem aqui? Porque aqui só é feita a leitura de arquivos
+        File file = getTempFile();
         if (isExternalStorageWritable()) {
             try {
-                FileInputStream fis = new FileInputStream(arquivo);
+                FileInputStream fis = new FileInputStream(file);
                 ObjectInputStream ois = new ObjectInputStream(fis);
 
                 game.copy((Game) ois.readObject());
@@ -163,7 +144,7 @@ public class FileHelper {
 
                 ois.close();
                 fis.close();
-                Log.i("KifuRecorder", "Partida recuperada.");
+                Log.i("Recorder", "恢复游戏");
             }
             catch (IOException e) {
                 e.printStackTrace();
@@ -173,7 +154,7 @@ public class FileHelper {
             }
         }
         else {
-            Log.e("KifuRecorder", "External storage not available to restore temporary game state.");
+            Log.e("Recorder", "External storage not available to restore temporary game state.");
         }
     }
 
@@ -186,5 +167,4 @@ public class FileHelper {
     public void writePngImage(Mat image, String filename) {
         Imgcodecs.imwrite(getFile(filename, "png").getAbsolutePath(), image);
     }
-
 }

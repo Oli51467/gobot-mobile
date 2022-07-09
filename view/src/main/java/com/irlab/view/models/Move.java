@@ -33,7 +33,7 @@ public class Move implements Serializable {
     }
 
     public String toString() {
-        String nomeCor = color == Board.EMPTY ? "Vazio" : color == Board.BLACK_STONE ? "Preto" : "Branco";
+        String nomeCor = color == Board.EMPTY ? "空棋盘" : color == Board.BLACK_STONE ? "黑棋" : "白棋";
         return "(" + row + ", " + column + ", " + nomeCor + ")";
     }
 
