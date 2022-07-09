@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.irlab.base.utils.FileUtil;
 import com.irlab.view.R;
@@ -31,6 +32,8 @@ public class ArchiveFragment extends Fragment {
     // Fragment内的Listview
     private ListView listView;
 
+    private TextView hint;
+
     // map存放数据
     private List<Map<String,Object>> list = new ArrayList<>();
 
@@ -46,6 +49,7 @@ public class ArchiveFragment extends Fragment {
         fileList = FileUtil.getFilesEndWithSameSuffix(sgfPath, ".sgf");
         // 初始化组件
         listView = view.findViewById(R.id.listView);
+        hint = view.findViewById(android.R.id.empty);
 
         // 初始化数据
         try {
@@ -56,6 +60,7 @@ public class ArchiveFragment extends Fragment {
         // 创建自定义适配器, 设置给listview
         ArchiveAdapter adapter = new ArchiveAdapter(getActivity().getApplicationContext(), list);
         listView.setAdapter(adapter);
+        listView.setEmptyView(hint);
         return view;
     }
 

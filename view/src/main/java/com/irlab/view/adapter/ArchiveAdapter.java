@@ -8,6 +8,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.irlab.view.R;
+import com.irlab.view.fragment.ArchiveFragment;
 
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,7 @@ public class ArchiveAdapter extends BaseAdapter {
             viewHolder.info = view.findViewById(R.id.info);
             viewHolder.date = view.findViewById(R.id.date);
             viewHolder.divider = view.findViewById(R.id.divider);
+            viewHolder.hint = view.findViewById(android.R.id.empty);
             view.setTag(viewHolder);
         }
         // 若已初始化过, 则不需要重新构建viewHolder
@@ -69,6 +71,7 @@ public class ArchiveAdapter extends BaseAdapter {
     final static class ViewHolder {
         TextView info;
         TextView date;
+        TextView hint;
         View divider;
         String code;
     }

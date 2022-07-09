@@ -35,14 +35,15 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         private ImageView check;
-        private TextView player, desc, rule;
+        private TextView playerBlack, playerWhite, desc, rule;
         private View root;
 
         public ViewHolder(View root) {
             super(root);
             this.root = root;
             check = root.findViewById(R.id.iv_check);
-            player = root.findViewById(R.id.tv_player);
+            playerBlack = root.findViewById(R.id.tv_player_black);
+            playerWhite = root.findViewById(R.id.tv_player_white);
             rule = root.findViewById(R.id.tv_rule);
             desc = root.findViewById(R.id.tv_desc);
         }
@@ -61,9 +62,10 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         // 双方信息
-        holder.player.setText(list.get(position).getPlayerBlack() + "  VS  " + list.get(position).getPlayerWhite());
+        holder.playerBlack.setText(list.get(position).getPlayerBlack().trim());
+        holder.playerWhite.setText(list.get(position).getPlayerWhite().trim());
         // description
-        holder.desc.setText(list.get(position).getDesc());
+        holder.desc.setText(list.get(position).getDesc().trim());
         // 规则
         holder.rule.setText(list.get(position).getRule() == 0 ? "中国规则" : "日本规则");
         // 设置tag

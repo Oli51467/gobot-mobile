@@ -30,4 +30,6 @@
     <string name="toast_deactivate_corner_tracking">Inactivated board tracking</string>
     <string name="toast_restore_original_corner_positions">Restored original board position</string>
     <string name="toast_save_snapshot">Saved snapshot</string>
+    <string name="hint_with_no_item">您没有任何棋谱可以加载</string>
+    <string name="hint_with_no_setting">您还没有添加任何对局设置</string>
 </resources>

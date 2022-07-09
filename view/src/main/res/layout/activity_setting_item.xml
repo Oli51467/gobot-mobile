@@ -17,61 +17,49 @@
         android:orientation="vertical">
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            style="@style/linearLayout_play_settings">
 
             <TextView
-                android:id="@+id/tv_player"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginLeft="10dp"
-                android:textSize="16sp"
-                android:textAppearance="?android:attr/textAppearanceLarge" />
+                style="@style/textview_setting_card_hint"
+                android:text="黑方:" />
+
+            <TextView
+                android:id="@+id/tv_player_black"
+                style="@style/textview_setting_card_info" />
+
+            <TextView
+                style="@style/textview_setting_card_hint"
+                android:text="白方:" />
+
+            <TextView
+                android:id="@+id/tv_player_white"
+                style="@style/textview_setting_card_info" />
 
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            style="@style/linearLayout_play_settings">
+
+            <TextView
+                style="@style/textview_setting_card_hint"
+                android:text="规则:" />
 
             <TextView
                 android:id="@+id/tv_rule"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginLeft="10dp"
-                android:textSize="16sp"
-                android:textAppearance="?android:attr/textAppearanceLarge" />
+                style="@style/textview_setting_card_info" />
 
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            style="@style/linearLayout_play_settings">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:layout_marginLeft="10dp"
-                android:text="描述: "
-                android:textStyle="bold"/>
+                style="@style/textview_setting_card_hint"
+                android:text="描述:" />
 
             <TextView
                 android:id="@+id/tv_desc"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:textSize="16sp"
-                android:layout_marginLeft="10dp"
-                android:textAppearance="?android:attr/textAppearanceLarge" />
+                style="@style/textview_setting_card_info" />
 
         </LinearLayout>
 
