@@ -5,40 +5,28 @@
 
     <RelativeLayout
         android:id="@+id/title"
-        android:layout_width="fill_parent"
-        android:layout_height="54dp"
-        android:background="@color/whiteSmoke"
-        android:gravity="center_vertical">
+        style="@style/fragment_bar_style">
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="下棋"
-            android:textStyle="bold"
-            android:textColor="@color/black"
-            android:textSize="18sp" />
+            style="@style/textview_bar_style"
+            android:text="下棋" />
     </RelativeLayout>
+
 
     <Button
         android:id="@+id/btn_play"
-        android:layout_width="320dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/btn_selector"
         android:text="开始对弈"
-        android:textColor="@color/white"
-        android:textSize="24sp" />
+        style="@style/button_playFragment_style"/>
 
     <Button
         android:id="@+id/btn_play_settings"
-        android:layout_width="320dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/btn_selector"
         android:text="对局设置"
-        android:textColor="@color/white"
-        android:textSize="24sp" />
+        style="@style/button_playFragment_style" />
+
+    <Button
+        android:id="@+id/btn_instruction"
+        android:text="使用说明"
+        style="@style/button_playFragment_style"/>
+
+
 </LinearLayout>

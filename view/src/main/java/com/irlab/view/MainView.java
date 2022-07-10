@@ -21,6 +21,7 @@ import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.irlab.base.MyApplication;
 import com.irlab.base.utils.ToastUtil;
+import com.irlab.view.activity.InstructionActivity;
 import com.irlab.view.activity.PlayConfigActivity;
 import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.activity.SelectConfigActivity;
@@ -54,7 +55,7 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
 
     private RelativeLayout openBluetooth = null;
 
-    private Button logout = null, play = null, playSettings = null;
+    private Button logout = null, play = null, playSettings = null, instruction = null;
 
     private ListView listView = null;
 
@@ -66,7 +67,6 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
     // 用于对 Fragment进行管理
     public FragmentManager fragmentManager = null;
 
-    // SharedPreferences
     SharedPreferences preferences = null;
 
     @Override
@@ -143,12 +143,14 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         logout = findViewById(R.id.btn_logout);
         play = findViewById(R.id.btn_play);
         playSettings = findViewById(R.id.btn_play_settings);
+        instruction = findViewById(R.id.btn_instruction);
         listView = findViewById(R.id.listView);
 
         openBluetooth.setOnClickListener(this);
         logout.setOnClickListener(this);
         play.setOnClickListener(this);
         playSettings.setOnClickListener(this);
+        instruction.setOnClickListener(this);
         listView.setOnItemClickListener(this);
     }
 
@@ -191,6 +193,12 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
             finish();
+        }
+        // 使用说明
+        else if (vid == R.id.btn_instruction) {
+            Intent intent = new Intent(this, InstructionActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
         }
     }
 

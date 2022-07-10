@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:text="@string/instructions_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textSize="24dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp" />
+
+
+            <TextView
+                android:text="@string/instructions_paragraph1"
+                style="@style/textview_instructions_style" />
+
+            <TextView
+                android:text="@string/instructions_paragraph2"
+                style="@style/textview_instructions_style" />
+
+            <TextView
+                android:text="@string/instructions_paragraph3"
+                style="@style/textview_instructions_style" />
+
+            <TextView
+                android:text="@string/instructions_paragraph4"
+                style="@style/textview_instructions_style" />
+
+            <TextView
+                android:text="@string/instructions_paragraph5"
+                style="@style/textview_instructions_style" />
+
+            <TextView
+                android:text="@string/instructions_paragraph6"
+                style="@style/textview_instructions_style" />
+            <TextView
+                android:text="@string/instructions_paragraph7"
+                style="@style/textview_instructions_style" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+
+</LinearLayout>

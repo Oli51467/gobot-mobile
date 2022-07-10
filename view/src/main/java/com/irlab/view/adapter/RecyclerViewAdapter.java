@@ -8,19 +8,26 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.irlab.base.entity.CellData;
 import com.irlab.view.R;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import onion.w4v3xrmknycexlsd.lib.sgfcharm.parse.SgfProperty;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>
         implements View.OnClickListener, View.OnLongClickListener {
 
+    private static final int TYPE_EMPTY = 0;
+    public static final int TYPE_NORMAL = 1;
+
     // 数据容器
-    private List<CellData> list;
+    private List<CellData> list = new ArrayList<>();
 
     private int mPosition = -1;
 
@@ -54,6 +61,14 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         return list.size();
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        if (list.size() <= 0) {
+            return TYPE_EMPTY;
+        }
+        return TYPE_NORMAL;
+    }
+
     public int getmPosition() { return this.mPosition; }
 
     public void setmPosition(int mPosition) { this.mPosition = mPosition; }
@@ -71,17 +86,17 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         // 设置tag
         holder.root.setTag(position);
         if (position == getmPosition()) {
-            //選中的顔色就設成了  黃色
             holder.check.setVisibility(View.VISIBLE);
         } else {
-            //未選中的顔色 就設成了 白色
             holder.check.setVisibility(View.INVISIBLE);
         }
     }
 
+    @Nullable
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.activity_setting_item, parent, false);
+        View view;
+        view = LayoutInflater.from(parent.getContext()).inflate(R.layout.activity_setting_item, parent, false);
         ViewHolder viewHolder = new ViewHolder(view);
         // 为Item设置点击事件
         view.setOnClickListener(this);

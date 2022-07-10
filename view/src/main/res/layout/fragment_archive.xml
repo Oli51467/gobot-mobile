@@ -6,28 +6,12 @@
 
     <RelativeLayout
         android:id="@+id/title"
-        android:layout_width="fill_parent"
-        android:layout_height="54dp"
-        android:background="@color/whiteSmoke"
-        android:gravity="center_vertical">
-
-        <ImageView
-            android:id="@+id/iv_back"
-            android:layout_width="wrap_content"
-            android:layout_height="24dp"
-            android:layout_alignParentLeft="true"
-            android:layout_marginStart="-80dp"
-            android:layout_centerVertical="true"
-            android:src="@drawable/icon_back" />
+        style="@style/fragment_bar_style">
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
+            style="@style/textview_bar_style"
             android:text="棋谱"
-            android:textStyle="bold"
-            android:textColor="@color/black"
-            android:textSize="18sp" />
+             />
     </RelativeLayout>
 
     <LinearLayout

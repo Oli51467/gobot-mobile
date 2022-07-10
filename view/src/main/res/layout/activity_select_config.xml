@@ -55,7 +55,8 @@
             android:background="@drawable/btn_not_focus"
             android:text="开始"
             android:textColor="@color/white"
-            android:textSize="24sp" />
+            android:textSize="24sp"
+            android:enabled="false"/>
 
     </RelativeLayout>
 

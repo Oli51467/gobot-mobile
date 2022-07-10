@@ -7,14 +7,24 @@
         android:layout_height="fill_parent"
         android:id="@+id/camera_surface_view1" />
 
-    <Button
-        android:id="@+id/btnFixBoardPosition"
-        android:text="OK"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="12dp"
         android:layout_marginRight="6dp"
-        android:layout_gravity="center_vertical|right" />
+        android:layout_gravity="center_vertical|right"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btnFixBoardPosition"
+            android:text="OK"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btn_return"
+            android:text="返回"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 
     <TextView
         android:text="@string/lbl_instructions"

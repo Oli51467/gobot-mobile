@@ -87,7 +87,7 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
         for (Config config : configs) {
             // 将对局人和description填充到CardView中
             String playerBlack = config.getPlayerBlack();
-            String playerWhite = config.getPlayerBlack();
+            String playerWhite = config.getPlayerWhite();
             String desc = config.getDesc();
             int rule = config.getRule();
             // 这里要把id放进去 方便后续点击该cardView时找到在数据库中相应的配置信息

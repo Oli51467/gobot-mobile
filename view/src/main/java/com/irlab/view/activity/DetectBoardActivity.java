@@ -27,7 +27,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public static final String TAG = "Detector";
 
     private CameraBridgeViewBase mOpenCvCameraView;
-    private Button btnFixBoardPosition;
+    private Button btnFixBoardPosition, btnReturn;
 
     private int boardDimension;
     private Mat boardPositionInImage = null;
@@ -69,6 +69,10 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         btnFixBoardPosition = findViewById(R.id.btnFixBoardPosition);
         btnFixBoardPosition.setOnClickListener(this);
         btnFixBoardPosition.setEnabled(false);
+
+        btnReturn = findViewById(R.id.btn_return);
+        btnReturn.setOnClickListener(this);
+        btnReturn.setEnabled(true);
 
         initialBoardDetector = new InitialBoardDetector(true);
         boardDetector = new BoardDetector();
@@ -148,7 +152,8 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     }
 
     public void onClick(View v) {
-        if (v.getId() == R.id.btnFixBoardPosition) {
+        int vid = v.getId();
+        if (vid == R.id.btnFixBoardPosition) {
             int[] matrix = new int[8];
             matrix[0] = (int) boardPositionInImage.get(0, 0)[0];
             matrix[1] = (int) boardPositionInImage.get(0, 0)[1];
@@ -166,6 +171,11 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             i.putExtra("boardPositionInImage", matrix);
             i.putExtra("boardDimension", boardDimension);
             startActivity(i);
+        }
+        else if (vid == R.id.btn_return) {
+            Intent intent = new Intent(this, SelectConfigActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
         }
     }
 }

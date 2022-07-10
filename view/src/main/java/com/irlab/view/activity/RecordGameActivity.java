@@ -105,15 +105,11 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
     private ImageButton btnUndoLastMove;
     private ImageButton btnRotateCounterClockwise;
     private ImageButton btnRotateClockwise;
-    private ImageButton btnPause;
-    private ImageButton btnAddMove;
     private ImageButton btnResetBoardPosition;
     private Button btnFinish;
     private SoundPool soundPool;
     private int beepId;
     private CameraBridgeViewBase mOpenCvCameraView;
-    //private ImageButton btnSnapshot;
-    //private ImageButton btnToggleCornerTracking;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -190,16 +186,9 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
         btnRotateCounterClockwise.setOnClickListener(this);
         btnRotateClockwise = findViewById(R.id.btnRotateClockwise);
         btnRotateClockwise.setOnClickListener(this);
-        btnPause = findViewById(R.id.btnPause);
-        btnPause.setOnClickListener(this);
+
         btnFinish = findViewById(R.id.btnFinish);
         btnFinish.setOnClickListener(this);
-        //btnSnapshot = findViewById(R.id.btnSnapshot);
-        //btnSnapshot.setOnClickListener(this);
-        btnAddMove = findViewById(R.id.btnAddMove);
-        btnAddMove.setOnClickListener(this);
-        //btnToggleCornerTracking = findViewById(R.id.btnToggleCornerTracking);
-        //btnToggleCornerTracking.setOnClickListener(this);
         btnResetBoardPosition = findViewById(R.id.btnResetBoardPosition);
         btnResetBoardPosition.setOnClickListener(this);
 
@@ -535,32 +524,11 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
             rotate(-1);
         } else if (id == R.id.btnRotateClockwise) {
             rotate(1);
-        } else if (id == R.id.btnPause) {
-            updatePauseButton();
         } else if (id == R.id.btnFinish) {
             areYouSureYouWantToFinishRecording();
-        }
-        /*else if (id == R.id.btnSnapshot) {
-            takeSnapshot();
-        } */
-        else if (id == R.id.btnAddMove) {
-            addMoveToGameRecord();
-        }
-        /*else if (id == R.id.btnToggleCornerTracking) {
-            toggleCornerTracking();}*/
-        else if (id == R.id.btnResetBoardPosition) {
+        } else if (id == R.id.btnResetBoardPosition) {
             resetCornersToTheirOriginalPositions();
         }
-    }
-
-    private void updatePauseButton() {
-        paused = !paused;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                btnPause.setImageResource(paused ? R.drawable.play : R.drawable.pause);
-            }
-        });
     }
 
     private void areYouSureYouWantToUndoTheLastMove(String message) {
@@ -659,7 +627,6 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
             // 必须在 UI 线程中运行，因为在显示 toast 后可能会关闭活动
             runOnUiThread(new Runnable() {
                 public void run() {
-                    // ToastUtil.show(RecordGameActivity.this, "游戏保存已到文件");
                 }
             });
         }
@@ -670,28 +637,6 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
     public void onBackPressed() {
         Log.d(TAG, "RecordGameActivity.onBackPressed()");
         areYouSureYouWantToFinishRecording();
-    }
-
-    private void addMoveToGameRecord() {
-        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-        final EditText input = new EditText(RecordGameActivity.this);
-        dialog.setTitle(R.string.dialog_add_move)
-                .setMessage(getString(R.string.dialog_add_move))
-                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Move manuallyAddedMove = processManualMove(input.getText().toString());
-                        Board newBoard = game.getLastBoard().generateNewBoardWith(manuallyAddedMove);
-                        if (game.addMoveIfItIsValid(newBoard)) {
-                            newMoveWasAdded();
-                            game.updateNumberOfManualAdditions();
-                            logger.addToLog("Move " + manuallyAddedMove + " was manually added");
-                        }
-                    }
-                })
-                .setNegativeButton(R.string.no, null)
-                .setView(input)
-                .show();
     }
 
     private Move processManualMove(String moveString) {

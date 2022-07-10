@@ -42,7 +42,7 @@ public class SettingsFragment extends Fragment {
 
     public void setView(View view) {
         this.view = view;
-        showInfo = view.findViewById(R.id.tv_sss);
+        showInfo = view.findViewById(R.id.tv_show_username);
         logout = view.findViewById(R.id.btn_logout);
     }
 
