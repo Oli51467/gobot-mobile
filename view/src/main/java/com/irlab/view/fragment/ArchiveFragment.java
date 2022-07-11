@@ -1,20 +1,31 @@
 package com.irlab.view.fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.irlab.base.entity.CellData;
 import com.irlab.base.utils.FileUtil;
 import com.irlab.view.R;
+import com.irlab.view.activity.EditConfigActivity;
+import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.adapter.ArchiveAdapter;
+import com.irlab.view.adapter.RecyclerViewAdapter;
+import com.irlab.view.adapter.RecyclerViewEmptySupport;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,14 +36,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ArchiveFragment extends Fragment {
+public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick {
+
+    RecyclerViewEmptySupport mRecyclerView = null;
+
+    ArchiveAdapter mAdapter = null;
+
+    LinearLayoutManager linearLayoutManager = null;
 
     View view;
 
-    // Fragment内的Listview
-    private ListView listView;
-
-    private TextView hint;
+    private TextView emptyView;
 
     // map存放数据
     private List<Map<String,Object>> list = new ArrayList<>();
@@ -47,10 +61,7 @@ public class ArchiveFragment extends Fragment {
         sgfPath = new File(Environment.getExternalStorageDirectory() + "/archive_recorder");
         // 获取该路径下所有.sgf文件
         fileList = FileUtil.getFilesEndWithSameSuffix(sgfPath, ".sgf");
-        // 初始化组件
-        listView = view.findViewById(R.id.listView);
-        hint = view.findViewById(android.R.id.empty);
-
+        initViews();
         // 初始化数据
         try {
             initData();
@@ -58,12 +69,25 @@ public class ArchiveFragment extends Fragment {
             e.printStackTrace();
         }
         // 创建自定义适配器, 设置给listview
-        ArchiveAdapter adapter = new ArchiveAdapter(getActivity().getApplicationContext(), list);
-        listView.setAdapter(adapter);
-        listView.setEmptyView(hint);
+        mAdapter = new ArchiveAdapter(list);
+        // 为 RecyclerView设置LayoutManger
+        mRecyclerView.setLayoutManager(linearLayoutManager);
+        // 设置item固定大小
+        mRecyclerView.setHasFixedSize(true);
+        // 为视图添加适配器
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this.getActivity()));
+        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setEmptyView(emptyView);
         return view;
     }
 
+    private void initViews() {
+        mRecyclerView = view.findViewById(R.id.archive_item);
+        emptyView = view.findViewById(R.id.empty);
+        linearLayoutManager = new LinearLayoutManager(this.getActivity(), LinearLayoutManager.VERTICAL, false);
+    }
+
+    // 从SDCard读取数据并放到list中
     private void initData() throws IOException {
         for (File file : fileList) {
             Map<String, Object> map = new HashMap<>();
@@ -103,5 +127,24 @@ public class ArchiveFragment extends Fragment {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onItemClickListener(View view, int position) {
+        // 根据点击的位置 拿到该配置信息的code
+        Map<String, Object> map = list.get(position);
+        Intent intent = new Intent(this.getActivity(), SGFInfoActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        // 通过bundle向下一个activity传递一个对象 该对象必须先实现序列化接口
+        Bundle bundle = new Bundle();
+        bundle.putString("code", map.get("code").toString());
+        intent.putExtras(bundle);
+        startActivity(intent);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        mAdapter.setOnItemClickListener(this);
     }
 }

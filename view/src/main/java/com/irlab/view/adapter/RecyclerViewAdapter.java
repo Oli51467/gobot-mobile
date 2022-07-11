@@ -1,15 +1,11 @@
 package com.irlab.view.adapter;
 
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.annotation.Nullable;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.irlab.base.entity.CellData;
@@ -17,8 +13,6 @@ import com.irlab.view.R;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import onion.w4v3xrmknycexlsd.lib.sgfcharm.parse.SgfProperty;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>
         implements View.OnClickListener, View.OnLongClickListener {
@@ -92,7 +86,6 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         }
     }
 
-    @Nullable
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view;

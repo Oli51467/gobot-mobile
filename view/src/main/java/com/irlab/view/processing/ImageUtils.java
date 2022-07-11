@@ -57,10 +57,10 @@ public class ImageUtils {
         return orthogonalBoard;
     }
 
-    // direction = -1 counter-clockwise, 1 clockwise
+    // 方向 = -1 逆时针 1 顺时针
     public static Mat rotateImage(Mat image, int direction) {
         Point center = new Point(image.cols() / 2, image.rows() / 2);
-        // Positive values mean counter-clockwise rotation
+        // 正值表示逆时针旋转
         direction *= -1;
         Mat transformationMatrix = Imgproc.getRotationMatrix2D(center, 90 * direction, 1);
         Mat rotatedImage = new Mat();

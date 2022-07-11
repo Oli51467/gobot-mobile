@@ -169,7 +169,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             i.putExtra("whitePlayer", whitePlayer);
             i.putExtra("komi", komi);
             i.putExtra("boardPositionInImage", matrix);
-            i.putExtra("boardDimension", boardDimension);
+            i.putExtra("boardDimension", 19);
             startActivity(i);
         }
         else if (vid == R.id.btn_return) {

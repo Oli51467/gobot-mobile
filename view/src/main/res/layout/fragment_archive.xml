@@ -19,22 +19,18 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <ListView
-            android:id="@+id/listView"
+        <com.irlab.view.adapter.RecyclerViewEmptySupport
+            android:id="@+id/archive_item"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/white"
-            android:divider="@drawable/main_list_divider_line"
-            android:clickable="true"/>
+            android:layout_height="match_parent" />
 
         <TextView
-            android:id="@android:id/empty"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:id="@+id/empty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="@string/hint_with_no_item"
             android:gravity="center"
             android:layout_gravity="center_horizontal" />
-
     </LinearLayout>
 
 </LinearLayout>

@@ -73,8 +73,9 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
     int curX = -1;
     int curY = -1;
     int curPlayer = -1;
+    int posX = 0, posY = 0, imageSize = 400;
     // 检测到的棋盘必须保持等于检测器注册的时间
-    long timeLimit = 1000;
+    long timeLimit = 2000;
     long timeOfLastBoardDetection;
     long timeSinceLastBoardChange;
     boolean paused = false;
@@ -89,12 +90,10 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
     // 用于在探测器偏离太远时将其带回来
     int numberOfFramesWithDissimilarOrthogonalImages = 0;
 
-    // Domain objects
-    // 棋盘可以是 9x9 13x13 或者 19x19
+    // Domain objects 棋盘目前固定为19*19
     int boardDimension;
     Corner[] boardCorners;
     Corner[] originalBoardCorners;
-    Mat cameraFrame;
     // 一个包括棋盘角的图像
     Mat boardPositionInImage;
 
@@ -230,8 +229,8 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
     }
 
     @Override
-    public void onRestoreInstanceState(Bundle savedInstaceState) {
-        super.onRestoreInstanceState(savedInstaceState);
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
         fileHelper.restoreGameStoredTemporarily(game, boardCorners);
         processBoardCorners();
     }
@@ -286,7 +285,6 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
         logger.startLoggingFrame();
         logger.setCameraFrame(inputFrame.rgba().clone());
 
-        cameraFrame = inputFrame.rgba();
         Mat originalImage = inputFrame.rgba();
 
         if (isCornerTrackingActive) {
@@ -299,22 +297,16 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
         if (state == STATE_LOOKING_FOR_BOARD) {
             logger.addToLog("棋盘不在轮廓内");
             logger.addToLog("");
-            if (orthogonalBoard != null) {
-                orthogonalBoard.copyTo(originalImage.rowRange(0, 500).colRange(0, 500));
-            }
             Drawer.drawLostBoardContour(originalImage, boardContour);
-            Drawer.drawBoard(originalImage, game.getLastBoard(), 0, 500, 400, game.getLastMove());
+            Drawer.drawBoard(originalImage, game.getLastBoard(), posX, posY, imageSize, game.getLastMove());
             logger.log();
             return originalImage;
         }
 
         // 每秒处理两次
         if (System.currentTimeMillis() - timeOfLastImageProcessing < 500) {
-            if (orthogonalBoard != null) {
-                orthogonalBoard.copyTo(originalImage.rowRange(0, 500).colRange(0, 500));
-            }
             Drawer.drawBoardContour(originalImage, boardContour);
-            Drawer.drawBoard(originalImage, game.getLastBoard(), 0, 500, 400, game.getLastMove());
+            Drawer.drawBoard(originalImage, game.getLastBoard(), posX, posY, imageSize, game.getLastMove());
             logger.log();
             return originalImage;
         } else timeOfLastImageProcessing = System.currentTimeMillis();
@@ -332,16 +324,21 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
                 game.canNextMoveBe(Board.WHITE_STONE)
         );
 
-        // snapshotAtual = stoneDetector.snapshot.toString();
         logger.logCurrentBoardState();
 
         if (!paused) {
-
             if (lastDetectedBoard.equals(board)) {
                 timeSinceLastBoardChange += SystemClock.elapsedRealtime() - timeOfLastBoardDetection;
                 timeOfLastBoardDetection = SystemClock.elapsedRealtime();
-                if (timeSinceLastBoardChange > timeLimit && game.addMoveIfItIsValid(board)) {
-                    newMoveWasAdded();
+                if (timeSinceLastBoardChange > timeLimit) {
+                    // 判断是否能落子
+                    if (game.addMoveIfItIsValid(board)) {
+                        newMoveWasAdded();
+                    }
+                    // 不能落子
+                    else {
+                        Log.d("TEST ILLEGAL", "不合法！" + game.getLastMove().column + " " + game.getLastMove().row);
+                    }
                 }
             } else {
                 timeSinceLastBoardChange = 0;
@@ -355,21 +352,17 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
         Drawer.drawBoardContour(originalImage, boardContour);
         logger.setCameraImageWithBoardContour(originalImage.clone());
 
-        // 在屏幕上绘制正交棋盘
-        if (orthogonalBoard != null) {
-            orthogonalBoard.copyTo(originalImage.rowRange(0, 500).colRange(0, 500));
-        }
-
         if (paused) {
             // 当它暂停时，绘制棋子探测器的当前输出（用于调试）
-            Drawer.drawBoard(originalImage, board, 0, 500, 400, null);
+            Drawer.drawBoard(originalImage, board, posX, posY, imageSize, null);
         } else {
-            Drawer.drawBoard(originalImage, game.getLastBoard(), 0, 500, 400, game.getLastMove());
+            Drawer.drawBoard(originalImage, game.getLastBoard(), posX, posY, imageSize, game.getLastMove());
         }
 
         logger.log();
 
-        // 获得当前落子位置 由于同一图像可能识别多次才能识别出正确位置 所以要和上一次的已经确定的落子位置判重
+        // ### 测试落子位置
+        // ### 测试 获得当前落子位置 由于同一图像可能识别多次才能识别出正确位置 所以要和上一次的已经确定的落子位置判重
         if (game.getLastMove() != null) {
             int moveX = game.getLastMove().column;
             int moveY = game.getLastMove().row;

@@ -57,8 +57,6 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
 
     private Button logout = null, play = null, playSettings = null, instruction = null;
 
-    private ListView listView = null;
-
     @Override
     public boolean navigateUpTo(Intent upIntent) {
         return super.navigateUpTo(upIntent);
@@ -144,14 +142,13 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         play = findViewById(R.id.btn_play);
         playSettings = findViewById(R.id.btn_play_settings);
         instruction = findViewById(R.id.btn_instruction);
-        listView = findViewById(R.id.listView);
 
         openBluetooth.setOnClickListener(this);
         logout.setOnClickListener(this);
         play.setOnClickListener(this);
         playSettings.setOnClickListener(this);
         instruction.setOnClickListener(this);
-        listView.setOnItemClickListener(this);
+        //listView.setOnItemClickListener(this);
     }
 
     @Override

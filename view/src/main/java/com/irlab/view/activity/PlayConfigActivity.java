@@ -56,13 +56,10 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
         initViews();
         // 线性布局 第二个参数是容器的走向, 第三个时候反转意思就是以中间为对称轴左右两边互换。
         linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-
         // 为 RecyclerView设置LayoutManger
         mRecyclerView.setLayoutManager(linearLayoutManager);
-
         // 设置item固定大小
         mRecyclerView.setHasFixedSize(true);
-
         // 为视图添加适配器
         mRecyclerView.setAdapter(mAdapter);
     }

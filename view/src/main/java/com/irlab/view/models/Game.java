@@ -21,9 +21,7 @@ public class Game implements Serializable {
     private List<Move> moves;
     private List<Board> boards;
 
-    // Attribute to measure the system's precision
     private int numberOfUndoes;
-    private int numberOfManualAdditions;
 
     public Game(int boardDimension, String blackPlayer, String whitePlayer, String komi) {
         this.boardDimension = boardDimension;
@@ -36,7 +34,6 @@ public class Game implements Serializable {
         Board emptyBoard = new Board(boardDimension);
         boards.add(emptyBoard);
         numberOfUndoes = 0;
-        numberOfManualAdditions = 0;
     }
 
     public void copy(Game game) {
@@ -47,7 +44,6 @@ public class Game implements Serializable {
         moves = game.moves; // I think there's no problem just copying the reference here
         boards = game.boards;
         numberOfUndoes = game.numberOfUndoes;
-        numberOfManualAdditions = game.numberOfManualAdditions;
     }
 
     public int getBoardDimension() {
@@ -68,10 +64,11 @@ public class Game implements Serializable {
         if (playedMove == null || repeatsPreviousState(board) || !canNextMoveBe(playedMove.color)) {
             return false;
         }
+        // ######### 规则判断
 
         boards.add(board);
         moves.add(playedMove);
-        Log.i("KifuRecorder", "Adding board " + board + " (move " + playedMove.sgf() + ") to the game.");
+        Log.i("Recorder", "Adding board " + board + " (move " + playedMove.sgf() + ") to the game.");
         return true;
     }
 
@@ -124,9 +121,7 @@ public class Game implements Serializable {
         return boards.get(boards.size() - 1);
     }
 
-    /**
-     * Disconsider the last move and return it.
-     */
+    // 不考虑最后一步
     public Move undoLastMove() {
         if (moves.isEmpty()) return null;
         boards.remove(boards.size() - 1);
@@ -139,14 +134,7 @@ public class Game implements Serializable {
         return moves.size();
     }
 
-    public void updateNumberOfManualAdditions() {
-        numberOfManualAdditions++;
-    }
-
-    /**
-     * Rotates all boards of this game clockwise (direction = 1) or counter-clockwise
-     * (direction = -1).
-     */
+    // 旋转
     public void rotate(int direction) {
         if (direction != -1 && direction != 1) return;
 
@@ -166,11 +154,8 @@ public class Game implements Serializable {
         moves = rotatedMoves;
     }
 
-    // SGF methods should be extracted to a SgfBuilder class that receives a Game as parameter
-    /**
-     * Exports the game in SGF format.
-     * Reference: http://www.red-bean.com/sgf/
-     */
+     // SGF methods should be extracted to a SgfBuilder class that receives a Game as parameter
+     // 输出文件到sgf Reference: http://www.red-bean.com/sgf/
     public String sgf() {
         StringBuilder sgf = new StringBuilder();
         writeHeader(sgf);
@@ -193,13 +178,11 @@ public class Game implements Serializable {
         writeProperty(sgf, "CA", "UTF-8");
         writeProperty(sgf, "SZ", "" + getLastBoard().getDimension());
         writeProperty(sgf, "DT", date);
-        //writeProperty(sgf, "AP", "Kifu Recorder v" + BuildConfig.VERSION_NAME);
         writeProperty(sgf, "KM", komi);
         writeProperty(sgf, "PW", whitePlayer);
         writeProperty(sgf, "PB", blackPlayer);
         writeProperty(sgf, "Z1", "" + getNumberOfMoves());
         writeProperty(sgf, "Z2", "" + numberOfUndoes);
-        writeProperty(sgf, "Z3", "" + numberOfManualAdditions);
     }
 
     private void writeProperty(StringBuilder sgf, String property, String value) {

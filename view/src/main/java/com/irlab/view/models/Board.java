@@ -222,7 +222,7 @@ public class Board implements Serializable {
     }
 
     /**
-     * Returns the group that is at a certain position on the board or null if there is no group.
+     * 返回位于棋盘上某个位置的组，如果没有组，则返回 null。
      */
     public Group getGroupAt(int row, int column) {
         if (isAValidPosition(row, column) || board[row][column] == Board.EMPTY) return null;
@@ -241,7 +241,7 @@ public class Board implements Serializable {
     }
 
     /**
-     * Does a depth-first search to find all stones that are part of this group and their liberties.
+     * 进行深度优先搜索以查找属于该组的所有棋子
      */
     private void delimitGroup(int row, int column, boolean[][] visitedPositions, Group group) {
         if (isAValidPosition(row, column) || visitedPositions[row][column]) return;

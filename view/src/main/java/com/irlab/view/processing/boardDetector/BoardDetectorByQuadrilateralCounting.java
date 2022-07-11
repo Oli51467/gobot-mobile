@@ -14,10 +14,10 @@ import java.util.List;
 
 public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterface
 {
-    // This is the threshould of vanished quadrilaterals to consider the board was lost
+    // 这是考虑棋盘丢失的四边形消失的阈值
     public static final int THRESHOULD = 10;
-    // This is the threshould of quadrilaterals to consider that the board was found again
-    public static final int RECOVERY_THRESHOULD = 4;
+    // 这是考虑再次找到板的四边形的阈值
+    public static final int RECOVERY_THRESHOLD = 4;
     public static final Scalar RED = new Scalar(0, 0, 255);
     public static final Scalar BLUE = new Scalar(255, 0, 0);
 
@@ -46,16 +46,12 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
 
     private int calculateNumberOfQuadrilateralsInside(Mat ortogonalBoardImage) {
         Mat imageWithBordersDetected = detectBordersIn(addBlackBorderAround(ortogonalBoardImage));
-        outputImageWithBorders(imageWithBordersDetected);
 
         List<MatOfPoint> contours = detectContoursIn(imageWithBordersDetected);
         outputImageWithContours(ortogonalBoardImage, contours);
 
         List<MatOfPoint> quadrilaterals = detectQuadrilateralsAmong(contours);
         outputImageWithQuadrilaterals(ortogonalBoardImage, quadrilaterals);
-
-//        System.out.println("Number of quadrilaterals found: " + quadrilaterals.size());
-
         return quadrilaterals.size();
     }
 
@@ -70,10 +66,6 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
         Imgproc.Canny(image, imageWithBordersDetected, 50, 100);
         Imgproc.dilate(imageWithBordersDetected, imageWithBordersDetected, Mat.ones(3, 3, CvType.CV_32F));
         return imageWithBordersDetected;
-    }
-
-    private void outputImageWithBorders(Mat imageWithBordersDetected) {
-//        Imgcodecs.imwrite("processing/ortogonal_with_borders_detected_" + imageIndex + ".jpg", imageWithBordersDetected);
     }
 
     private List<MatOfPoint> detectContoursIn(Mat imageWithBordersDetected) {
@@ -96,7 +88,6 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
     private void outputImageWithContours(Mat ortogonalBoardImage, List<MatOfPoint> contours) {
         Mat imageWithContoursDetected = ortogonalBoardImage.clone();
         Imgproc.drawContours(imageWithContoursDetected, contours, -1, RED, 2);
-//        Imgcodecs.imwrite("processing/ortogonal_with_contours_detected_" + imageIndex + ".jpg", imageWithContoursDetected);
     }
 
     private List<MatOfPoint> detectQuadrilateralsAmong(List<MatOfPoint> contours) {
@@ -106,13 +97,11 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
             MatOfPoint2f contour2f = new MatOfPoint2f();
             MatOfPoint2f approx2f = new MatOfPoint2f();
             contour.convertTo(contour2f, CvType.CV_32FC2);
-            // The 0.1 means this detection is very lenient, as the goal here
-            // is to find as most squares as possible inside the image
+            // 0.1 表示此检测非常宽松, 作为这里的目标, 是在图像中找到尽可能多的正方形
             Imgproc.approxPolyDP(contour2f, approx2f, Imgproc.arcLength(contour2f, true) * 0.1, true);
 
             MatOfPoint approx = new MatOfPoint();
             approx2f.convertTo(approx, CvType.CV_32S);
-            double contourArea = Math.abs(Imgproc.contourArea(approx2f));
 
             if (isQuadrilateral(approx2f, approx)) {
                 quadrilaterals.add(approx);
@@ -133,7 +122,6 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
             contoursList.add(quadrilateral);
             Imgproc.drawContours(imageWithQuadrilateralsDetected, contoursList, -1, BLUE, 2);
         }
-//        Imgcodecs.imwrite("processing/ortogonal_with_quadrilaterals_detected_" + imageIndex + ".jpg", imageWithQuadrilateralsDetected);
     }
 
     private boolean isBoardInsideContourAccordingToQuadrilateralsDetection() {
@@ -141,7 +129,7 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
             return isFirstDetection() || calculateDifferenceOfDetectedQuadrilaterals() < THRESHOULD;
         } else {
             return lastNumberOfQuadrilateralsFoundWhileBoardWasInsideContour - numberOfQuadrilateralsFound
-                <= RECOVERY_THRESHOULD;
+                <= RECOVERY_THRESHOLD;
         }
     }
 

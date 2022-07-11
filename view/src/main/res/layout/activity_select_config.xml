@@ -51,7 +51,7 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:layout_gravity="center"
-            android:layout_marginTop="48dp"
+            android:layout_marginTop="24dp"
             android:background="@drawable/btn_not_focus"
             android:text="开始"
             android:textColor="@color/white"

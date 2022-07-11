@@ -30,17 +30,17 @@ public class Drawer {
     };
 
     public static void drawRelevantContours(Mat image, QuadrilateralHierarchy quadrilateralHierarchy, MatOfPoint contourClosestToTheBoard) {
-        // Draw the leaf quadrilaterals in green
+        // 用绿色画出四边形
         if (quadrilateralHierarchy.leaves.size() > 0) {
             Imgproc.drawContours(image, quadrilateralHierarchy.leaves, -1, mGreen, 2);
         }
 
-        // Draw the external quadrilaterals in blue
+        // 用蓝色画出外四边形
         if (quadrilateralHierarchy.externals.size() > 0) {
             Imgproc.drawContours(image, quadrilateralHierarchy.externals, -1, mBlue, 2);
         }
 
-        // Draw the board contour in red
+        // 用红色画出棋盘轮廓
         if (contourClosestToTheBoard != null) {
             drawContour(image, contourClosestToTheBoard, mRed);
         }
