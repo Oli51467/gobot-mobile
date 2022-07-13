@@ -7,7 +7,6 @@ import android.util.Log;
 
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.irlab.base.database.ConfigDatabase;
-import com.irlab.base.database.UserDatabase;
 
 public class MyApplication extends Application {
     public static final String TAG = "MyApplication";
@@ -18,7 +17,6 @@ public class MyApplication extends Application {
     private static MyApplication MyApp;
 
     // 声明数据库对象
-    private UserDatabase userDatabase;
     private ConfigDatabase configDatabase;
 
     // 声明公共的信息映射对象, 可当作全局变量使用 读内存比读磁盘快很多
@@ -37,7 +35,6 @@ public class MyApplication extends Application {
         }
         ARouter.init(MyApplication.this);
         // 建立数据库、初始化数据库对象
-        userDatabase = UserDatabase.getInstance(context);
         configDatabase = ConfigDatabase.getInstance(context);
 
         preferences = getSharedPreferences("config", Context.MODE_PRIVATE);
@@ -50,9 +47,6 @@ public class MyApplication extends Application {
     }
 
     // 提供获取数据库实例的方法
-    public synchronized UserDatabase getUserDatabase() {
-        return userDatabase;
-    }
 
     public synchronized ConfigDatabase getConfigDatabase() { return configDatabase; }
 

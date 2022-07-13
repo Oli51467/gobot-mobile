@@ -12,10 +12,22 @@ public class Group {
     private Set<Position> positions;
     private Set<Position> liberties;
 
+    public Group(Group group) {
+        this.positions = new HashSet<Position>(group.positions);
+        this.liberties = new HashSet<Position>(group.liberties);
+        this.color = group.color;
+    }
+
     public Group(int color) {
         this.color = color;
         positions = new HashSet<>();
         liberties = new HashSet<>();
+    }
+
+    public Group(Position point, int color) {
+        positions = new HashSet<Position>();
+        positions.add(point);
+        this.color = color;
     }
 
     public int getColor() {
@@ -30,9 +42,22 @@ public class Group {
         positions.add(position);
     }
 
+    public void add(Group group, Position playedStone) {
+        this.positions.addAll(group.positions);
+        this.liberties.addAll(group.liberties);
+        // remove played stone from liberties
+        this.liberties.remove(playedStone);
+    }
+
+    public Set<Position> getLiberties() {
+        return liberties;
+    }
+
     public void addLiberty(Position liberdade) {
         liberties.add(liberdade);
     }
+
+    public void removeLiberty(Position liberdade) { liberties.remove(liberdade); }
 
     public boolean isInAtari() {
         return liberties.size() == 1;
@@ -44,6 +69,16 @@ public class Group {
 
     public boolean hasNoLiberties() {
         return liberties.size() == 0;
+    }
+
+    public void die(Board board) {
+        for (Position rollingStone : this.positions) {
+            rollingStone.setGroup(null);
+            Set<Group> adjacentGroups = board.getGroupsAdjacentToNotNull(rollingStone);
+            for (Group group : adjacentGroups) {
+                group.liberties.add(rollingStone);
+            }
+        }
     }
 
     @Override

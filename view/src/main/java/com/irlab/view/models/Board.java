@@ -206,12 +206,24 @@ public class Board implements Serializable {
         return newBoard;
 	}
 
-    private Set<Group> getGroupsAdjacentTo(Move move) {
+    public Set<Group> getGroupsAdjacentTo(Move move) {
         Set<Group> groupsAdjacentToMove = new HashSet<>();
         groupsAdjacentToMove.add(getGroupAt(move.row - 1, move.column));
         groupsAdjacentToMove.add(getGroupAt(move.row + 1, move.column));
         groupsAdjacentToMove.add(getGroupAt(move.row, move.column - 1));
         groupsAdjacentToMove.add(getGroupAt(move.row, move.column + 1));
+        return groupsAdjacentToMove;
+    }
+
+    public Set<Group> getGroupsAdjacentToNotNull(Position move) {
+        Set<Group> groupsAdjacentToMove = new HashSet<>();
+        int dx [] = {-1, 0, 1, 0}, dy[] = {0, 1, 0, -1};
+        for (int i = 0; i < 4; i ++ ) {
+            int newX = move.row + dx[i], newY = move.column + dy[i];
+            if (getGroupAt(newX, newY) != null) {
+                groupsAdjacentToMove.add(getGroupAt(newX, newY));
+            }
+        }
         return groupsAdjacentToMove;
     }
 
@@ -249,7 +261,7 @@ public class Board implements Serializable {
         visitedPositions[row][column] = true;
 
         if (board[row][column] == Board.EMPTY) {
-            group.addLiberty(new Position(row, column));
+            group.addLiberty(new Position(row, column, group));
         }
         else if (board[row][column] == group.getColor()) {
             group.addPosition(new Position(row, column));

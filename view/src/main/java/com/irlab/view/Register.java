@@ -3,6 +3,7 @@ package com.irlab.view;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -10,15 +11,29 @@ import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
 
-import com.irlab.base.MyApplication;
-import com.irlab.base.dao.UserDAO;
-import com.irlab.base.entity.User;
 import com.irlab.base.utils.ButtonListenerUtil;
+import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.base.watcher.HideTextWatcher;
 import com.irlab.base.watcher.ValidationWatcher;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
 public class Register extends Activity implements View.OnClickListener {
+
+    public static final String TAG = Register.class.getName();
+
+    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
     public static final int MAX_LENGTH = 10;
 
@@ -31,15 +46,10 @@ public class Register extends Activity implements View.OnClickListener {
 
     private Button register;
 
-    private UserDAO userDAO;
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
-
-        userDAO = MyApplication.getInstance().getUserDatabase().userDAO();
-
         // 初始化布局元素
         initViews();
         // 设置注册按钮是否可点击
@@ -80,33 +90,92 @@ public class Register extends Activity implements View.OnClickListener {
             String userName = this.userName.getText().toString();
             String password = this.password.getText().toString();
             String passwordConfirm = this.passwordConfirm.getText().toString();
-            if (userDAO.findByName(userName) == null) {
-                if (password.equals(passwordConfirm)) {
-                    User user = new User();
-                    user.setName(userName);
-                    user.setPassWord(password);
-                    //
-                    new Thread(() -> {
-                        userDAO.insert(user);
-                        ToastUtil.show(this, "注册成功");
-                        Intent intent = new Intent(this, Login.class);
-                        // 同时设置 Flag_ACTIVITY_SINGLE_TOP, 则直接使用栈内的对应 Activity
-                        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        startActivity(intent);
-                    }).start();
-                }
-                else {
-                    ToastUtil.show(this, "两次输入的密码不一致!");
-                }
+            if (!password.equals(passwordConfirm)) {
+                ToastUtil.show(this, "两次输入的密码不一致!");
+                return;
             }
-            else {
-                ToastUtil.show(this, "该用户名已注册");
-            }
+            // 查询是否重名
+            HttpUtil.sendOkHttpRequest("http://101.42.155.54:8080/api/getUserByName?userName=" + userName, new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                }
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String responseData = response.body().string();
+                    try {
+                        JSONObject jsonObject = new JSONObject(responseData);
+                        String status = jsonObject.getString("status");
+                        // 该用户名没有被注册
+                        if (status.equals("nullObject")) {
+                            String json = getJson(userName, password);
+                            RequestBody requestBody = FormBody.create(JSON, json);
+
+                            HttpUtil.sendOkHttpResponse("http://101.42.155.54:8080/api/addUser", requestBody, new Callback() {
+                                @Override
+                                public void onFailure(Call call, IOException e) {
+
+                                }
+                                @Override
+                                public void onResponse(Call call, Response response) throws IOException {
+                                    String responseData = response.body().string();
+                                    try {
+                                        JSONObject jsonObject = new JSONObject(responseData);
+                                        String status = jsonObject.getString("status");
+                                        if (status.equals("success")) {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    ToastUtil.show(Register.this, "注册成功");
+                                                    Intent intent = new Intent(Register.this, Login.class);
+                                                    intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                                    startActivity(intent);
+                                                }
+                                            });
+                                        } else {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    ToastUtil.show(Register.this, "服务器异常");
+                                                }
+                                            });
+                                        }
+                                    } catch (JSONException e) {
+                                        Log.d(TAG, e.toString());
+                                    }
+                                }
+                            });
+                        }
+                        // 用户名已被注册
+                        else {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ToastUtil.show(Register.this, "该用户名已被注册");
+                                }
+                            });
+                        }
+                    } catch (JSONException e) {
+                        Log.d(TAG, e.toString());
+                    }
+                }
+            });
         }
         else if (vid == R.id.iv_return) {
             Intent intent = new Intent(this, Login.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         }
+    }
+
+    // 将提交到服务器的数据转换为json格式
+    private String getJson(String userName, String password) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("userName", userName);
+            jsonParam.put("password", password);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return jsonParam.toString();
     }
 }

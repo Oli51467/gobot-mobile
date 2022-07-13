@@ -60,14 +60,19 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
         // 获取存储sgf文件的外部存储路径
         sgfPath = new File(Environment.getExternalStorageDirectory() + "/archive_recorder");
         // 获取该路径下所有.sgf文件
-        fileList = FileUtil.getFilesEndWithSameSuffix(sgfPath, ".sgf");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                fileList = FileUtil.getFilesEndWithSameSuffix(sgfPath, ".sgf");
+                // 初始化数据
+                try {
+                    initData();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
         initViews();
-        // 初始化数据
-        try {
-            initData();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         // 创建自定义适配器, 设置给listview
         mAdapter = new ArchiveAdapter(list);
         // 为 RecyclerView设置LayoutManger
@@ -121,12 +126,6 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
     @Override
     public void onResume() {
         super.onResume();
-        list.clear();
-        try {
-            initData();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override

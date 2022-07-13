@@ -7,7 +7,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents a complete game, with the sequence of boards and moves that were made.
@@ -59,13 +61,55 @@ public class Game implements Serializable {
     }
 
     public boolean addMoveIfItIsValid(Board board) {
+        // 获得落子的这一步
         Move playedMove = board.getDifferenceTo(getLastBoard());
-
+        // 如果未落子 或者盘面与之前的盘面相同(三劫循环有争议) 或者 非交替落子时 落子无效
         if (playedMove == null || repeatsPreviousState(board) || !canNextMoveBe(playedMove.color)) {
             return false;
         }
         // ######### 规则判断
+        Set<Position> capturedStones = new HashSet<>();
+        Set<Group> capturedGroups = new HashSet<>();
+        // 先获取这枚棋子的位置
+        Position curPosition = playedMove.getPosition();
+        // 得到和这个棋子相连的所有组 得到的集合中不包含空组
+        Set<Group> adjGroups = board.getGroupsAdjacentToNotNull(curPosition);
+        // 为新落的子新创建一个组
+        Group curPlayedGroup = new Group(curPosition, playedMove.color);
+        // 设置该点的组为新建立的组
+        curPosition.setGroup(curPlayedGroup);
+        // 遍历所有组 在每个组中将这枚棋子加进去
+        for (Group adjGroup : adjGroups) {
+            // 只有和自己是同色时才加入该组
+            if (adjGroup.getColor() == playedMove.color) {
+                // 该组加入棋子
+                curPlayedGroup.add(adjGroup, curPosition);
+            }
+            else {
+                //  将这口气移除
+                adjGroup.removeLiberty(curPosition);
+                // 对手没气
+                if (adjGroup.hasNoLiberties()) {
+                    // 处理打劫
+                    capturedStones.addAll(adjGroup.getPositions());
+                    capturedGroups.add(new Group(adjGroup));
+                    adjGroup.die(board);
+                }
+            }
+        }
+        // Preventing suicide or ko and re-adding liberty
+        if (curPlayedGroup.hasNoLiberties()) {
+            for (Group group : board.getGroupsAdjacentToNotNull(curPosition)) {
+                group.getLiberties().add(curPosition);
+            }
+            curPosition.setGroup(null);
+            return false;
+        }
 
+        // Move is valid, applying changes
+        for (Position position : curPlayedGroup.getPositions()) {
+            position.setGroup(curPlayedGroup);
+        }
         boards.add(board);
         moves.add(playedMove);
         Log.i("Recorder", "Adding board " + board + " (move " + playedMove.sgf() + ") to the game.");
