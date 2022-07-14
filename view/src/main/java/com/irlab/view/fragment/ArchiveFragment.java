@@ -92,7 +92,9 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
 
     // 从SDCard读取数据并放到list中
     private void initData() throws IOException {
+        if (fileList == null || fileList.size() == 0) return;
         for (File file : fileList) {
+            if (file == null) continue;
             Map<String, Object> map = new HashMap<>();
             // 根据文件名字符串截取出各种信息 先截取最前面的时间戳
             String afterTrimDate = file.getName().substring(17);
