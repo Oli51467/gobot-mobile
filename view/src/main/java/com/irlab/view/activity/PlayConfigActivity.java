@@ -1,21 +1,26 @@
 package com.irlab.view.activity;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.irlab.base.MyApplication;
-import com.irlab.base.dao.ConfigDAO;
 import com.irlab.base.entity.CellData;
-import com.irlab.base.entity.Config;
+import com.irlab.base.utils.HttpUtil;
+import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.adapter.RecyclerViewAdapter;
@@ -23,45 +28,44 @@ import com.rosefinches.smiledialog.SmileDialog;
 import com.rosefinches.smiledialog.SmileDialogBuilder;
 import com.rosefinches.smiledialog.enums.SmileDialogType;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
 public class PlayConfigActivity extends AppCompatActivity implements View.OnClickListener, RecyclerViewAdapter.setClick, RecyclerViewAdapter.setLongClick {
 
-    RecyclerView mRecyclerView = null;
+    public static final String TAG = PlayConfigActivity.class.getName();
 
-    RecyclerViewAdapter mAdapter = null;
+    private RecyclerView mRecyclerView = null;
 
-    ImageView back = null;
+    private RecyclerViewAdapter mAdapter = null;
 
-    TextView addSetting = null;
+    private ImageView back = null;
 
-    LinearLayoutManager linearLayoutManager = null;
+    private TextView addSetting = null;
 
-    ConfigDAO configDAO;
+    private LinearLayoutManager linearLayoutManager = null;
 
     // 每一条数据都是一个CellData实体 放到list中
-    List<CellData> list = new ArrayList<>();
+    public List<CellData> list = new ArrayList<>();
+
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play_config);
         getSupportActionBar().hide();
-        configDAO = MyApplication.getInstance().getConfigDatabase().configDAO();
+        sharedPreferences = MyApplication.getInstance().preferences;
         initData();
-        // 初始化适配器 将数据填充进去
-        mAdapter = new RecyclerViewAdapter(list);
-
-        initViews();
-        // 线性布局 第二个参数是容器的走向, 第三个时候反转意思就是以中间为对称轴左右两边互换。
-        linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        // 为 RecyclerView设置LayoutManger
-        mRecyclerView.setLayoutManager(linearLayoutManager);
-        // 设置item固定大小
-        mRecyclerView.setHasFixedSize(true);
-        // 为视图添加适配器
-        mRecyclerView.setAdapter(mAdapter);
     }
 
     // 初始化界面及事件
@@ -80,18 +84,19 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
     private void initData() {
         list = new ArrayList<>();
         // 从数据库拿到所有已经配置好的配置信息
-        List<Config> configs = configDAO.findAll();
-        for (Config config : configs) {
-            // 将对局人和description填充到CardView中
-            String playerBlack = config.getPlayerBlack();
-            String playerWhite = config.getPlayerWhite();
-            String desc = config.getDesc();
-            int rule = config.getRule();
-            // 这里要把id放进去 方便后续点击该cardView时找到在数据库中相应的配置信息
-            int id = config.getId();
-            CellData cellData = new CellData(playerBlack, playerWhite, desc, id, rule);
-            list.add(cellData);
-        }
+        String userName = sharedPreferences.getString("userName", null);
+        HttpUtil.sendOkHttpRequest("http://101.42.155.54:8080/api/getPlayConfig?userName=" + userName, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
+            }
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseData = response.body().string();
+                Log.d("djnxyxy", responseData);
+                addCellDataToList(responseData);
+            }
+        });
     }
 
     @Override
@@ -138,14 +143,85 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
                 // 删除一条选中的数据 根据position拿到对应的cellData 再拿到配置的id
                 .setConformButton("删除", () -> {
                     CellData cellData = list.get(position);
-                    int id = cellData.getId();
-                    configDAO.deleteById(id);
-                    finish();
-                    startActivity(new Intent(this, PlayConfigActivity.class));
+                    Long id = cellData.getId();
+                    HttpUtil.sendOkHttpDelete("http://101.42.155.54:8080/api/deletePlayConfig?id=" + id, new Callback() {
+                        @Override
+                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ToastUtil.show(PlayConfigActivity.this, "服务器异常 删除失败!");
+                                }
+                            });
+                        }
+                        @Override
+                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ToastUtil.show(PlayConfigActivity.this, "删除成功!");
+                                    finish();
+                                    startActivity(new Intent(PlayConfigActivity.this, PlayConfigActivity.class));
+                                }
+                            });
+                        }
+                    });
                 })
                 .build();
         dialog.show();
         return false;
     }
+
+    private void addCellDataToList(String jsonData) {
+        try {
+            JSONArray jsonArray = new JSONArray(jsonData);
+            for (int i = 0; i < jsonArray.length(); i ++ ) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                Long cid = jsonObject.getLong("id");
+                String cPlayerBlack = jsonObject.getString("playerBlack");
+                String cPlayerWhite = jsonObject.getString("playerWhite");
+                String cEngine = jsonObject.getString("engine");
+                String cDescription = jsonObject.getString("desc");
+                int cKomi = jsonObject.getInt("komi");
+                int cRule = jsonObject.getInt("rule");
+                CellData cellData = new CellData(cid, cPlayerBlack, cPlayerWhite, cEngine, cDescription, cKomi, cRule);
+                Log.d("djnxyxy", cellData.toString());
+                list.add(cellData);
+            }
+            Message msg = new Message();
+            msg.what = 1;
+            handler.sendMessage(msg);
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+        }
+    }
+
+    /**
+     * 在线程中更新UI会产生 Only the original thread that created a view hierarchy can touch its views 异常。
+     * 原因是只有创建这个View的线程才能去操作这个view，普通会认为是将view创建在非UI线程中才会出现这个错误，因此采用handle，
+     * 个人理解为消息队列，线程产生的消息，由消息队列保管，最后依次去更新UI。
+     * 为了保证线程安全，Android禁止在非UI线程中更新UI，其中相关View和控件操作都不是线程安全的。
+     */
+    //用handler更新UI,动态获取
+    @SuppressLint("HandlerLeak")
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == 1) {
+                // 初始化适配器 将数据填充进去
+                mAdapter = new RecyclerViewAdapter(list);
+                initViews();
+                // 线性布局 第二个参数是容器的走向, 第三个时候反转意思就是以中间为对称轴左右两边互换。
+                linearLayoutManager = new LinearLayoutManager(PlayConfigActivity.this, LinearLayoutManager.VERTICAL, false);
+                // 为 RecyclerView设置LayoutManger
+                mRecyclerView.setLayoutManager(linearLayoutManager);
+                // 设置item固定大小
+                mRecyclerView.setHasFixedSize(true);
+                // 为视图添加适配器
+                mRecyclerView.setAdapter(mAdapter);
+            }
+        }
+    };
 }
 

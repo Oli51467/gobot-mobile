@@ -1,8 +1,15 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.MyApplication.JSON;
+
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -14,19 +21,37 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import com.irlab.base.MyApplication;
-import com.irlab.base.dao.ConfigDAO;
 import com.irlab.base.entity.CellData;
-import com.irlab.base.entity.Config;
 import com.irlab.base.utils.ButtonListenerUtil;
+import com.irlab.base.utils.HttpUtil;
 import com.irlab.view.R;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /*
 结构同添加配置界面
  */
 public class EditConfigActivity extends Activity implements View.OnClickListener, AdapterView.OnItemSelectedListener, RadioGroup.OnCheckedChangeListener {
 
+    public static final String TAG = EditConfigActivity.class.getName();
+
     private static final String[] T = {"让先", "让2子", "让3子", "让4子", "让5子", "让6子", "让7子", "让8子", "让9子"};
+
+    private SharedPreferences preferences;
 
     // 选择让几子的String适配器
     private ArrayAdapter<String> tAdapter;
@@ -46,9 +71,9 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
 
     private CellData configInfo = null;
 
-    private ConfigDAO configDAO = null;
+    private Map<String, Object> config;
 
-    private Config config = null;
+    private Long id;
 
     private int pos = 0;
 
@@ -58,17 +83,36 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_config);
-        configDAO = MyApplication.getInstance().getConfigDatabase().configDAO();
         // 从bundle中拿到传来的CellData
         configInfo = (CellData) getIntent().getSerializableExtra("configItem");
+        preferences = MyApplication.getInstance().preferences;
         // 根据id找到对应的配置信息
-        int id = configInfo.getId();
-        config = configDAO.findById(id);
-        // 初始化界面和数据
-        initView();
-        initData();
-        ButtonListenerUtil.buttonEnabled(save, 0, 100,mPlayerBlack, mPlayerWhite, mDescription);
-        ButtonListenerUtil.buttonChangeColor(0, 100, this, save, mPlayerBlack, mPlayerWhite, mDescription);
+        id = configInfo.getId();
+        HttpUtil.sendOkHttpRequest("http://101.42.155.54:8080/api/getPlayConfigById?id=" + id, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
+            }
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                config = new HashMap<>();
+                String responseData = Objects.requireNonNull(response.body()).string();
+                try {
+                    JSONObject jsonObject = new JSONObject(responseData);
+                    config.put("playerBlack", jsonObject.getString("playerBlack"));
+                    config.put("playerWhite", jsonObject.getString("playerWhite"));
+                    config.put("engine", jsonObject.getString("engine"));
+                    config.put("desc", jsonObject.getString("desc"));
+                    config.put("komi", jsonObject.getInt("komi"));
+                    config.put("rule", jsonObject.getInt("rule"));
+                    Message msg = new Message();
+                    msg.what = 1;
+                    handler.sendMessage(msg);
+                } catch (JSONException e) {
+                    Log.d(TAG, e.toString());
+                }
+            }
+        });
     }
 
     private void initView() {
@@ -83,11 +127,11 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         japaneseRule = findViewById(R.id.rb_japanese_rule);
 
         // 设置内容
-        mPlayerBlack.setText(config.getPlayerBlack());
-        mPlayerWhite.setText(config.getPlayerWhite());
-        mDescription.setText(config.getDesc());
-        pos = config.getT();
-        if (config.getRule() == 0) {
+        mPlayerBlack.setText(config.get("playerBlack").toString());
+        mPlayerWhite.setText(config.get("playerWhite").toString());
+        mDescription.setText(config.get("desc").toString());
+        pos = (Integer) config.get("komi");
+        if ((Integer) config.get("rule") == 0) {
             chineseRule.setChecked(true);
         } else {
             japaneseRule.setChecked(true);
@@ -115,24 +159,55 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
             Intent intent = new Intent(this, PlayConfigActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
-        } else if (vid == R.id.btn_save) {
+        }
+        else if (vid == R.id.btn_save) {
             // 获取输入框的数据
+            String userName = preferences.getString("userName", null);
             String playerBlack = mPlayerBlack.getText().toString();
             String playerWhite = mPlayerWhite.getText().toString();
             String desc = mDescription.getText().toString();
             // 将该配置封装成一个对象插入到数据库
-            config.setDesc(desc);
-            config.setPlayerBlack(playerBlack);
-            config.setPlayerWhite(playerWhite);
-            config.setRule(rule);
-            config.setT(pos);
-            configDAO.update(config);
+            String json = getJson(userName, playerBlack, playerWhite, "b20", desc, pos, rule);
+            RequestBody requestBody = FormBody.create(JSON, json);
             // 插入成功后跳转
-            Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(this, PlayConfigActivity.class);
-            startActivity(intent);
-            finish();
+            HttpUtil.sendOkHttpResponse("http://101.42.155.54:8080/api/updatePlayConfig?id=" + id, requestBody, new Callback() {
+                @Override
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // 插入成功后跳转
+                            Toast.makeText(EditConfigActivity.this, "保存成功", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(EditConfigActivity.this, PlayConfigActivity.class);
+                            startActivity(intent);
+                            finish();
+                        }
+                    });
+                }
+            });
         }
+    }
+
+    // 将提交到服务器的数据转换为json格式
+    private String getJson(String userName, String playerBlack, String playerWhite, String engine, String desc, int komi, int rule) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("userName", userName);
+            jsonParam.put("playerBlack", playerBlack);
+            jsonParam.put("playerWhite", playerWhite);
+            jsonParam.put("engine", engine);
+            jsonParam.put("desc", desc);
+            jsonParam.put("komi", komi);
+            jsonParam.put("rule", rule);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return jsonParam.toString();
     }
 
     @Override
@@ -159,4 +234,19 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         super.onStop();
         finish();
     }
+
+    @SuppressLint("HandlerLeak")
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == 1) {
+                // 初始化界面和数据
+                initView();
+                initData();
+                ButtonListenerUtil.buttonEnabled(save, 0, 100,mPlayerBlack, mPlayerWhite, mDescription);
+                ButtonListenerUtil.buttonChangeColor(0, 100, EditConfigActivity.this, save, mPlayerBlack, mPlayerWhite, mDescription);
+            }
+        }
+    };
 }

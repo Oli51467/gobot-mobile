@@ -1,5 +1,7 @@
 package com.irlab.view;
 
+import static com.irlab.base.MyApplication.JSON;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,15 +27,12 @@ import java.io.IOException;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
-import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class Register extends Activity implements View.OnClickListener {
 
     public static final String TAG = Register.class.getName();
-
-    public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
     public static final int MAX_LENGTH = 10;
 

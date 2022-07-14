@@ -4,22 +4,28 @@ import java.io.Serializable;
 
 public class CellData implements Serializable {
 
-    int id;
+    Long id;
 
     String playerBlack;
 
     String playerWhite;
 
-    int rule;
-
     String desc;
 
-    public CellData(String playerBlack, String playerWhite, String desc, int id, int rule) {
+    String engine;
+
+    int rule;
+
+    int komi;
+
+    public CellData(Long id, String playerBlack, String playerWhite, String engine, String desc, int komi, int rule) {
+        this.id = id;
         this.playerBlack = playerBlack;
         this.playerWhite = playerWhite;
+        this.engine = engine;
         this.desc = desc;
+        this.komi = komi;
         this.rule = rule;
-        this.id = id;
     }
 
     public String getPlayerBlack() {
@@ -38,11 +44,11 @@ public class CellData implements Serializable {
         this.playerWhite = playerWhite;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -60,5 +66,18 @@ public class CellData implements Serializable {
 
     public void setDesc(String desc) {
         this.desc = desc;
+    }
+
+    @Override
+    public String toString() {
+        return "CellData{" +
+                "id=" + id +
+                ", playerBlack='" + playerBlack + '\'' +
+                ", playerWhite='" + playerWhite + '\'' +
+                ", desc='" + desc + '\'' +
+                ", engine='" + engine + '\'' +
+                ", rule=" + rule +
+                ", komi=" + komi +
+                '}';
     }
 }

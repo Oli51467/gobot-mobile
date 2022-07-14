@@ -1,9 +1,12 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.MyApplication.JSON;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -13,19 +16,33 @@ import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 
 import com.irlab.base.MyApplication;
-import com.irlab.base.dao.ConfigDAO;
-import com.irlab.base.entity.Config;
 import com.irlab.base.utils.ButtonListenerUtil;
+import com.irlab.base.utils.HttpUtil;
+import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /*
 添加对局设置界面
  */
 public class AddConfigActivity extends Activity implements View.OnClickListener,
         AdapterView.OnItemSelectedListener, RadioGroup.OnCheckedChangeListener {
+
+    public static final String TAG = AddConfigActivity.class.getName();
 
     private static final String[] T = {"让先", "让2子", "让3子", "让4子", "让5子", "让6子", "让7子", "让8子", "让9子"};
 
@@ -36,8 +53,6 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
 
     // 选择让几子的String适配器
     private ArrayAdapter<String> tAdapter;
-
-    private ConfigDAO configDAO;
 
     // 控件
     private ImageView back;
@@ -61,8 +76,6 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_setting);
         preferences = MyApplication.getInstance().preferences;
-        // 通过Application拿到DAO
-        configDAO = MyApplication.getInstance().getConfigDatabase().configDAO();
         // 初始化
         initViews();
         initData();
@@ -102,7 +115,6 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
     private void reload() {
         String playerBlack = preferences.getString("playerBlack", null);
         String playerWhite = preferences.getString("playerWhite", null);
-        String title = preferences.getString("title", null);
         String desc = preferences.getString("desc", null);
         int rule = preferences.getInt("rule", 0);
         int pos = preferences.getInt("pos", 0);
@@ -143,24 +155,67 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
                 mDescription.requestFocus();
                 return;
             }
-            String playerBlack = mPlayerBlack.getText().toString();
-            String playerWhite = mPlayerWhite.getText().toString();
-            String desc = mDescription.getText().toString();
+            String userName = preferences.getString("userName", null);
+            String playerBlack = this.mPlayerBlack.getText().toString();
+            String playerWhite = this.mPlayerWhite.getText().toString();
+            String desc = this.mDescription.getText().toString();
             // 将该配置封装成一个对象插入到数据库
-            Config config = new Config();
-            config.setDesc(desc);
-            config.setPlayerBlack(playerBlack);
-            config.setPlayerWhite(playerWhite);
-            config.setRule(rule);
-            config.setT(pos);
-            // #这里以后要开多线程
-            configDAO.insert(config);
-            // 插入成功后跳转
-            Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(this, PlayConfigActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
+            String json = getJson(userName, playerBlack, playerWhite, "b20", desc, pos, rule);
+            RequestBody requestBody = FormBody.create(JSON, json);
+            HttpUtil.sendOkHttpResponse("http://101.42.155.54:8080/api/addPlayConfig", requestBody, new Callback() {
+                @Override
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                    String responseData = response.body().string();
+                    try {
+                        JSONObject jsonObject = new JSONObject(responseData);
+                        String status = jsonObject.getString("status");
+                        if (status.equals("success")) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ToastUtil.show(AddConfigActivity.this, "添加成功");
+                                    Intent intent = new Intent(AddConfigActivity.this, PlayConfigActivity.class);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                    startActivity(intent);
+                                }
+                            });
+                        } else {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    ToastUtil.show(AddConfigActivity.this, "服务器异常");
+                                }
+                            });
+                        }
+                    } catch (JSONException e) {
+                        Log.d(TAG, e.toString());
+                    }
+                }
+            });
         }
+    }
+
+    // 将提交到服务器的数据转换为json格式
+    private String getJson(String userName, String playerBlack, String playerWhite, String engine, String description, int komi, int rule) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("userName", userName);
+            jsonParam.put("playerBlack", playerBlack);
+            jsonParam.put("playerWhite", playerWhite);
+            jsonParam.put("engine", engine);
+            jsonParam.put("rule", komi);
+            jsonParam.put("komi", rule);
+            jsonParam.put("desc", description);
+            Log.d("djnxyxy", description);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return jsonParam.toString();
     }
 
     @Override

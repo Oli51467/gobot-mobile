@@ -1,5 +1,6 @@
 package com.irlab.view.activity;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -7,66 +8,66 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.irlab.base.MyApplication;
-import com.irlab.base.dao.ConfigDAO;
 import com.irlab.base.entity.CellData;
-import com.irlab.base.entity.Config;
+import com.irlab.base.utils.HttpUtil;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.adapter.RecyclerViewAdapter;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
 public class SelectConfigActivity extends AppCompatActivity implements View.OnClickListener, RecyclerViewAdapter.setClick {
+
+    public static final String TAG = SelectConfigActivity.class.getName();
 
     public static final int PERMISSION_REQUEST_CODE = 123;
 
-    RecyclerView mRecyclerView = null;
+    private RecyclerView mRecyclerView = null;
 
-    RecyclerViewAdapter mAdapter = null;
+    private RecyclerViewAdapter mAdapter = null;
 
-    ImageView back = null;
+    private ImageView back = null;
 
-    Button begin = null;
+    private Button begin = null;
 
-    LinearLayoutManager linearLayoutManager = null;
-
-    ConfigDAO configDAO;
+    private LinearLayoutManager linearLayoutManager = null;
 
     // 每一条数据都是一个CellData实体 放到list中
-    List<CellData> list = new ArrayList<>();
+    private List<CellData> list;
+
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_config);
         getSupportActionBar().hide();
-        configDAO = MyApplication.getInstance().getConfigDatabase().configDAO();
+        sharedPreferences = MyApplication.getInstance().preferences;
         initData();
-        // 初始化适配器 将数据填充进去
-        mAdapter = new RecyclerViewAdapter(list);
-
-        initViews();
-        // 线性布局 第二个参数是容器的走向, 第三个时候反转意思就是以中间为对称轴左右两边互换。
-        linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-
-        // 为 RecyclerView设置LayoutManger
-        mRecyclerView.setLayoutManager(linearLayoutManager);
-
-        // 设置item固定大小
-        mRecyclerView.setHasFixedSize(true);
-
-        // 为视图添加适配器
-        mRecyclerView.setAdapter(mAdapter);
     }
 
     // 初始化界面及事件
@@ -83,19 +84,19 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
     // 初始化数据
     private void initData() {
         list = new ArrayList<>();
+        String userName = sharedPreferences.getString("userName", null);
         // 从数据库拿到所有已经配置好的配置信息
-        List<Config> configs = configDAO.findAll();
-        for (Config config : configs) {
-            // 将对局人和description填充到CardView中
-            String playerBlack = config.getPlayerBlack();
-            String playerWhite = config.getPlayerWhite();
-            String desc = config.getDesc();
-            int rule = config.getRule();
-            // 这里要把id放进去 方便后续点击该cardView时找到在数据库中相应的配置信息
-            int id = config.getId();
-            CellData cellData = new CellData(playerBlack, playerWhite, desc, id, rule);
-            list.add(cellData);
-        }
+        HttpUtil.sendOkHttpRequest("http://101.42.155.54:8080/api/getPlayConfig?userName=" + userName, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
+            }
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseData = response.body().string();
+                addCellDataToList(responseData);
+            }
+        });
     }
 
     @Override
@@ -111,6 +112,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onItemClickListener(View view, int position) {
         begin.setBackgroundResource(com.irlab.base.R.drawable.btn_login_normal);
@@ -164,4 +166,48 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
             }
         }
     }
+
+    private void addCellDataToList(String jsonData) {
+        try {
+            JSONArray jsonArray = new JSONArray(jsonData);
+            for (int i = 0; i < jsonArray.length(); i ++ ) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                Long cid = jsonObject.getLong("id");
+                String cPlayerBlack = jsonObject.getString("playerBlack");
+                String cPlayerWhite = jsonObject.getString("playerWhite");
+                String cEngine = jsonObject.getString("engine");
+                String cDescription = jsonObject.getString("desc");
+                int cKomi = jsonObject.getInt("komi");
+                int cRule = jsonObject.getInt("rule");
+                CellData cellData = new CellData(cid, cPlayerBlack, cPlayerWhite, cEngine, cDescription, cKomi, cRule);
+                list.add(cellData);
+            }
+            Message msg = new Message();
+            msg.what = 1;
+            handler.sendMessage(msg);
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+        }
+    }
+
+    @SuppressLint("HandlerLeak")
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == 1) {
+                // 初始化适配器 将数据填充进去
+                mAdapter = new RecyclerViewAdapter(list);
+                initViews();
+                // 线性布局 第二个参数是容器的走向, 第三个时候反转意思就是以中间为对称轴左右两边互换。
+                linearLayoutManager = new LinearLayoutManager(SelectConfigActivity.this, LinearLayoutManager.VERTICAL, false);
+                // 为 RecyclerView设置LayoutManger
+                mRecyclerView.setLayoutManager(linearLayoutManager);
+                // 设置item固定大小
+                mRecyclerView.setHasFixedSize(true);
+                // 为视图添加适配器
+                mRecyclerView.setAdapter(mAdapter);
+            }
+        }
+    };
 }
