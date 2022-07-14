@@ -53,25 +53,23 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
 
     private File sgfPath;
 
-    private List<File> fileList;
+    private List<File> fileList = new ArrayList<>();
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_archive, container, false);
         // 获取存储sgf文件的外部存储路径
         sgfPath = new File(Environment.getExternalStorageDirectory() + "/archive_recorder");
+        if (!sgfPath.exists() && !sgfPath.isDirectory()) {
+            sgfPath.mkdir();
+        }
         // 获取该路径下所有.sgf文件
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                fileList = FileUtil.getFilesEndWithSameSuffix(sgfPath, ".sgf");
-                // 初始化数据
-                try {
-                    initData();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        fileList = FileUtil.getFilesEndWithSameSuffix(sgfPath, ".sgf");
+        // 初始化数据
+        try {
+            initData();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         initViews();
         // 创建自定义适配器, 设置给listview
         mAdapter = new ArchiveAdapter(list);

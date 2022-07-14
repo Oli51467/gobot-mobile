@@ -67,7 +67,7 @@ public class Game implements Serializable {
         if (playedMove == null || repeatsPreviousState(board) || !canNextMoveBe(playedMove.color)) {
             return false;
         }
-        // ######### 规则判断
+        /* ######### 规则判断
         Set<Position> capturedStones = new HashSet<>();
         Set<Group> capturedGroups = new HashSet<>();
         // 先获取这枚棋子的位置
@@ -109,7 +109,7 @@ public class Game implements Serializable {
         // Move is valid, applying changes
         for (Position position : curPlayedGroup.getPositions()) {
             position.setGroup(curPlayedGroup);
-        }
+        }*/
         boards.add(board);
         moves.add(playedMove);
         Log.i("Recorder", "Adding board " + board + " (move " + playedMove.sgf() + ") to the game.");

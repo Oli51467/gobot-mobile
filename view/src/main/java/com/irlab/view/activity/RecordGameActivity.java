@@ -335,10 +335,6 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
                     if (game.addMoveIfItIsValid(board)) {
                         newMoveWasAdded();
                     }
-                    // 不能落子
-                    else {
-                        Log.d("TEST ILLEGAL", "不合法！" + game.getLastMove().column + " " + game.getLastMove().row);
-                    }
                 }
             } else {
                 timeSinceLastBoardChange = 0;

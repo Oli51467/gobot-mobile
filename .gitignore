@@ -14,3 +14,4 @@
 .cxx
 local.properties
 /opencv/build/
+/.idea/deploymentTargetDropDown.xml

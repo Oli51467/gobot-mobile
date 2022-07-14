@@ -14,17 +14,11 @@ public interface ConfigDAO {
     @Insert
     void insert(Config... configs);
 
-    @Query("SELECT * FROM Config WHERE title = :title ORDER BY id DESC limit 1")
-    Config findByTitle(String title);
-
     @Query("SELECT * FROM Config WHERE id = :id")
     Config findById(int id);
 
     @Query("SELECT * FROM Config")
     List<Config> findAll();
-
-    @Query("DELETE FROM Config")
-    void deleteAll();
 
     @Update
     void update(Config config);
