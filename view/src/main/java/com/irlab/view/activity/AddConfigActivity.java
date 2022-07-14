@@ -24,6 +24,7 @@ import com.irlab.base.utils.ButtonListenerUtil;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
+import com.irlab.view.utils.JsonUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,15 +45,13 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
 
     public static final String TAG = AddConfigActivity.class.getName();
 
-    private static final String[] T = {"让先", "让2子", "让3子", "让4子", "让5子", "让6子", "让7子", "让8子", "让9子"};
-
     // 分别为选择规则的下拉列表
-    private Spinner tSpinner;
+    private Spinner tSpinner, engineSpinner;
 
     private SharedPreferences preferences;
 
     // 选择让几子的String适配器
-    private ArrayAdapter<String> tAdapter;
+    private ArrayAdapter<String> tAdapter, engineAdapter;
 
     // 控件
     private ImageView back;
@@ -69,7 +68,7 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
     private int rule = 0;
 
     // 选择让几子 0:让先  1:让2子  2:让3子 ...
-    private int pos = 0;
+    private int posT = 0, posEngine = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +87,7 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
     private void initViews() {
         back = findViewById(R.id.header_back);
         tSpinner = findViewById(R.id.spinner_T);
+        engineSpinner = findViewById(R.id.spinner_engine);
         buttonSave = findViewById(R.id.btn_save);
         mPlayerBlack = findViewById(R.id.et_player_black);
         mPlayerWhite = findViewById(R.id.et_player_white);
@@ -100,16 +100,18 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         back.setOnClickListener(this);
         buttonSave.setOnClickListener(this);
         mRule.setOnCheckedChangeListener(this);
-
     }
 
     private void initData() {
         // 初始化适配器
-        tAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, T);
+        tAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.T);
+        engineAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.ENGINES);
         // 将adapter 添加到spinner中
         tSpinner.setAdapter(tAdapter);
+        engineSpinner.setAdapter(engineAdapter);
         // 添加事件Spinner事件监听
         tSpinner.setOnItemSelectedListener(this);
+        engineSpinner.setOnItemSelectedListener(this);
     }
 
     private void reload() {
@@ -117,7 +119,8 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         String playerWhite = preferences.getString("playerWhite", null);
         String desc = preferences.getString("desc", null);
         int rule = preferences.getInt("rule", 0);
-        int pos = preferences.getInt("pos", 0);
+        int posT = preferences.getInt("posT", 0);
+        int posEngine = preferences.getInt("posEngine", 0);
 
         if (playerBlack != null) {
             mPlayerBlack.setText(playerBlack);
@@ -130,7 +133,8 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         }
         if (rule != 0) chineseRule.setChecked(true);
         else japaneseRule.setChecked(true);
-        tSpinner.setSelection(pos);
+        tSpinner.setSelection(posT);
+        engineSpinner.setSelection(posEngine);
     }
 
     @Override
@@ -160,7 +164,7 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
             String playerWhite = this.mPlayerWhite.getText().toString();
             String desc = this.mDescription.getText().toString();
             // 将该配置封装成一个对象插入到数据库
-            String json = getJson(userName, playerBlack, playerWhite, "b20", desc, pos, rule);
+            String json = JsonUtil.getJsonFormOfPlayConfig(userName, playerBlack, playerWhite, MyApplication.ENGINES[posEngine], desc, posT, rule);
             RequestBody requestBody = FormBody.create(JSON, json);
             HttpUtil.sendOkHttpResponse("http://101.42.155.54:8080/api/addPlayConfig", requestBody, new Callback() {
                 @Override
@@ -200,27 +204,17 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         }
     }
 
-    // 将提交到服务器的数据转换为json格式
-    private String getJson(String userName, String playerBlack, String playerWhite, String engine, String description, int komi, int rule) {
-        JSONObject jsonParam = new JSONObject();
-        try {
-            jsonParam.put("userName", userName);
-            jsonParam.put("playerBlack", playerBlack);
-            jsonParam.put("playerWhite", playerWhite);
-            jsonParam.put("engine", engine);
-            jsonParam.put("rule", komi);
-            jsonParam.put("komi", rule);
-            jsonParam.put("desc", description);
-            Log.d("djnxyxy", description);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return jsonParam.toString();
-    }
-
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        pos = position;     // 拿到位置 代表选择了哪一条
+        int pid = parent.getId();
+        // 让子的下拉框
+        if (pid == R.id.spinner_T) {
+            posT = position;     // 拿到位置 代表选择了哪一条
+        }
+        // 引擎的下拉框
+        else if (pid == R.id.spinner_engine) {
+            posEngine = position;
+        }
     }
 
     @Override
@@ -251,7 +245,8 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         editor.putString("playerWhite", playerWhite);
         editor.putString("desc", desc);
         editor.putInt("rule", rule);
-        editor.putInt("pos", pos);
+        editor.putInt("posT", posT);
+        editor.putInt("posEngine", posEngine);
         editor.commit();
     }
 

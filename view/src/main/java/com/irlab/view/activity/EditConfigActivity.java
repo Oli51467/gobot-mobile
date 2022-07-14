@@ -27,6 +27,7 @@ import com.irlab.base.entity.CellData;
 import com.irlab.base.utils.ButtonListenerUtil;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.view.R;
+import com.irlab.view.utils.JsonUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,15 +50,13 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
 
     public static final String TAG = EditConfigActivity.class.getName();
 
-    private static final String[] T = {"让先", "让2子", "让3子", "让4子", "让5子", "让6子", "让7子", "让8子", "让9子"};
-
     private SharedPreferences preferences;
 
     // 选择让几子的String适配器
-    private ArrayAdapter<String> tAdapter;
+    private ArrayAdapter<String> tAdapter, engineAdapter;
 
     // 分别为选择规则的下拉列表
-    private Spinner tSpinner;
+    private Spinner tSpinner, engineSpinner;
 
     private RadioButton chineseRule, japaneseRule;
 
@@ -75,9 +74,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
 
     private Long id;
 
-    private int pos = 0;
-
-    private int rule = 0;
+    private int posT = 0, posEngine = 0, rule = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +115,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
     private void initView() {
         mRule = findViewById(R.id.rg_rule);
         tSpinner = findViewById(R.id.spinner_T);
+        engineSpinner = findViewById(R.id.spinner_engine);
         save = findViewById(R.id.btn_save);
         back = findViewById(R.id.header_back);
         mPlayerBlack = findViewById(R.id.et_player_black);
@@ -130,7 +128,10 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         mPlayerBlack.setText(config.get("playerBlack").toString());
         mPlayerWhite.setText(config.get("playerWhite").toString());
         mDescription.setText(config.get("desc").toString());
-        pos = (Integer) config.get("komi");
+        posT = (Integer) config.get("komi");
+        // ### 暂时手动判断 这里以后要看一下怎么改方便
+        if (config.get("engine").equals("b20")) posEngine = 0;
+        else posEngine = 1;
         if ((Integer) config.get("rule") == 0) {
             chineseRule.setChecked(true);
         } else {
@@ -144,12 +145,17 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
     }
 
     private void initData() {
-        tAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, T);
+        // 初始化适配器
+        tAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.T);
+        engineAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.ENGINES);
         // 将adapter 添加到spinner中
         tSpinner.setAdapter(tAdapter);
+        engineSpinner.setAdapter(engineAdapter);
         // 添加事件Spinner事件监听
-        tSpinner.setSelection(pos);
+        tSpinner.setSelection(posT);
+        engineSpinner.setSelection(posEngine);
         tSpinner.setOnItemSelectedListener(this);
+        engineSpinner.setOnItemSelectedListener(this);
     }
 
     @Override
@@ -159,15 +165,14 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
             Intent intent = new Intent(this, PlayConfigActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
-        }
-        else if (vid == R.id.btn_save) {
+        } else if (vid == R.id.btn_save) {
             // 获取输入框的数据
             String userName = preferences.getString("userName", null);
             String playerBlack = mPlayerBlack.getText().toString();
             String playerWhite = mPlayerWhite.getText().toString();
             String desc = mDescription.getText().toString();
             // 将该配置封装成一个对象插入到数据库
-            String json = getJson(userName, playerBlack, playerWhite, "b20", desc, pos, rule);
+            String json = JsonUtil.getJsonFormOfPlayConfig(userName, playerBlack, playerWhite, MyApplication.ENGINES[posEngine], desc, posT, rule);
             RequestBody requestBody = FormBody.create(JSON, json);
             // 插入成功后跳转
             HttpUtil.sendOkHttpResponse("http://101.42.155.54:8080/api/updatePlayConfig?id=" + id, requestBody, new Callback() {
@@ -193,26 +198,14 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         }
     }
 
-    // 将提交到服务器的数据转换为json格式
-    private String getJson(String userName, String playerBlack, String playerWhite, String engine, String desc, int komi, int rule) {
-        JSONObject jsonParam = new JSONObject();
-        try {
-            jsonParam.put("userName", userName);
-            jsonParam.put("playerBlack", playerBlack);
-            jsonParam.put("playerWhite", playerWhite);
-            jsonParam.put("engine", engine);
-            jsonParam.put("desc", desc);
-            jsonParam.put("komi", komi);
-            jsonParam.put("rule", rule);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return jsonParam.toString();
-    }
-
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        pos = position;
+        int pid = parent.getId();
+        if (pid == R.id.spinner_T) {
+            posT = position;
+        } else if (pid == R.id.spinner_engine) {
+            posEngine = position;
+        }
     }
 
     @Override

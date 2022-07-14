@@ -146,12 +146,14 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         String blackPlayer = cellData.getPlayerBlack();
         String whitePlayer = cellData.getPlayerWhite();
         String komi = cellData.getRule() == 0 ? "7.5" : "6.5";
+        String engine = cellData.getEngine();
         Intent intent = new Intent(this, DetectBoardActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         // 通过bundle向下一个activity传递一个对象 该对象必须先实现序列化接口
         intent.putExtra("blackPlayer", blackPlayer);
         intent.putExtra("whitePlayer", whitePlayer);
         intent.putExtra("komi", komi);
+        intent.putExtra("engine", engine);
         startActivity(intent);
     }
 

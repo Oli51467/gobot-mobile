@@ -3,6 +3,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Android/AndroidSDK/platforms/android-29/data/res/layout/simple_spinner_item.xml" value="0.165625" />
         <entry key="..\:/AndroidProject/go-robot/OpenCVLib/java/CVNativeImplement/CVNativeImplement/src/main/res/menu/activity_lab.xml" value="0.15625" />
         <entry key="..\:/AndroidProject/go-robot/OpenCVLib/java/CVNativeImplement/src/main/res/menu/activity_lab.xml" value="0.15625" />
         <entry key="..\:/AndroidProject/go-robot/base/src/main/res/drawable/bar_normal.xml" value="0.157" />

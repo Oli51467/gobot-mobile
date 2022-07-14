@@ -68,6 +68,14 @@ public class CellData implements Serializable {
         this.desc = desc;
     }
 
+    public String getEngine() {
+        return engine;
+    }
+
+    public void setEngine(String engine) {
+        this.engine = engine;
+    }
+
     @Override
     public String toString() {
         return "CellData{" +

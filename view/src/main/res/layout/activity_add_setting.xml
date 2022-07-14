@@ -146,6 +146,27 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/tv_engine"
+                android:text="引擎 "
+                android:layout_marginTop="8dp"
+                style="@style/textview_style"/>
+
+            <Spinner
+                android:id="@+id/spinner_engine"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/spinner_selector"/>
+
+        </LinearLayout>
+
         <Button
             android:id="@+id/btn_save"
             android:layout_width="320dp"
