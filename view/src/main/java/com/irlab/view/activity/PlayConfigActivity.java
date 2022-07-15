@@ -93,7 +93,6 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 String responseData = response.body().string();
-                Log.d("djnxyxy", responseData);
                 addCellDataToList(responseData);
             }
         });
@@ -185,7 +184,6 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
                 int cKomi = jsonObject.getInt("komi");
                 int cRule = jsonObject.getInt("rule");
                 CellData cellData = new CellData(cid, cPlayerBlack, cPlayerWhite, cEngine, cDescription, cKomi, cRule);
-                Log.d("djnxyxy", cellData.toString());
                 list.add(cellData);
             }
             Message msg = new Message();

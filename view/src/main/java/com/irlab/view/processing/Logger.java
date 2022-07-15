@@ -2,6 +2,7 @@ package com.irlab.view.processing;
 
 import com.irlab.view.models.Game;
 import com.irlab.view.processing.cornerDetector.Corner;
+import com.irlab.view.utils.FileHelper;
 
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
@@ -54,7 +55,7 @@ public class Logger {
         this.game = game;
         this.fileHelper = fileHelper;
 
-        logFile = fileHelper.getFile("", "log");
+        //logFile = fileHelper.getFile("", "log");
     }
 
     public long getFrameNumber() {
@@ -132,26 +133,6 @@ public class Logger {
         writeToLogFile();
 
         if (!shouldSaveImages) return;
-
-        if (shouldLog(LoggingConfiguration.RAW_CAMERA_IMAGE) && cameraFrame != null) {
-            fileHelper.writePngImage(cameraFrame, Imgproc.COLOR_RGBA2BGR, generateImageFilename("camera"));
-        }
-
-        if (shouldLog(LoggingConfiguration.CAMERA_IMAGE_WITH_BOARD_CONTOUR) && cameraImageWithBoardContour != null) {
-            fileHelper.writePngImage(cameraImageWithBoardContour, Imgproc.COLOR_RGBA2BGR, generateImageFilename("camera_com_contorno"));
-        }
-
-        if (shouldLog(LoggingConfiguration.ORTHOGONAL_BOARD_IMAGE) && ortogonalBoardImage != null) {
-            fileHelper.writePngImage(ortogonalBoardImage, Imgproc.COLOR_RGBA2BGR, generateImageFilename("tabuleiro_ortogonal"));
-        }
-
-        if (ortogonalBoardImage2 != null) {
-            fileHelper.writePngImage(ortogonalBoardImage2, Imgproc.COLOR_RGBA2BGR, generateImageFilename("segundo_tabuleiro_ortogonal"));
-        }
-
-        if (lastValidOrtogonalBoardImage != null) {
-            fileHelper.writePngImage(lastValidOrtogonalBoardImage, Imgproc.COLOR_RGBA2BGR, generateImageFilename("ultimo_tabuleiro_valido"));
-        }
     }
 
     private boolean shouldLog(int flag) {
@@ -171,10 +152,4 @@ public class Logger {
             e.printStackTrace();
         }
     }
-
-    public void takeSnapshot(Mat cameraFrame, Mat orthogonalBoard) {
-        fileHelper.writePngImage(cameraFrame, Imgproc.COLOR_RGBA2BGR, generateImageFilename("snapshot_camera"));
-        fileHelper.writePngImage(orthogonalBoard, Imgproc.COLOR_RGBA2BGR, generateImageFilename("snapshot_orthogonal_board"));
-    }
-
 }

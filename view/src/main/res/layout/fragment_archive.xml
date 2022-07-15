@@ -19,18 +19,11 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <com.irlab.view.adapter.RecyclerViewEmptySupport
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/archive_item"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <TextView
-            android:id="@+id/empty"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/hint_with_no_item"
-            android:gravity="center"
-            android:layout_gravity="center_horizontal" />
+            android:layout_height="match_parent"
+            android:paddingBottom="?attr/actionBarSize"/> <!--解决RecyclerView下拉被底部导航栏挡住的问题 若上方有导航栏 同理改为paddingTop即可-->
     </LinearLayout>
 
 </LinearLayout>

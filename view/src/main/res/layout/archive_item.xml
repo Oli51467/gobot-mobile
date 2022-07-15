@@ -11,31 +11,53 @@
     card_view:cardCornerRadius="10dp"
     android:orientation="horizontal">
 
-    <LinearLayout
-        android:layout_width="300dp"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <LinearLayout
-            style="@style/linearLayout_play_settings"
-            android:layout_marginTop="15dp">
+            android:id="@+id/layout_left"
+            android:layout_width="280dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tv_player_info"
-                style="@style/textview_setting_card_info" />
+            <LinearLayout
+                style="@style/linearLayout_play_settings"
+                android:layout_marginTop="15dp">
+
+                <TextView
+                    android:id="@+id/tv_player_info"
+                    style="@style/textview_setting_card_info" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/linearLayout_play_settings">
+
+                <TextView
+                    android:id="@+id/tv_date"
+                    style="@style/textview_setting_card_hint"
+                    android:layout_marginTop="20dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
         <LinearLayout
-            style="@style/linearLayout_play_settings">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_toRightOf="@id/layout_left">
 
             <TextView
-                android:id="@+id/tv_date"
-                style="@style/textview_setting_card_hint"
-                android:layout_marginTop="20dp" />
-
+                android:id="@+id/tv_result"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:gravity="center_vertical"
+                android:textStyle="bold"
+                android:textSize="16sp"/>
         </LinearLayout>
 
-    </LinearLayout>
+    </RelativeLayout>
 
 </androidx.cardview.widget.CardView>

@@ -1,6 +1,6 @@
 package com.irlab.view.processing.cornerDetector;
 
-import com.irlab.view.processing.FileHelper;
+import com.irlab.view.utils.FileHelper;
 import com.irlab.view.processing.Logger;
 
 import org.opencv.core.Mat;

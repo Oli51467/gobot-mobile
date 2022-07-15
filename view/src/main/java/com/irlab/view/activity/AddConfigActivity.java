@@ -180,22 +180,15 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
                         JSONObject jsonObject = new JSONObject(responseData);
                         String status = jsonObject.getString("status");
                         if (status.equals("success")) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    ToastUtil.show(AddConfigActivity.this, "添加成功");
-                                    Intent intent = new Intent(AddConfigActivity.this, PlayConfigActivity.class);
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                                    startActivity(intent);
-                                }
+                            runOnUiThread(() -> {
+                                ToastUtil.show(AddConfigActivity.this, "添加成功");
+                                Intent intent = new Intent(AddConfigActivity.this, PlayConfigActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                startActivity(intent);
                             });
-                        } else {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    ToastUtil.show(AddConfigActivity.this, "服务器异常");
-                                }
-                            });
+                        }
+                        else {
+                            runOnUiThread(() -> ToastUtil.show(AddConfigActivity.this, "服务器异常"));
                         }
                     } catch (JSONException e) {
                         Log.d(TAG, e.toString());

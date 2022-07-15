@@ -1,4 +1,4 @@
-package com.irlab.view.processing;
+package com.irlab.view.utils;
 
 import com.irlab.view.processing.cornerDetector.Corner;
 import com.irlab.view.processing.cornerDetector.Ponto;

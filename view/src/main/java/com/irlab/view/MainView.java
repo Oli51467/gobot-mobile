@@ -10,7 +10,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -22,16 +21,13 @@ import com.irlab.base.MyApplication;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.activity.InstructionActivity;
 import com.irlab.view.activity.PlayConfigActivity;
-import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.activity.SelectConfigActivity;
 import com.irlab.view.fragment.PlayFragment;
 import com.irlab.view.fragment.ArchiveFragment;
 import com.irlab.view.fragment.SettingsFragment;
 
-import java.util.Map;
-
 @Route(path = "/view/main")
-public class MainView extends FragmentActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
+public class MainView extends FragmentActivity implements View.OnClickListener {
 
     // 三个布局界面
     private PlayFragment playFragment = null;
@@ -147,7 +143,6 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         play.setOnClickListener(this);
         playSettings.setOnClickListener(this);
         instruction.setOnClickListener(this);
-        //listView.setOnItemClickListener(this);
     }
 
     @Override
@@ -256,31 +251,5 @@ public class MainView extends FragmentActivity implements View.OnClickListener, 
         if (archiveFragment != null) {
             transaction.hide(archiveFragment);
         }
-    }
-
-    /**
-     * 通过选中的棋谱list, 通过getItemAtPosition获取到对应的map数据
-     * 再通过get("id")获取到附加在该list上的sgf的数据库索引信息
-     * 再通过查找对应id获取该list对应的SGF
-     * 将该SGF的棋谱信息码code通过bundle传递到展示棋谱的界面中, 该界面只有一个, 根据每次的入参code的不同展示不同的棋谱
-     * @param adapterView
-     * @param view
-     * @param pos
-     * @param l
-     */
-    @Override
-    public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-        // 拿到对应item的map信息
-        Map<String, Object> map = (Map<String, Object>) adapterView.getItemAtPosition(pos);
-        // 获取该条目的id 该id即对应SGF的id
-        String code = map.get("code").toString();
-        // 跳转
-        Intent intent = new Intent(this, SGFInfoActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        // 在bundle中传递SGF的code给展示activity
-        Bundle bundle = new Bundle();
-        bundle.putString("code", code);
-        intent.putExtras(bundle);
-        startActivity(intent);
     }
 }

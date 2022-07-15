@@ -1,8 +1,5 @@
 package com.irlab.view.activity;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.media.AudioManager;
@@ -13,21 +10,18 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.models.Board;
 import com.irlab.view.models.Game;
 import com.irlab.view.models.Move;
 import com.irlab.view.processing.Drawer;
-import com.irlab.view.processing.FileHelper;
-import com.irlab.view.processing.ImageUtils;
+import com.irlab.view.utils.FileHelper;
 import com.irlab.view.processing.Logger;
 import com.irlab.view.processing.LoggingConfiguration;
 import com.irlab.view.processing.boardDetector.BoardDetector;
@@ -37,6 +31,7 @@ import com.irlab.view.processing.cornerDetector.Ponto;
 import com.irlab.view.processing.similarityCalculator.FingerprintMatching;
 import com.irlab.view.processing.similarityCalculator.SimilarityCalculatorInterface;
 import com.irlab.view.processing.stoneDetector.StoneDetector;
+import com.irlab.view.utils.ImageUtils;
 import com.rosefinches.smiledialog.SmileDialog;
 import com.rosefinches.smiledialog.SmileDialogBuilder;
 import com.rosefinches.smiledialog.enums.SmileDialogType;
@@ -612,13 +607,7 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
     }
 
     private void saveGameRecordOnDisk() {
-        if (fileHelper.saveGameFile(game)) {
-            // 必须在 UI 线程中运行，因为在显示 toast 后可能会关闭活动
-            runOnUiThread(new Runnable() {
-                public void run() {
-                }
-            });
-        }
+        fileHelper.saveGame(game, this);
     }
 
     // TODO: Check if this is being called
@@ -628,20 +617,10 @@ public class RecordGameActivity extends AppCompatActivity implements CameraBridg
         areYouSureYouWantToFinishRecording();
     }
 
-    private Move processManualMove(String moveString) {
-        moveString = moveString.trim();
-        if (moveString.length() != 3) return null;
-        moveString = moveString.toLowerCase();
-        int color = moveString.charAt(0) == 'b' ? Board.BLACK_STONE : Board.WHITE_STONE;
-        int row = moveString.charAt(1) - 'a';
-        int column = moveString.charAt(2) - 'a';
-        return new Move(row, column, color);
-    }
-
     private void newMoveWasAdded() {
         moveCounter++;
         soundPool.play(beepId, 1, 1, 0, 0, 1);
-        saveGameRecordOnDisk();
+        //saveGameRecordOnDisk();
         updateUndoButton();
     }
 

@@ -16,10 +16,10 @@
             android:layout_width="wrap_content"
             android:layout_height="24dp"
             android:layout_alignParentLeft="true"
-            android:layout_marginStart="-80dp"
             android:layout_centerVertical="true"
-            android:src="@drawable/icon_back"
-            android:clickable="true"/>
+            android:layout_marginStart="-80dp"
+            android:clickable="true"
+            android:src="@drawable/icon_back" />
 
         <TextView
             android:id="@+id/header_title"
@@ -27,11 +27,12 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:text="选择对局信息"
-            android:textStyle="bold"
             android:textColor="@color/black"
-            android:textSize="18sp" />
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
     </RelativeLayout>
+
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -40,25 +41,23 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/play_setting_item"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-
-        </androidx.recyclerview.widget.RecyclerView>
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/btn_begin"/>
 
         <Button
             android:id="@+id/btn_begin"
-            android:layout_below="@+id/play_setting_item"
             android:layout_width="320dp"
             android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
             android:layout_centerInParent="true"
-            android:layout_gravity="center"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/btn_not_focus"
+            android:enabled="false"
             android:text="开始"
             android:textColor="@color/white"
-            android:textSize="24sp"
-            android:enabled="false"/>
-
+            android:textSize="24sp" />
     </RelativeLayout>
+
 
 
 </LinearLayout>
