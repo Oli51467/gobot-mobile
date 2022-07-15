@@ -1,6 +1,7 @@
 package com.irlab.view.activity;
 
 import static com.irlab.base.MyApplication.JSON;
+import static com.irlab.base.MyApplication.SERVER;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -85,7 +86,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         preferences = MyApplication.getInstance().preferences;
         // 根据id找到对应的配置信息
         id = configInfo.getId();
-        HttpUtil.sendOkHttpRequest("http://101.42.155.54:8080/api/getPlayConfigById?id=" + id, new Callback() {
+        HttpUtil.sendOkHttpRequest(SERVER + "/api/getPlayConfigById?id=" + id, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
 
@@ -175,7 +176,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
             String json = JsonUtil.getJsonFormOfPlayConfig(userName, playerBlack, playerWhite, MyApplication.ENGINES[posEngine], desc, posT, rule);
             RequestBody requestBody = FormBody.create(JSON, json);
             // 插入成功后跳转
-            HttpUtil.sendOkHttpResponse("http://101.42.155.54:8080/api/updatePlayConfig?id=" + id, requestBody, new Callback() {
+            HttpUtil.sendOkHttpResponse(SERVER + "/api/updatePlayConfig?id=" + id, requestBody, new Callback() {
                 @Override
                 public void onFailure(@NonNull Call call, @NonNull IOException e) {
 

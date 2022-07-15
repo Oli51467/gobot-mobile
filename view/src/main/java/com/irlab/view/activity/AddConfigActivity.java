@@ -1,6 +1,7 @@
 package com.irlab.view.activity;
 
 import static com.irlab.base.MyApplication.JSON;
+import static com.irlab.base.MyApplication.SERVER;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -166,7 +167,7 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
             // 将该配置封装成一个对象插入到数据库
             String json = JsonUtil.getJsonFormOfPlayConfig(userName, playerBlack, playerWhite, MyApplication.ENGINES[posEngine], desc, posT, rule);
             RequestBody requestBody = FormBody.create(JSON, json);
-            HttpUtil.sendOkHttpResponse("http://101.42.155.54:8080/api/addPlayConfig", requestBody, new Callback() {
+            HttpUtil.sendOkHttpResponse(SERVER + "/api/addPlayConfig", requestBody, new Callback() {
                 @Override
                 public void onFailure(@NonNull Call call, @NonNull IOException e) {
 

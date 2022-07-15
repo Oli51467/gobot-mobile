@@ -1,6 +1,7 @@
 package com.irlab.view;
 
 import static com.irlab.base.MyApplication.JSON;
+import static com.irlab.base.MyApplication.SERVER;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -94,7 +95,7 @@ public class Register extends Activity implements View.OnClickListener {
                 return;
             }
             // 查询是否重名
-            HttpUtil.sendOkHttpRequest("http://101.42.155.54:8080/api/getUserByName?userName=" + userName, new Callback() {
+            HttpUtil.sendOkHttpRequest(SERVER + "/api/getUserByName?userName=" + userName, new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
                 }
@@ -109,7 +110,7 @@ public class Register extends Activity implements View.OnClickListener {
                             String json = getJson(userName, password);
                             RequestBody requestBody = FormBody.create(JSON, json);
 
-                            HttpUtil.sendOkHttpResponse("http://101.42.155.54:8080/api/addUser", requestBody, new Callback() {
+                            HttpUtil.sendOkHttpResponse(SERVER + "/api/addUser", requestBody, new Callback() {
                                 @Override
                                 public void onFailure(Call call, IOException e) {
 

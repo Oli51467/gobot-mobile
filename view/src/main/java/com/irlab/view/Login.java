@@ -93,7 +93,7 @@ public class Login extends Activity implements View.OnClickListener{
      * @return true/false
      */
     public void checkInfo(String userName, String password) {
-        HttpUtil.sendOkHttpRequest("http://101.42.155.54:8080/api/checkUserInfo?userName=" + userName + "&password=" + password, new Callback() {
+        HttpUtil.sendOkHttpRequest(MyApplication.SERVER + "/api/checkUserInfo?userName=" + userName + "&password=" + password, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
 

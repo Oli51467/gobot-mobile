@@ -85,7 +85,7 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
         list = new ArrayList<>();
         // 从数据库拿到所有已经配置好的配置信息
         String userName = sharedPreferences.getString("userName", null);
-        HttpUtil.sendOkHttpRequest("http://101.42.155.54:8080/api/getPlayConfig?userName=" + userName, new Callback() {
+        HttpUtil.sendOkHttpRequest( MyApplication.SERVER + "/api/getPlayConfig?userName=" + userName, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
 
@@ -144,7 +144,7 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
                 .setConformButton("删除", () -> {
                     CellData cellData = list.get(position);
                     Long id = cellData.getId();
-                    HttpUtil.sendOkHttpDelete("http://101.42.155.54:8080/api/deletePlayConfig?id=" + id, new Callback() {
+                    HttpUtil.sendOkHttpDelete(MyApplication.SERVER + "/api/deletePlayConfig?id=" + id, new Callback() {
                         @Override
                         public void onFailure(@NonNull Call call, @NonNull IOException e) {
                             runOnUiThread(new Runnable() {

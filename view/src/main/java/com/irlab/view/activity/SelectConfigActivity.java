@@ -86,7 +86,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         list = new ArrayList<>();
         String userName = sharedPreferences.getString("userName", null);
         // 从数据库拿到所有已经配置好的配置信息
-        HttpUtil.sendOkHttpRequest("http://101.42.155.54:8080/api/getPlayConfig?userName=" + userName, new Callback() {
+        HttpUtil.sendOkHttpRequest(MyApplication.SERVER + "/api/getPlayConfig?userName=" + userName, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
 

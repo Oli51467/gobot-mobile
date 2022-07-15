@@ -11,6 +11,8 @@ import okhttp3.MediaType;
 
 public class MyApplication extends Application {
 
+    public static final String SERVER = "http://8.142.10.225:8081";
+
     public static final String[] T = {"让先", "让2子", "让3子", "让4子", "让5子", "让6子", "让7子", "让8子", "让9子"};
 
     public static final String[] ENGINES = {"b20", "b40"};
