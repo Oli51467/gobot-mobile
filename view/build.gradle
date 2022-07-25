@@ -1,17 +1,11 @@
 apply plugin: 'com.android.library'
-/*if (isBuildModule.toBoolean()) {
-    apply plugin: 'com.android.application'
-}
-else {
-    apply plugin: 'com.android.library'
-}*/
+
 android {
-    compileSdk 29
+    compileSdk 32
 
     defaultConfig {
-        //applicationId "com.irlab.view"
-        minSdk 19
-        targetSdk 29
+        minSdk 24
+        targetSdk 32
         versionCode 1
         versionName "1.0"
 
@@ -35,17 +29,18 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    externalNativeBuild {
+        cmake {
+            version "3.10.2"
+            path file('src/main/jni/CMakeLists.txt')
+        }
     }
     sourceSets {
         main {
-            if (isBuildModule.toBoolean()) {
-                manifest.srcFile 'src/main/debug/AndroidManifest.xml'
-            }
-            else {
-                manifest.srcFile 'src/main/release/AndroidManifest.xml'
-            }
+            manifest.srcFile 'src/main/debug/AndroidManifest.xml'
         }
     }
 }

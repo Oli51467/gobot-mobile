@@ -1,45 +1,22 @@
 package com.irlab.view.utils;
 
-import com.irlab.view.processing.cornerDetector.Corner;
-import com.irlab.view.processing.cornerDetector.Ponto;
+import android.graphics.Bitmap;
+import android.os.Environment;
 
+import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class ImageUtils {
 
     public static final int ORTHOGONAL_BOARD_IMAGE_SIZE = 500;
-
-    public static Mat generateOrthogonalBoardImage(Mat image, Corner[] corners) {
-        Mat orthogonalBoardImage = new Mat(ORTHOGONAL_BOARD_IMAGE_SIZE, ORTHOGONAL_BOARD_IMAGE_SIZE, image.type());
-
-        Mat orthogonalImageCorners = new Mat(4, 1, CvType.CV_32FC2);
-        orthogonalImageCorners.put(0, 0,
-                0, 0,
-                ORTHOGONAL_BOARD_IMAGE_SIZE, 0,
-                ORTHOGONAL_BOARD_IMAGE_SIZE, ORTHOGONAL_BOARD_IMAGE_SIZE,
-                0, ORTHOGONAL_BOARD_IMAGE_SIZE);
-
-        Point[] realCornerPositions = new Point[4];
-        for (int i = 0; i < 4; i++) {
-            Ponto realCornerPosition = corners[i].getRealCornerPosition();
-            realCornerPositions[i] = new Point(realCornerPosition.x, realCornerPosition.y);
-        }
-
-        Mat boardPositionInImage = new Mat(4, 1, CvType.CV_32FC2);
-        boardPositionInImage.put(0, 0,
-                realCornerPositions[0].x, realCornerPositions[0].y,
-                realCornerPositions[1].x, realCornerPositions[1].y,
-                realCornerPositions[2].x, realCornerPositions[2].y,
-                realCornerPositions[3].x, realCornerPositions[3].y);
-
-        Mat transformationMatrix = Imgproc.getPerspectiveTransform(boardPositionInImage, orthogonalImageCorners);
-        Imgproc.warpPerspective(image, orthogonalBoardImage, transformationMatrix, orthogonalBoardImage.size());
-        return orthogonalBoardImage;
-    }
 
     public static Mat transformOrthogonally(Mat originalImage, Mat boardPositionInImage) {
         Mat orthogonalBoard = new Mat(ORTHOGONAL_BOARD_IMAGE_SIZE, ORTHOGONAL_BOARD_IMAGE_SIZE, originalImage.type());
@@ -57,15 +34,51 @@ public class ImageUtils {
         return orthogonalBoard;
     }
 
-    // 方向 = -1 逆时针 1 顺时针
-    public static Mat rotateImage(Mat image, int direction) {
-        Point center = new Point(image.cols() / 2, image.rows() / 2);
-        // 正值表示逆时针旋转
-        direction *= -1;
-        Mat transformationMatrix = Imgproc.getRotationMatrix2D(center, 90 * direction, 1);
-        Mat rotatedImage = new Mat();
-        Imgproc.warpAffine(image, rotatedImage, transformationMatrix, new Size(image.cols(), image.rows()));
-        return rotatedImage;
+    public static MatOfPoint convertToMatOfPoint(Mat boardPositionInImage) {
+        Point[] corners = {
+                new Point(boardPositionInImage.get(0, 0)[0], boardPositionInImage.get(0, 0)[1]),
+                new Point(boardPositionInImage.get(1, 0)[0], boardPositionInImage.get(1, 0)[1]),
+                new Point(boardPositionInImage.get(2, 0)[0], boardPositionInImage.get(2, 0)[1]),
+                new Point(boardPositionInImage.get(3, 0)[0], boardPositionInImage.get(3, 0)[1])
+        };
+        MatOfPoint boardContour = new MatOfPoint(corners);
+        return boardContour;
     }
 
+    public static Bitmap matToBitmap(Mat inputFrame) {
+        Bitmap bitmap = Bitmap.createBitmap(inputFrame.cols(), inputFrame.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(inputFrame, bitmap);
+        return bitmap;
+    }
+
+    public static void savePNG_After(Bitmap bitmap, String fileName) {
+        File file = new File(Environment.getExternalStorageDirectory() + "/recoder");
+        if (!file.exists()) file.mkdirs();
+        file = new File(file + File.separator, fileName + ".png");
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            if (bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)) {
+                out.flush();
+                out.close();
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Bitmap[][] splitImage(Bitmap rawBitmap, int row, int column) {
+        Bitmap[][] bitmapMatrix = new Bitmap[row][column];
+        int unitWidth = rawBitmap.getWidth() / column;
+        int unitHeight = rawBitmap.getHeight() / row;
+        Bitmap unitBitmap;
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < column; j++) {
+                unitBitmap = Bitmap.createBitmap(rawBitmap, j * unitWidth, i * unitHeight, unitWidth, unitHeight);
+                bitmapMatrix[i][j] = unitBitmap;
+                //savePNG_After(unitBitmap, i + "_" + j);
+            }
+        }
+        return bitmapMatrix;
+    }
 }

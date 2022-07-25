@@ -1,276 +1,180 @@
 package com.irlab.view.models;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Represents a board state
- */
-public class Board implements Serializable {
+// 棋盘
+public class Board {
+    private final int width;
+    private final int height;
+    public final Point[][] points;
+    private Player P1, P2, actualPlayer;
+    private final int initialHandicap;
+    private final GameRecord gameRecord;
+    private int handicap;
 
-    public final static int EMPTY = 0;
-    public final static int BLACK_STONE = 1;
-    public final static int WHITE_STONE = 2;
+    public Board(int width, int height, int handicap) {
+        this.width = width;
+        this.height = height;
+        this.initialHandicap = handicap;
+        this.points = new Point[width][height];
+        this.gameRecord = new GameRecord(width, height, handicap);
+        initBoard();
+    }
 
-    private int dimension;
-    private Integer[][] board;
+    private void initBoard() {
+        // 初始化对局双方
+        P1 = new Player(1);
+        P2 = new Player(2);
+        actualPlayer = P1;
 
-    public Board(int dimension) {
-        this.dimension = dimension;
-        this.board = new Integer[dimension][dimension];
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                board[i][j] = EMPTY;
+        // 初始化棋盘
+        for (int x = 0; x < this.width; x ++ ) {
+            for (int y = 0; y < this.height; y ++ ) {
+                points[x][y] = new Point(this, x, y);
             }
         }
+        handicap = 0;
     }
 
-    public Board(Board board) {
-        this.dimension = board.dimension;
-        this.board = new Integer[dimension][dimension];
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                this.board[i][j] = board.board[i][j];
-            }
+    public boolean isInBoard(int x, int y) {
+        return (x >= 0 && x < width && y >= 0 && y < height);
+    }
+
+    public boolean isInBoard(Point Point) {
+        int x = Point.getX();
+        int y = Point.getY();
+        return isInBoard(x, y);
+    }
+
+    public Point getPoint(int x, int y) {
+        if (isInBoard(x, y)) {
+            return points[x][y];
+        } else {
+            return null;
         }
     }
 
-    public int getDimension() {
-        return dimension;
+    public int getHandicap() {
+        return initialHandicap;
     }
 
-    public void putStone(int raw, int col, int stone) {
-        if (stone != BLACK_STONE && stone != WHITE_STONE) {
-            throw new RuntimeException("Invalid stone!");
-        }
-        if (isAValidPosition(raw, col)) {
-            throw new RuntimeException("Invalid position!");
-        }
-        if (board[raw][col] != EMPTY) {
-			throw new RuntimeException("There is already a stone in that position!");
-		}
-        board[raw][col] = stone;
-    }
+    public boolean play(Point point, Player player) {
+        // 判断该局部是否是打劫
+        boolean ko = false;
+        GameTurn currentTurn;
 
-    private boolean isAValidPosition(int row, int column) {
-        return row < 0 || column < 0 || row >= dimension || column >= dimension;
-    }
+        // 棋子应该在棋盘内
+        if (!isInBoard(point)) return false;
 
-    public int getPosition(int row, int column) {
-        return board[row][column];
-    }
+        // 棋子不能重叠
+        if (point.getGroup() != null) return false;
 
-    public String toString() {
-        StringBuilder output = new StringBuilder();
+        // 为判断打劫 要记录吃掉的棋子和吃掉的组
+        Set<Point> capturedStones = new HashSet<>();
+        Set<Group> capturedGroups = new HashSet<>();
 
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                if (board[i][j] == EMPTY) output.append('.');
-                else if (board[i][j] == BLACK_STONE) output.append('P');
-                else if (board[i][j] == WHITE_STONE) output.append('B');
-            }
-            output.append(System.getProperty("line.separator"));
-        }
-
-        return output.toString();
-    }
-
-    /**
-     * Returns a new board that corresponds to the current board rotated clockwise (direction = 1)
-     * or counter-clockwise (direction = -1)
-     */
-    public Board rotate(int direction) {
-        if (direction == -1) return rotateCounterClockwise();
-        else if (direction == 1) return rotateClockwise();
-        throw new RuntimeException("Invalid rotation direction!");
-    }
-
-    private Board rotateClockwise() {
-        Board rotatedBoard = new Board(dimension);
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                if (board[dimension - 1 - j][i] != Board.EMPTY) {
-                    rotatedBoard.putStone(i, j, board[dimension - 1 - j][i]);
+        Set<Group> adjGroups = point.getAdjacentGroups();
+        Group newGroup = new Group(point, player);
+        point.setGroup(newGroup);
+        for (com.irlab.view.models.Group Group : adjGroups) {
+            if (Group.getOwner() == player) {
+                newGroup.add(Group, point);
+            } else {
+                Group.removeLiberty(point);
+                if (Group.getLiberties().size() == 0) {
+                    capturedStones.addAll(Group.getStones());
+                    capturedGroups.add(new Group(Group));
+                    Group.die();
                 }
             }
         }
-        return rotatedBoard;
-    }
 
-    private Board rotateCounterClockwise() {
-        Board rotatedBoard = new Board(dimension);
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                if (board[j][dimension - 1 - i] != Board.EMPTY) {
-                    rotatedBoard.putStone(i, j, board[j][dimension - 1 - i]);
+        currentTurn = gameRecord.getLastTurn().toNext(point.getX(), point.getY(), player.getIdentifier(), getHandicap(), capturedStones);
+        for (GameTurn turn : gameRecord.getTurns()) {
+            if (turn.equals(currentTurn)) {
+                ko = true;
+                break;
+            }
+        }
+        // 判断打劫
+        if (ko) {
+            for (Group chain : capturedGroups) {
+                chain.getOwner().removeCapturedStones(chain.getStones().size());
+                for (Point stone : chain.getStones()) {
+                    stone.setGroup(chain);
                 }
             }
         }
-        return rotatedBoard;
-    }
 
-    public boolean isIdenticalTo(Board otherBoard) {
-        if (dimension != otherBoard.dimension) return false;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                if (getPosition(i, j) != otherBoard.getPosition(i, j)) return false;
+        // 不能自杀
+        if (newGroup.getLiberties().size() == 0 || ko) {
+            for (Group chain : point.getAdjacentGroups()) {
+                chain.getLiberties().add(point);
             }
+            point.setGroup(null);
+            return false;
         }
+        // 落子有效
+        for (Point stone : newGroup.getStones()) {
+            stone.setGroup(newGroup);
+        }
+        gameRecord.apply(currentTurn);
         return true;
     }
 
-    /**
-     * Checks if two board are equal, including if one is a rotation of the other.
-     */
-    @Override
-    public boolean equals(Object object) {
-        if (!(object instanceof Board)) return false;
-        Board otherBoard = (Board)object;
-        if (dimension != otherBoard.dimension) return false;
-
-        Board rotation1 = otherBoard.rotateClockwise();
-        Board rotation2 = rotation1.rotateClockwise();
-        Board rotation3 = rotation2.rotateClockwise();
-
-        return this.isIdenticalTo(otherBoard) || this.isIdenticalTo(rotation1) || this.isIdenticalTo(rotation2) || this.isIdenticalTo(rotation3);
-    }
-
-    /**
-     * Returns the different move between this board and the previous one. If it's not possible to
-     * reach the current board from the previous one, returns null.
-     */
-    public Move getDifferenceTo(Board previousBoard) {
-        int numberOfBlackStonesBefore = previousBoard.getNumberOfStonesOfColor(Board.BLACK_STONE);
-        int numberOfWhiteStonesBefore = previousBoard.getNumberOfStonesOfColor(Board.WHITE_STONE);
-        int numberOfBlackStonesAfter = getNumberOfStonesOfColor(Board.BLACK_STONE);
-        int numberOfWhiteStonesAfter = getNumberOfStonesOfColor(Board.WHITE_STONE);
-        int blackStonesDifference = numberOfBlackStonesAfter - numberOfBlackStonesBefore;
-        int whiteStonesDifference = numberOfWhiteStonesAfter - numberOfWhiteStonesBefore;
-        int moveColor;
-
-        if (blackStonesDifference == 1) moveColor = Board.BLACK_STONE;
-        else if (whiteStonesDifference == 1) moveColor = Board.WHITE_STONE;
-        else return null;
-        Move movePlayed = getDifferentMoveBetweenCurrentBoardAnd(previousBoard, moveColor);
-
-        if (previousBoard.generateNewBoardWith(movePlayed).isIdenticalTo(this)) {
-            return movePlayed;
+    public boolean play(int x, int y, Player player) {
+        Point point = getPoint(x, y);
+        if (point == null) {
+            System.out.println("落子超出棋盘范围了 请重新落子！");
+            return false;
         }
-        return null;
+        return play(point, player);
     }
 
-    private int getNumberOfStonesOfColor(int cor) {
-        int numberOfStones = 0;
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                if (board[i][j] == cor) ++numberOfStones;
+    public Player getPlayer() {
+        return actualPlayer;
+    }
+
+    public Player getLastPlayer() {
+        if (actualPlayer == P1) return P2;
+        else return P1;
+    }
+
+    public boolean nextPlayer() {
+        return changePlayer();
+    }
+
+    public boolean changePlayer() {
+        if (handicap < initialHandicap) {
+            handicap++;
+            return false;
+        } else {
+            if (actualPlayer == P1) {
+                actualPlayer = P2;
+                System.out.println("该白棋下啦");
+            } else {
+                actualPlayer = P1;
+                System.out.println("该黑棋下啦");
             }
+            return true;
         }
-        return numberOfStones;
     }
 
-    /**
-     * Returns the first different stone found between the two boards of the specified color.
-     */
-    private Move getDifferentMoveBetweenCurrentBoardAnd(Board previousBoard, int color) {
-        for (int i = 0; i < previousBoard.getDimension(); ++i) {
-            for (int j = 0; j < previousBoard.getDimension(); ++j) {
-                if (board[i][j] == color && previousBoard.getPosition(i, j) != board[i][j]) {
-                    return new Move(i, j, color);
+    @Override
+    public String toString() {
+        String board = "";
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                Point cross = points[i][j];
+                if (cross.getGroup() == null) {
+                    board += "· ";
+                } else {
+                    board += (cross.getGroup().getOwner().getIdentifier() == 1 ? '1' : '2') + " ";
                 }
             }
+            board += "\n";
         }
-        return null;
+        return board;
     }
-
-    /**
-     * Returns a new board that corresponds to the current board added with the move passed as
-     * parameter. If the move is not valid, returns the current board.
-     */
-	public Board generateNewBoardWith(Move move) {
-        if (move == null || board[move.row][move.column] != EMPTY) return this;
-
-        Board newBoard = new Board(this);
-
-        for (Group group : getGroupsAdjacentTo(move)) {
-            if (group == null) continue;
-            if (group.isCapturedBy(move)) newBoard.remove(group);
-        }
-
-        newBoard.board[move.row][move.column] = move.color;
-
-        Group groupOfMove = newBoard.getGroupAt(move.row, move.column);
-        if (groupOfMove.hasNoLiberties()) return this;
-
-        return newBoard;
-	}
-
-    public Set<Group> getGroupsAdjacentTo(Move move) {
-        Set<Group> groupsAdjacentToMove = new HashSet<>();
-        groupsAdjacentToMove.add(getGroupAt(move.row - 1, move.column));
-        groupsAdjacentToMove.add(getGroupAt(move.row + 1, move.column));
-        groupsAdjacentToMove.add(getGroupAt(move.row, move.column - 1));
-        groupsAdjacentToMove.add(getGroupAt(move.row, move.column + 1));
-        return groupsAdjacentToMove;
-    }
-
-    public Set<Group> getGroupsAdjacentToNotNull(Position move) {
-        Set<Group> groupsAdjacentToMove = new HashSet<>();
-        int dx [] = {-1, 0, 1, 0}, dy[] = {0, 1, 0, -1};
-        for (int i = 0; i < 4; i ++ ) {
-            int newX = move.row + dx[i], newY = move.column + dy[i];
-            if (getGroupAt(newX, newY) != null) {
-                groupsAdjacentToMove.add(getGroupAt(newX, newY));
-            }
-        }
-        return groupsAdjacentToMove;
-    }
-
-    private void remove(Group group) {
-        for (Position position : group.getPositions()) {
-            board[position.row][position.column] = EMPTY;
-        }
-    }
-
-    /**
-     * 返回位于棋盘上某个位置的组，如果没有组，则返回 null。
-     */
-    public Group getGroupAt(int row, int column) {
-        if (isAValidPosition(row, column) || board[row][column] == Board.EMPTY) return null;
-
-        boolean[][] visitedPositions = new boolean[dimension][dimension];
-        for (int i = 0; i < dimension; ++i) {
-            for (int j = 0; j < dimension; ++j) {
-                visitedPositions[i][j] = false;
-            }
-        }
-
-        int color = board[row][column];
-        Group group = new Group(color);
-        delimitGroup(row, column, visitedPositions, group);
-        return group;
-    }
-
-    /**
-     * 进行深度优先搜索以查找属于该组的所有棋子
-     */
-    private void delimitGroup(int row, int column, boolean[][] visitedPositions, Group group) {
-        if (isAValidPosition(row, column) || visitedPositions[row][column]) return;
-
-        visitedPositions[row][column] = true;
-
-        if (board[row][column] == Board.EMPTY) {
-            group.addLiberty(new Position(row, column, group));
-        }
-        else if (board[row][column] == group.getColor()) {
-            group.addPosition(new Position(row, column));
-
-            delimitGroup(row - 1, column, visitedPositions, group);
-            delimitGroup(row + 1, column, visitedPositions, group);
-            delimitGroup(row, column - 1, visitedPositions, group);
-            delimitGroup(row, column + 1, visitedPositions, group);
-        }
-    }
-
 }

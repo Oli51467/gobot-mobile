@@ -41,8 +41,7 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/play_setting_item"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/btn_begin"/>
+            android:layout_height="wrap_content" />
 
         <Button
             android:id="@+id/btn_begin"

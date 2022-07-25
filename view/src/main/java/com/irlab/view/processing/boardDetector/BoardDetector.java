@@ -33,9 +33,6 @@ public class BoardDetector implements BoardDetectorInterface {
                 consensus = false;
             }
         }
-        // A full consensus is a very simple way of combining different classifiers.
-        // In this case, quadrilateral counting should have more weight than the
-        // image similarity verifier because it produces better results overall.
         return consensus;
     }
 
@@ -52,5 +49,4 @@ public class BoardDetector implements BoardDetectorInterface {
             boardDetector.setImageIndex(imageIndex);
         }
     }
-
 }

@@ -28,11 +28,6 @@
             android:exported="false"
             android:screenOrientation="portrait"/>
         <activity
-            android:name=".activity.RecordGameActivity"
-            android:launchMode="singleInstance"
-            android:exported="false"
-            android:screenOrientation="landscape" />
-        <activity
             android:name=".activity.DetectBoardActivity"
             android:launchMode="singleInstance"
             android:exported="false"
@@ -42,11 +37,11 @@
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
-            android:name="com.irlab.view.Login"
+            android:name=".activity.LoginActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
-            android:name="com.irlab.view.Register"
+            android:name=".activity.RegisterActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity

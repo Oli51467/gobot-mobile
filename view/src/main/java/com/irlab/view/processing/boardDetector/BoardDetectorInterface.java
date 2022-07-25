@@ -10,7 +10,7 @@ public interface BoardDetectorInterface {
     // This is the only method that should be public
     public boolean isBoardContainedIn(Mat ortogonalBoardImage);
 
-    public void setState(int state);
-    public void setImageIndex(int imageIndex);
+    void setState(int state);
+    void setImageIndex(int imageIndex);
 
 }

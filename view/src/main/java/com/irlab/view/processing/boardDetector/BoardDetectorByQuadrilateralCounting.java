@@ -141,10 +141,6 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
         return lastNumberOfQuadrilateralsFound - numberOfQuadrilateralsFound;
     }
 
-    public int getNumberOfQuadrilateralsFound() {
-        return numberOfQuadrilateralsFound;
-    }
-
     public void setState(int state) {
         this.state = state;
     }

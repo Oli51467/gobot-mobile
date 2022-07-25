@@ -15,3 +15,4 @@
 local.properties
 /opencv/build/
 /.idea/deploymentTargetDropDown.xml
+.gradlew.bat
