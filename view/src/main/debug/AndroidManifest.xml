@@ -31,7 +31,7 @@
             android:name=".activity.DetectBoardActivity"
             android:launchMode="singleInstance"
             android:exported="false"
-            android:screenOrientation="landscape" />
+            android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".activity.SelectConfigActivity"
             android:exported="false"

@@ -54,10 +54,10 @@ public class ImageUtils {
     public static void savePNG_After(Bitmap bitmap, String fileName) {
         File file = new File(Environment.getExternalStorageDirectory() + "/recoder");
         if (!file.exists()) file.mkdirs();
-        file = new File(file + File.separator, fileName + ".png");
+        file = new File(file + File.separator, fileName + ".jpeg");
         try {
             FileOutputStream out = new FileOutputStream(file);
-            if (bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)) {
+            if (bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)) {
                 out.flush();
                 out.close();
             }
@@ -67,16 +67,15 @@ public class ImageUtils {
         }
     }
 
-    public static Bitmap[][] splitImage(Bitmap rawBitmap, int row, int column) {
-        Bitmap[][] bitmapMatrix = new Bitmap[row][column];
-        int unitWidth = rawBitmap.getWidth() / column;
-        int unitHeight = rawBitmap.getHeight() / row;
+    public static Bitmap[][] splitImage(Bitmap rawBitmap, int piece) {
+        Bitmap[][] bitmapMatrix = new Bitmap[piece][piece];
+        int unit = Math.min(rawBitmap.getHeight(), rawBitmap.getWidth()) / piece;
         Bitmap unitBitmap;
-        for (int i = 0; i < row; i++) {
-            for (int j = 0; j < column; j++) {
-                unitBitmap = Bitmap.createBitmap(rawBitmap, j * unitWidth, i * unitHeight, unitWidth, unitHeight);
+        for (int i = 0; i < piece; i++) {
+            for (int j = 0; j < piece; j++) {
+                unitBitmap = Bitmap.createBitmap(rawBitmap, j * unit, i * unit, unit, unit);
                 bitmapMatrix[i][j] = unitBitmap;
-                //savePNG_After(unitBitmap, i + "_" + j);
+                savePNG_After(unitBitmap, i + "_" + j);
             }
         }
         return bitmapMatrix;

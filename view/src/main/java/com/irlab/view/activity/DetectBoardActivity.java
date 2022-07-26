@@ -2,20 +2,28 @@ package com.irlab.view.activity;
 
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
 import static com.irlab.view.utils.ImageUtils.matToBitmap;
+import static com.irlab.view.utils.ImageUtils.savePNG_After;
 import static com.irlab.view.utils.ImageUtils.splitImage;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
+import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 import com.irlab.view.SqueezeNcnn;
 import com.irlab.view.models.Board;
@@ -33,6 +41,9 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DetectBoardActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
 
@@ -41,16 +52,16 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public static final int WHITE = 2;
     public static final int WIDTH = 19;
     public static final int HEIGHT = 19;
+    public static final int THREAD_NUM = 13;
+    public static final int SINGLE_THREAD_TASK = 30;
     public static final String TAG = "Detector";
-
     public static int previousX, previousY;
     public static boolean init = true;
 
     private CameraBridgeViewBase mOpenCvCameraView;
-    private Button btnFixBoardPosition, btnReturn;
+    private Button btnFixBoardPosition;
 
     private Mat orthogonalBoard = null;
-    private Mat boardPositionInImage = null;
     private MatOfPoint boardContour;
 
     InitialBoardDetector initialBoardDetector;
@@ -62,10 +73,8 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
 
     private Bitmap[][] bitmapMatrix;
 
-    public int curBoard[][];
-    public int lastBoard[][];
-
-    long timeOfLastBoardDetection;
+    public int[][] curBoard;
+    public int[][] lastBoard;
 
     private SqueezeNcnn squeezencnn;
 
@@ -74,8 +83,10 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
 
     MyTask initNcnn;
 
+    private static final CountDownLatch cdl = new CountDownLatch(THREAD_NUM);
+
     // opencv与app交互的回调函数
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+    private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
             if (status == LoaderCallbackInterface.SUCCESS) {
@@ -144,25 +155,39 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         if (vid == R.id.btnFixBoardPosition) {
             int moveX, moveY;
             Bitmap bitmap = matToBitmap(orthogonalBoard);
-            bitmapMatrix = splitImage(bitmap, WIDTH, HEIGHT);
-            //savePNG_After(bitmap, "total");
-
+            bitmapMatrix = splitImage(bitmap, WIDTH);
+            savePNG_After(bitmap, "total");
+            ExecutorService threadPool = Executors.newCachedThreadPool();
+            int cnt = -1;
             for (int i = 0; i < WIDTH; i ++ ) {
                 for (int j = 0; j < HEIGHT; j ++ ) {
-                    String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
-                    if (result == null) result = "-1";
-                    else if (result.equals("black")) curBoard[i][j] = BLACK;
-                    else if (result.equals("white")) curBoard[i][j] = WHITE;
-                    else if (result.equals("blank")) curBoard[i][j] = BLANK;
+                    if ((++ cnt % SINGLE_THREAD_TASK) == 0) {
+                        int finalI = i;
+                        int finalJ = j;
+                        threadPool.execute(() -> {
+                            String result = squeezencnn.Detect(bitmapMatrix[finalI][finalJ], true);
+                            if (result.equals("black")) curBoard[finalI][finalJ] = BLACK;
+                            else if (result.equals("white")) curBoard[finalI][finalJ] = WHITE;
+                            else curBoard[finalI][finalJ] = BLANK;
+                            cdl.countDown();
+                        });
+                    }
                 }
             }
-
+            //threadPoolExecutor.shutdown();
+            try {
+                cdl.await();
+            }
+            catch (InterruptedException e) {
+                Log.e("TAG", e.toString());
+            }
+            threadPool.shutdown();
             Pair<Integer, Integer> move = getMoveByDiff();
-            if (move == null) Log.d(TAG, "未落子");
+            if (move == null) ToastUtil.show(this, "未落子");
             else {
                 moveX = move.first;
                 moveY = move.second;
-                Log.d(TAG, moveX + " " + moveY);
+                ToastUtil.show(this, moveX + " " + moveY);
                 Player player = board.getPlayer();
                 // 可以落子
                 if (board.play(moveX, moveY, player)) {
@@ -182,11 +207,11 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
 
                 }
                 else {
-                    Log.d(TAG, "这里不可以落子");
+                    Log.w(TAG, "这里不可以落子");
                     curBoard[moveX][moveY] = BLANK;
                 }
-                Log.d(TAG, board + "--------------\n");
-                Log.d(TAG, lastBoard.toString());
+                Log.d(TAG, board + "--------------\n" + "lastBoard:\n");
+                Log.d(TAG, previousBoard.toString());
             }
         }
         else if (vid == R.id.btn_return) {
@@ -204,14 +229,12 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         initialBoardDetector.setImage(inputImage.clone());
         initialBoardDetector.setPreviewImage(inputImage);
 
-        timeOfLastBoardDetection = System.currentTimeMillis();
         if (initialBoardDetector.process()) {
             // 拿到轮廓检测后的棋盘 Mat && MatOfPoint
-            boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
+            Mat boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
             boardContour = convertToMatOfPoint(boardPositionInImage);
             orthogonalBoard = ImageUtils.transformOrthogonally(inputImage, boardPositionInImage);
             runOnUiThread(() -> btnFixBoardPosition.setEnabled(true));
-            timeOfLastBoardDetection = System.currentTimeMillis();
         }
         // 在图像上画出轮廓
         else if (boardContour != null) {
@@ -245,7 +268,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         btnFixBoardPosition.setOnClickListener(this);
         btnFixBoardPosition.setEnabled(false);
 
-        btnReturn = findViewById(R.id.btn_return);
+        Button btnReturn = findViewById(R.id.btn_return);
         btnReturn.setOnClickListener(this);
         btnReturn.setEnabled(true);
     }
@@ -287,6 +310,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         }
     }
 
+    @SuppressLint("StaticFieldLeak")
     public class MyTask extends AsyncTask<SqueezeNcnn, Integer, Boolean> {
 
         @Override
@@ -296,7 +320,23 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             if (!ret_init) {
                 Log.e(TAG, "squeezencnn Init failed");
             }
+            else {
+                Message msg = new Message();
+                msg.what = 1;
+                handler.sendMessage(msg);
+            }
             return ret_init;
         }
     }
+
+    @SuppressLint("HandlerLeak")
+    private final Handler handler = new Handler() {
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == 1) {
+                ToastUtil.show(DetectBoardActivity.this, "初始化已完成");
+            }
+        }
+    };
 }

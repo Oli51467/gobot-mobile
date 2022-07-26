@@ -13,24 +13,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Defines a quadrilateral spatial hierarchy, indicating which ones are inside which ones.
+ * 定义四边形空间层次结构, 指示哪些在哪些内部
  */
 public class QuadrilateralHierarchy {
 
     public Map<MatOfPoint, List<MatOfPoint>> hierarchy = new HashMap<>();
-    // quadrilaterals that do not have children
     public List<MatOfPoint> leaves = new ArrayList<>();
-    // quadrilaterals that have one or more children
     public List<MatOfPoint> externals = new ArrayList<>();
 
-    /**
-     * Builds the hierarchy of the provided quadrilaterals.
-     * @param quadrilaterals
-     */
+    // 构建提供的四边形的层次结构。
     public QuadrilateralHierarchy(List<MatOfPoint> quadrilaterals) {
-
         for (MatOfPoint quadrilateral : quadrilaterals) {
-            hierarchy.put(quadrilateral, new ArrayList<MatOfPoint>());
+            hierarchy.put(quadrilateral, new ArrayList<>());
             for (MatOfPoint otherQuadrilateral : quadrilaterals) {
                 if (quadrilateral == otherQuadrilateral) continue;
                 if (isInside(quadrilateral, otherQuadrilateral)) {
@@ -39,12 +33,10 @@ public class QuadrilateralHierarchy {
             }
         }
 
-        // Separates the "tree" of quadrilaterals in leaf quadrilaterals and external quadrilaterals
         Iterator it = hierarchy.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
             List<MatOfPoint> valor = (List<MatOfPoint>)pair.getValue();
-            // Log.d("ASDF", "Quadrilateral has " + valor.size() + " internal quadrilaterals.");
             if (valor.size() == 0) {
                 this.leaves.add((MatOfPoint) pair.getKey());
             }
@@ -55,13 +47,7 @@ public class QuadrilateralHierarchy {
 
     }
 
-    /**
-     * Checks if a quadrilateral is inside another
-     *
-     * @param externalQuadrilateral
-     * @param internalQuadrilateral
-     * @return
-     */
+    // 检查一个四边形是否在另一个里面
     private boolean isInside(MatOfPoint externalQuadrilateral, MatOfPoint internalQuadrilateral) {
         final double IS_INSIDE_CONTOUR = 1;
         double result;
@@ -75,5 +61,4 @@ public class QuadrilateralHierarchy {
         }
         return true;
     }
-
 }

@@ -91,7 +91,6 @@ public class LoginActivity extends Activity implements View.OnClickListener{
      * 判断输入的密码是否与数据库中的密码一致
      * @param userName 用户名
      * @param password 密码
-     * @return true/false
      */
     public void checkInfo(String userName, String password) {
         HttpUtil.sendOkHttpRequest(MyApplication.SERVER + "/api/checkUserInfo?userName=" + userName + "&password=" + password, new Callback() {
@@ -109,31 +108,18 @@ public class LoginActivity extends Activity implements View.OnClickListener{
                     if (status.equals("success")) {
                         SharedPreferences.Editor editor = preferences.edit();
                         editor.putString("userName", userName);
-                        editor.commit();
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                ToastUtil.show(LoginActivity.this, "登录成功");
-                                ARouter.getInstance().build("/view/main").withFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP).navigation();
-                                finish();
-                            }
+                        editor.apply();
+                        runOnUiThread(() -> {
+                            ToastUtil.show(LoginActivity.this, "登录成功");
+                            ARouter.getInstance().build("/view/main").withFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP).navigation();
+                            finish();
                         });
                     }
                     else if (status.equals("userNameNotExist")) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                ToastUtil.show(LoginActivity.this, "该用户名未注册");
-                            }
-                        });
+                        runOnUiThread(() -> ToastUtil.show(LoginActivity.this, "该用户名未注册"));
                     }
                     else if (status.equals("wrongPassword")) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                ToastUtil.show(LoginActivity.this, "用户名或密码错误");
-                            }
-                        });
+                        runOnUiThread(() -> ToastUtil.show(LoginActivity.this, "用户名或密码错误"));
                     }
                 } catch (JSONException e) {
                     Log.d(TAG, e.toString());

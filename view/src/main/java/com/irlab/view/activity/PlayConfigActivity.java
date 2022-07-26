@@ -48,12 +48,6 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
 
     private RecyclerViewAdapter mAdapter = null;
 
-    private ImageView back = null;
-
-    private TextView addSetting = null;
-
-    private LinearLayoutManager linearLayoutManager = null;
-
     // 每一条数据都是一个CellData实体 放到list中
     public List<CellData> list = new ArrayList<>();
 
@@ -71,8 +65,8 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
     // 初始化界面及事件
     private void initViews() {
         mRecyclerView = findViewById(R.id.play_setting_item);
-        back = findViewById(R.id.header_back);
-        addSetting = findViewById(R.id.header_add);
+        ImageView back = findViewById(R.id.header_back);
+        TextView addSetting = findViewById(R.id.header_add);
 
         back.setOnClickListener(this);
         addSetting.setOnClickListener(this);
@@ -146,22 +140,14 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
                     HttpUtil.sendOkHttpDelete(MyApplication.SERVER + "/api/deletePlayConfig?id=" + id, new Callback() {
                         @Override
                         public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    ToastUtil.show(PlayConfigActivity.this, "服务器异常 删除失败!");
-                                }
-                            });
+                            runOnUiThread(() -> ToastUtil.show(PlayConfigActivity.this, "服务器异常 删除失败!"));
                         }
                         @Override
-                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    ToastUtil.show(PlayConfigActivity.this, "删除成功!");
-                                    finish();
-                                    startActivity(new Intent(PlayConfigActivity.this, PlayConfigActivity.class));
-                                }
+                        public void onResponse(@NonNull Call call, @NonNull Response response) {
+                            runOnUiThread(() -> {
+                                ToastUtil.show(PlayConfigActivity.this, "删除成功!");
+                                finish();
+                                startActivity(new Intent(PlayConfigActivity.this, PlayConfigActivity.class));
                             });
                         }
                     });
@@ -211,7 +197,7 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
                 mAdapter = new RecyclerViewAdapter(list);
                 initViews();
                 // 线性布局 第二个参数是容器的走向, 第三个时候反转意思就是以中间为对称轴左右两边互换。
-                linearLayoutManager = new LinearLayoutManager(PlayConfigActivity.this, LinearLayoutManager.VERTICAL, false);
+                LinearLayoutManager linearLayoutManager = new LinearLayoutManager(PlayConfigActivity.this, LinearLayoutManager.VERTICAL, false);
                 // 为 RecyclerView设置LayoutManger
                 mRecyclerView.setLayoutManager(linearLayoutManager);
                 // 设置item固定大小

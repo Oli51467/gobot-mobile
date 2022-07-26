@@ -126,9 +126,9 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         japaneseRule = findViewById(R.id.rb_japanese_rule);
 
         // 设置内容
-        mPlayerBlack.setText(config.get("playerBlack").toString());
-        mPlayerWhite.setText(config.get("playerWhite").toString());
-        mDescription.setText(config.get("desc").toString());
+        mPlayerBlack.setText(Objects.requireNonNull(config.get("playerBlack")).toString());
+        mPlayerWhite.setText(Objects.requireNonNull(config.get("playerWhite")).toString());
+        mDescription.setText(Objects.requireNonNull(config.get("desc")).toString());
         posT = (Integer) config.get("komi");
         // ### 暂时手动判断 这里以后要看一下怎么改方便
         if (config.get("engine").equals("b20")) posEngine = 0;
@@ -166,7 +166,8 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
             Intent intent = new Intent(this, PlayConfigActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
-        } else if (vid == R.id.btn_save) {
+        }
+        else if (vid == R.id.btn_save) {
             // 获取输入框的数据
             String userName = preferences.getString("userName", null);
             String playerBlack = mPlayerBlack.getText().toString();
@@ -184,15 +185,12 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
 
                 @Override
                 public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            // 插入成功后跳转
-                            Toast.makeText(EditConfigActivity.this, "保存成功", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(EditConfigActivity.this, PlayConfigActivity.class);
-                            startActivity(intent);
-                            finish();
-                        }
+                    runOnUiThread(() -> {
+                        // 插入成功后跳转
+                        Toast.makeText(EditConfigActivity.this, "保存成功", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(EditConfigActivity.this, PlayConfigActivity.class);
+                        startActivity(intent);
+                        finish();
                     });
                 }
             });

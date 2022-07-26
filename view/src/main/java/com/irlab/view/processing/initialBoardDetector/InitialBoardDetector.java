@@ -63,10 +63,10 @@ public class InitialBoardDetector {
         }
         positionOfBoardInImage = new Mat(4, 1, CvType.CV_32FC2);
         positionOfBoardInImage.put(0, 0,
-                (int) boardCorners.get(0).x, (int) boardCorners.get(0).y,
-                (int) boardCorners.get(1).x, (int) boardCorners.get(1).y,
-                (int) boardCorners.get(2).x, (int) boardCorners.get(2).y,
-                (int) boardCorners.get(3).x, (int) boardCorners.get(3).y);
+                boardCorners.get(0).x, boardCorners.get(0).y,
+                boardCorners.get(1).x, boardCorners.get(1).y,
+                boardCorners.get(2).x, boardCorners.get(2).y,
+                boardCorners.get(3).x, boardCorners.get(3).y);
         processedWithSuccess = true;
         return true;
     }
@@ -89,7 +89,7 @@ public class InitialBoardDetector {
         // 删除可能是噪音的非常小的轮廓
         for (Iterator<MatOfPoint> it = contours.iterator(); it.hasNext();) {
             MatOfPoint contour = it.next();
-            if (Imgproc.contourArea(contour) < 700) {
+            if (Imgproc.contourArea(contour) < 600) {
                 it.remove();
             }
         }

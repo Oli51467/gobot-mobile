@@ -51,17 +51,9 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
 
     private SharedPreferences preferences;
 
-    // 选择让几子的String适配器
-    private ArrayAdapter<String> tAdapter, engineAdapter;
-
-    // 控件
-    private ImageView back;
-
     private Button buttonSave;
 
     private EditText mPlayerBlack, mPlayerWhite, mDescription;
-
-    private RadioGroup mRule;
 
     private RadioButton chineseRule, japaneseRule;
 
@@ -86,14 +78,15 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
     }
 
     private void initViews() {
-        back = findViewById(R.id.header_back);
+        // 控件
+        ImageView back = findViewById(R.id.header_back);
         tSpinner = findViewById(R.id.spinner_T);
         engineSpinner = findViewById(R.id.spinner_engine);
         buttonSave = findViewById(R.id.btn_save);
         mPlayerBlack = findViewById(R.id.et_player_black);
         mPlayerWhite = findViewById(R.id.et_player_white);
         mDescription = findViewById(R.id.et_desc);
-        mRule = findViewById(R.id.rg_rule);
+        RadioGroup mRule = findViewById(R.id.rg_rule);
         chineseRule = findViewById(R.id.rb_chinese_rule);
         japaneseRule = findViewById(R.id.rb_japanese_rule);
 
@@ -105,8 +98,9 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
 
     private void initData() {
         // 初始化适配器
-        tAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.T);
-        engineAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.ENGINES);
+        // 选择让几子的String适配器
+        ArrayAdapter<String> tAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.T);
+        ArrayAdapter<String> engineAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.ENGINES);
         // 将adapter 添加到spinner中
         tSpinner.setAdapter(tAdapter);
         engineSpinner.setAdapter(engineAdapter);
@@ -241,7 +235,7 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
         editor.putInt("rule", rule);
         editor.putInt("posT", posT);
         editor.putInt("posEngine", posEngine);
-        editor.commit();
+        editor.apply();
     }
 
     @Override

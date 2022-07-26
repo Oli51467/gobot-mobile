@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.irlab.base.utils.ButtonListenerUtil;
@@ -98,10 +99,11 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
             // 查询是否重名
             HttpUtil.sendOkHttpRequest(SERVER + "/api/getUserByName?userName=" + userName, new Callback() {
                 @Override
-                public void onFailure(Call call, IOException e) {
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
                 }
                 @Override
-                public void onResponse(Call call, Response response) throws IOException {
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                     String responseData = response.body().string();
                     try {
                         JSONObject jsonObject = new JSONObject(responseData);
@@ -123,22 +125,14 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
                                         JSONObject jsonObject = new JSONObject(responseData);
                                         String status = jsonObject.getString("status");
                                         if (status.equals("success")) {
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    ToastUtil.show(RegisterActivity.this, "注册成功");
-                                                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                                                    intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                                                    startActivity(intent);
-                                                }
+                                            runOnUiThread(() -> {
+                                                ToastUtil.show(RegisterActivity.this, "注册成功");
+                                                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                                                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                                startActivity(intent);
                                             });
                                         } else {
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    ToastUtil.show(RegisterActivity.this, "服务器异常");
-                                                }
-                                            });
+                                            runOnUiThread(() -> ToastUtil.show(RegisterActivity.this, "服务器异常"));
                                         }
                                     } catch (JSONException e) {
                                         Log.d(TAG, e.toString());
@@ -148,12 +142,7 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
                         }
                         // 用户名已被注册
                         else {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    ToastUtil.show(RegisterActivity.this, "该用户名已被注册");
-                                }
-                            });
+                            runOnUiThread(() -> ToastUtil.show(RegisterActivity.this, "该用户名已被注册"));
                         }
                     } catch (JSONException e) {
                         Log.d(TAG, e.toString());
