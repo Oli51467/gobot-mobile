@@ -74,7 +74,7 @@ public class InitialBoardDetector {
     private Mat detectBorders() {
         Mat intermediaryImage = new Mat();
         // 边缘检测
-        Imgproc.Canny(image, intermediaryImage, 30, 100);
+        Imgproc.Canny(image, intermediaryImage, 80, 220);
         // 图像膨胀
         Imgproc.dilate(intermediaryImage, intermediaryImage, Mat.ones(3, 3, CvType.CV_32F));
         return intermediaryImage;
@@ -127,8 +127,8 @@ public class InitialBoardDetector {
 
         MatOfPoint contourClosestToTheBoard = null;
         int numberOfChildren = 9999;
-        // 内部必须至少有这个数量的叶子四边形
-        int threshold = 10;
+        // 内部必须至少有这个数量的四边形
+        int threshold = 15;
 
         for (MatOfPoint contour : quadrilateralHierarchy.externals) {
             if (quadrilateralHierarchy.hierarchy.get(contour).size() < numberOfChildren && quadrilateralHierarchy.hierarchy.get(contour).size() > threshold) {

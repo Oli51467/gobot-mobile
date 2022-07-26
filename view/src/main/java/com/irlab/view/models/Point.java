@@ -13,7 +13,7 @@ public class Point {
     private final int x, y;
 
     // 描述该点是否在一个组内或属于哪个组
-    private com.irlab.view.models.Group Group;
+    private Group Group;
 
     public Point(Board board, int x, int y) {
         this.board = board;
@@ -30,7 +30,7 @@ public class Point {
         return y;
     }
 
-    public com.irlab.view.models.Group getGroup() {
+    public Group getGroup() {
         return Group;
     }
 
@@ -44,8 +44,8 @@ public class Point {
     }
 
     // 拿到相邻棋子所属的组
-    public Set<com.irlab.view.models.Group> getAdjacentGroups() {
-        Set<com.irlab.view.models.Group> adjacentGroups = new HashSet<com.irlab.view.models.Group>();
+    public Set<Group> getAdjacentGroups() {
+        Set<Group> adjacentGroups = new HashSet<com.irlab.view.models.Group>();
 
         int[] dx = {-1, 0, 1, 0}, dy = {0, 1, 0, -1};
         assert dx.length == dy.length : "dx and dy should have the same length";

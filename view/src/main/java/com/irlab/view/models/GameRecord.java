@@ -20,10 +20,6 @@ public class GameRecord {
         following.clear();
     }
 
-    public int nbrPreceding() {
-        return preceding.size() - 1;
-    }
-
     public Iterable<GameTurn> getTurns() {
         return preceding;
     }

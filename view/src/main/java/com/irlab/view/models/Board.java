@@ -169,7 +169,8 @@ public class Board {
                 Point cross = points[i][j];
                 if (cross.getGroup() == null) {
                     board += "· ";
-                } else {
+                }
+                else {
                     board += (cross.getGroup().getOwner().getIdentifier() == 1 ? '1' : '2') + " ";
                 }
             }

@@ -19,7 +19,6 @@ import android.view.View;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -56,7 +55,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public static final int SINGLE_THREAD_TASK = 30;
     public static final String TAG = "Detector";
     public static int previousX, previousY;
-    public static boolean init = true;
+    public static boolean init = true, initNet = false;
 
     private CameraBridgeViewBase mOpenCvCameraView;
     private Button btnFixBoardPosition;
@@ -174,7 +173,6 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
                     }
                 }
             }
-            //threadPoolExecutor.shutdown();
             try {
                 cdl.await();
             }
@@ -234,7 +232,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             Mat boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
             boardContour = convertToMatOfPoint(boardPositionInImage);
             orthogonalBoard = ImageUtils.transformOrthogonally(inputImage, boardPositionInImage);
-            runOnUiThread(() -> btnFixBoardPosition.setEnabled(true));
+            if (initNet) runOnUiThread(() -> btnFixBoardPosition.setEnabled(true));
         }
         // 在图像上画出轮廓
         else if (boardContour != null) {
@@ -299,11 +297,9 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             for (int j = 0; j < HEIGHT; j ++ ) {
                 com.irlab.view.models.Point cross = board.points[i][j];
                 if (cross.getGroup() == null) {
-                    curBoard[i][j] = BLANK;
                     lastBoard[i][j] = BLANK;
                 }
                 else {
-                    curBoard[i][j] = cross.getGroup().getOwner().getIdentifier();
                     lastBoard[i][j] = cross.getGroup().getOwner().getIdentifier();
                 }
             }
@@ -324,6 +320,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
                 Message msg = new Message();
                 msg.what = 1;
                 handler.sendMessage(msg);
+                initNet = true;
             }
             return ret_init;
         }
@@ -336,6 +333,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             super.handleMessage(msg);
             if (msg.what == 1) {
                 ToastUtil.show(DetectBoardActivity.this, "初始化已完成");
+                initNet = true;
             }
         }
     };
