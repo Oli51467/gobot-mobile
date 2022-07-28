@@ -1,0 +1,9 @@
+# ninja log v5
+0	851	680031393	CMakeFiles/squeezencnn.dir/squeezencnn_jni.cpp.o	ec89384311089517
+853	1509	680031394	D:/AndroidProject/android_learning/jetpack/build/intermediates/cxx/Debug/655d1767/obj/arm64-v8a/libsqueezencnn.so	788e45de6e3e9220
+2	719	680032131	CMakeFiles/squeezencnn.dir/squeezencnn_jni.cpp.o	ec89384311089517
+719	1225	680032132	D:/AndroidProject/android_learning/jetpack/build/intermediates/cxx/Debug/655d1767/obj/arm64-v8a/libsqueezencnn.so	788e45de6e3e9220
+3	696	680032389	CMakeFiles/squeezencnn.dir/squeezencnn_jni.cpp.o	ec89384311089517
+696	1201	680032390	D:/AndroidProject/android_learning/jetpack/build/intermediates/cxx/Debug/655d1767/obj/arm64-v8a/libsqueezencnn.so	788e45de6e3e9220
+3	1170	680032475	CMakeFiles/squeezencnn.dir/squeezencnn_jni.cpp.o	ec89384311089517
+1170	1878	680032476	D:/AndroidProject/android_learning/jetpack/build/intermediates/cxx/Debug/655d1767/obj/arm64-v8a/libsqueezencnn.so	788e45de6e3e9220

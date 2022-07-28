@@ -1,0 +1,7 @@
+[
+{
+  "directory": "D:/AndroidProject/android_learning/jetpack/.cxx/Debug/655d1767/x86",
+  "command": "D:\\Android\\AndroidSDK\\ndk\\21.4.7075529\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=i686-none-linux-android24 --gcc-toolchain=D:/Android/AndroidSDK/ndk/21.4.7075529/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/Android/AndroidSDK/ndk/21.4.7075529/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dsqueezencnn_EXPORTS -isystem D:/AndroidProject/android_learning/jetpack/src/main/jni/ncnn-20220701-android-vulkan/x86/include/ncnn  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -O0 -fno-limit-debug-info  -fPIC   -fno-rtti -fno-exceptions -o CMakeFiles\\squeezencnn.dir\\squeezencnn_jni.cpp.o -c D:\\AndroidProject\\android_learning\\jetpack\\src\\main\\jni\\squeezencnn_jni.cpp",
+  "file": "D:\\AndroidProject\\android_learning\\jetpack\\src\\main\\jni\\squeezencnn_jni.cpp"
+}
+]

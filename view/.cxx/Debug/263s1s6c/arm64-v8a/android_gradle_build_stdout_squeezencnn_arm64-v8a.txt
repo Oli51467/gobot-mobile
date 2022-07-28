@@ -1,0 +1,3 @@
+ninja: Entering directory `D:\AndroidProject\android_learning\jetpack\.cxx\Debug\263s1s6c\arm64-v8a'
+[1/2] Building CXX object CMakeFiles/squeezencnn.dir/squeezencnn_jni.cpp.o
+[2/2] Linking CXX shared library D:\AndroidProject\android_learning\jetpack\build\intermediates\cxx\Debug\263s1s6c\obj\arm64-v8a\libsqueezencnn.so

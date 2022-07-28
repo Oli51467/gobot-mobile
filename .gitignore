@@ -11,10 +11,9 @@
 /build
 /captures
 .externalNativeBuild
-.cxx
 local.properties
 /opencv/build/
 /.idea/deploymentTargetDropDown.xml
-/gradlew.bat
-/gradlew
-/gradle/wrapper
+gradlew.bat
+gradlew
+/gradle

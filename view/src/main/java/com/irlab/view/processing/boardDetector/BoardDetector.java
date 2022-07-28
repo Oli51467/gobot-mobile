@@ -17,8 +17,8 @@ public class BoardDetector implements BoardDetectorInterface {
         setState(STATE_BOARD_IS_INSIDE);
     }
 
-    public boolean isBoardContainedIn(Mat ortogonalBoardImage) {
-        if (isBoardInsideAccordingToEnsenble(ortogonalBoardImage)) {
+    public boolean isBoardContainedIn(Mat orthogonalBoardImage) {
+        if (isBoardInsideAccordingToEnsenble(orthogonalBoardImage)) {
             setState(STATE_BOARD_IS_INSIDE);
         } else {
             setState(STATE_LOOKING_FOR_BOARD);

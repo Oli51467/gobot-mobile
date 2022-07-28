@@ -1,0 +1,23 @@
+                    Executable : D:\Android\AndroidSDK\cmake\3.10.2.4988404\bin\cmake.exe
+arguments : 
+-HD:\AndroidProject\android_learning\jetpack\src\main\jni
+-DCMAKE_SYSTEM_NAME=Android
+-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+-DCMAKE_SYSTEM_VERSION=21
+-DANDROID_PLATFORM=android-21
+-DANDROID_ABI=x86
+-DCMAKE_ANDROID_ARCH_ABI=x86
+-DANDROID_NDK=D:\Android\AndroidSDK\ndk\24.0.8215888
+-DCMAKE_ANDROID_NDK=D:\Android\AndroidSDK\ndk\24.0.8215888
+-DCMAKE_TOOLCHAIN_FILE=D:\Android\AndroidSDK\ndk\24.0.8215888\build\cmake\android.toolchain.cmake
+-DCMAKE_MAKE_PROGRAM=D:\Android\AndroidSDK\cmake\3.10.2.4988404\bin\ninja.exe
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=D:\AndroidProject\android_learning\jetpack\build\intermediates\cxx\Debug\1p722655\obj\x86
+-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=D:\AndroidProject\android_learning\jetpack\build\intermediates\cxx\Debug\1p722655\obj\x86
+-DCMAKE_BUILD_TYPE=Debug
+-BD:\AndroidProject\android_learning\jetpack\.cxx\Debug\1p722655\x86
+-GNinja
+jvmArgs : 
+
+
+                    Build command args: []
+                    Version: 2

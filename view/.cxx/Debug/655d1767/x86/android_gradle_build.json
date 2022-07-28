@@ -1,0 +1,40 @@
+{
+  "stringTable": {},
+  "buildFiles": [
+    "D:\\AndroidProject\\android_learning\\jetpack\\src\\main\\jni\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "D:\\Android\\AndroidSDK\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+      "-C",
+      "D:\\AndroidProject\\android_learning\\jetpack\\.cxx\\Debug\\655d1767\\x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "D:\\Android\\AndroidSDK\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+    "-C",
+    "D:\\AndroidProject\\android_learning\\jetpack\\.cxx\\Debug\\655d1767\\x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "squeezencnn-Debug-x86": {
+      "buildCommandComponents": [
+        "D:\\Android\\AndroidSDK\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "D:\\AndroidProject\\android_learning\\jetpack\\.cxx\\Debug\\655d1767\\x86",
+        "squeezencnn"
+      ],
+      "buildType": "debug",
+      "abi": "x86",
+      "artifactName": "squeezencnn",
+      "output": "D:\\AndroidProject\\android_learning\\jetpack\\build\\intermediates\\cxx\\Debug\\655d1767\\obj\\x86\\libsqueezencnn.so",
+      "runtimeFiles": []
+    }
+  },
+  "toolchains": {},
+  "cFileExtensions": [],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}

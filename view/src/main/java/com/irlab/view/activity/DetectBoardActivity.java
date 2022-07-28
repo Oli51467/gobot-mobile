@@ -27,6 +27,7 @@ import com.irlab.view.R;
 import com.irlab.view.SqueezeNcnn;
 import com.irlab.view.models.Board;
 import com.irlab.view.models.Player;
+import com.irlab.view.models.Point;
 import com.irlab.view.utils.Drawer;
 import com.irlab.view.processing.boardDetector.BoardDetector;
 import com.irlab.view.processing.initialBoardDetector.InitialBoardDetector;
@@ -54,6 +55,9 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public static final int THREAD_NUM = 13;
     public static final int SINGLE_THREAD_TASK = 30;
     public static final String TAG = "Detector";
+    //private static CountDownLatch cdl;
+    //public static final ExecutorService threadPool = Executors.newCachedThreadPool();
+
     public static int previousX, previousY;
     public static boolean init = true, initNet = false;
 
@@ -81,8 +85,6 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public Board previousBoard;
 
     MyTask initNcnn;
-
-    private static final CountDownLatch cdl = new CountDownLatch(THREAD_NUM);
 
     // opencv与app交互的回调函数
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -125,6 +127,13 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     }
 
     @Override
+    protected void onRestart() {
+        super.onRestart();
+        initNcnn = new MyTask();
+        initNcnn.execute(squeezencnn);
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         if (!OpenCVLoader.initDebug()) {
@@ -140,6 +149,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public void onDestroy() {
         super.onDestroy();
         initNcnn.cancel(true);
+        initNet = false;
         if (mOpenCvCameraView != null) mOpenCvCameraView.disableView();
     }
 
@@ -156,30 +166,46 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             Bitmap bitmap = matToBitmap(orthogonalBoard);
             bitmapMatrix = splitImage(bitmap, WIDTH);
             savePNG_After(bitmap, "total");
-            ExecutorService threadPool = Executors.newCachedThreadPool();
             int cnt = -1;
+            //cdl = new CountDownLatch(THREAD_NUM);
             for (int i = 0; i < WIDTH; i ++ ) {
                 for (int j = 0; j < HEIGHT; j ++ ) {
                     if ((++ cnt % SINGLE_THREAD_TASK) == 0) {
                         int finalI = i;
                         int finalJ = j;
-                        threadPool.execute(() -> {
+                        String result = squeezencnn.Detect(bitmapMatrix[finalI][finalJ], true);
+                        if (result.equals("black")) curBoard[finalI][finalJ] = BLACK;
+                        else if (result.equals("white")) curBoard[finalI][finalJ] = WHITE;
+                        else curBoard[finalI][finalJ] = BLANK;
+                        /*threadPool.execute(() -> {
+                            Log.d(TAG, "thread work");
                             String result = squeezencnn.Detect(bitmapMatrix[finalI][finalJ], true);
+                            Log.d(TAG, "threan work end");
                             if (result.equals("black")) curBoard[finalI][finalJ] = BLACK;
                             else if (result.equals("white")) curBoard[finalI][finalJ] = WHITE;
                             else curBoard[finalI][finalJ] = BLANK;
                             cdl.countDown();
-                        });
+                        });*/
                     }
                 }
             }
-            try {
+            /*try {
                 cdl.await();
             }
             catch (InterruptedException e) {
                 Log.e("TAG", e.toString());
             }
-            threadPool.shutdown();
+            Log.d(TAG, "thread shutdown");*/
+            StringBuilder res = new StringBuilder();
+            for (int i = 0; i < 19; i ++ ) {
+                for (int j = 0; j < 19; j ++ ){
+                    if (curBoard[i][j] == BLANK) res.append("· ");
+                    else if (curBoard[i][j] == BLACK) res.append("1 ");
+                    else res.append("2 ");
+                }
+                res.append("\n");
+            }
+            Log.d(TAG, "识别后的棋盘" + "\n" + res + "\n");
             Pair<Integer, Integer> move = getMoveByDiff();
             if (move == null) ToastUtil.show(this, "未落子");
             else {
@@ -197,7 +223,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
                         init = false;
                     }
                     // 更新一下矩阵棋盘 更新为落完子后的棋盘局面 因为可能有提子
-                    updateMetrixBoard();
+                    updateMetricBoard();
                     board.nextPlayer();
                     previousX = moveX;
                     previousY = moveY;
@@ -209,7 +235,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
                     curBoard[moveX][moveY] = BLANK;
                 }
                 Log.d(TAG, board + "--------------\n" + "lastBoard:\n");
-                Log.d(TAG, previousBoard.toString());
+                //Log.d(TAG, previousBoard.toString());
             }
         }
         else if (vid == R.id.btn_return) {
@@ -258,7 +284,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
 
     private void initViews() {
         // 设置一些CameraView的基本状态信息
-        mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_surface_view1);
+        mOpenCvCameraView = findViewById(R.id.camera_surface_view1);
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 
@@ -292,10 +318,10 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         return null;
     }
 
-    private void updateMetrixBoard() {
+    private void updateMetricBoard() {
         for (int i = 0; i < WIDTH; i ++ ) {
             for (int j = 0; j < HEIGHT; j ++ ) {
-                com.irlab.view.models.Point cross = board.points[i][j];
+                Point cross = board.points[i][j];
                 if (cross.getGroup() == null) {
                     lastBoard[i][j] = BLANK;
                 }
@@ -320,7 +346,6 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
                 Message msg = new Message();
                 msg.what = 1;
                 handler.sendMessage(msg);
-                initNet = true;
             }
             return ret_init;
         }

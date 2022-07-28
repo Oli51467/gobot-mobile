@@ -32,8 +32,8 @@ public class BoardDetectorByQuadrilateralCounting implements BoardDetectorInterf
         lastNumberOfQuadrilateralsFound = -1;
     }
 
-    public boolean isBoardContainedIn(Mat ortogonalBoardImage) {
-        numberOfQuadrilateralsFound = calculateNumberOfQuadrilateralsInside(ortogonalBoardImage);
+    public boolean isBoardContainedIn(Mat orthogonalBoardImage) {
+        numberOfQuadrilateralsFound = calculateNumberOfQuadrilateralsInside(orthogonalBoardImage);
         boolean isBoardContainedIn = isBoardInsideContourAccordingToQuadrilateralsDetection();
 
         if (isBoardContainedIn) {
