@@ -55,8 +55,8 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public static final int THREAD_NUM = 13;
     public static final int SINGLE_THREAD_TASK = 30;
     public static final String TAG = "Detector";
-    //private static CountDownLatch cdl;
-    //public static final ExecutorService threadPool = Executors.newCachedThreadPool();
+    private static CountDownLatch cdl;
+    public static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
     public static int previousX, previousY;
     public static boolean init = true, initNet = false;
@@ -167,17 +167,13 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             bitmapMatrix = splitImage(bitmap, WIDTH);
             savePNG_After(bitmap, "total");
             int cnt = -1;
-            //cdl = new CountDownLatch(THREAD_NUM);
+            cdl = new CountDownLatch(THREAD_NUM);
             for (int i = 0; i < WIDTH; i ++ ) {
                 for (int j = 0; j < HEIGHT; j ++ ) {
                     if ((++ cnt % SINGLE_THREAD_TASK) == 0) {
                         int finalI = i;
                         int finalJ = j;
-                        String result = squeezencnn.Detect(bitmapMatrix[finalI][finalJ], true);
-                        if (result.equals("black")) curBoard[finalI][finalJ] = BLACK;
-                        else if (result.equals("white")) curBoard[finalI][finalJ] = WHITE;
-                        else curBoard[finalI][finalJ] = BLANK;
-                        /*threadPool.execute(() -> {
+                        threadPool.execute(() -> {
                             Log.d(TAG, "thread work");
                             String result = squeezencnn.Detect(bitmapMatrix[finalI][finalJ], true);
                             Log.d(TAG, "threan work end");
@@ -185,17 +181,17 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
                             else if (result.equals("white")) curBoard[finalI][finalJ] = WHITE;
                             else curBoard[finalI][finalJ] = BLANK;
                             cdl.countDown();
-                        });*/
+                        });
                     }
                 }
             }
-            /*try {
+            try {
                 cdl.await();
             }
             catch (InterruptedException e) {
                 Log.e("TAG", e.toString());
             }
-            Log.d(TAG, "thread shutdown");*/
+            Log.d(TAG, "thread shutdown");
             StringBuilder res = new StringBuilder();
             for (int i = 0; i < 19; i ++ ) {
                 for (int j = 0; j < 19; j ++ ){

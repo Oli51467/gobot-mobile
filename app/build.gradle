@@ -35,17 +35,6 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-
-    sourceSets {
-        main {
-            if (isBuildModule.toBoolean()) {
-                manifest.srcFile 'src/main/debug/AndroidManifest.xml'
-            }
-            else {
-                manifest.srcFile 'src/main/release/AndroidManifest.xml'
-            }
-        }
-    }
 }
 
 dependencies {

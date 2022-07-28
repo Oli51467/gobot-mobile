@@ -18,7 +18,7 @@ public class InitialBoardDetector {
 
     public static final String TAG = InitialBoardDetector.class.getName();
     public static final int NUMBER_OF_CHILDREN = 9999;
-    public static final int INNER_CHILDREN = 5;  // 内部必须至少有这个数量的四边形
+    public static final int INNER_CHILDREN = 2;  // 内部必须至少有这个数量的四边形
 
     // Camera image
     private Mat image;

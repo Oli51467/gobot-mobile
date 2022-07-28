@@ -38,11 +38,6 @@ android {
             path file('src/main/jni/CMakeLists.txt')
         }
     }
-    sourceSets {
-        main {
-            manifest.srcFile 'src/main/debug/AndroidManifest.xml'
-        }
-    }
 }
 
 dependencies {
