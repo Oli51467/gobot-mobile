@@ -52,11 +52,11 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public static final int WHITE = 2;
     public static final int WIDTH = 19;
     public static final int HEIGHT = 19;
-    public static final int THREAD_NUM = 13;
-    public static final int SINGLE_THREAD_TASK = 30;
+    public static final int THREAD_NUM = 19;
+    public static final int SINGLE_THREAD_TASK = 19;
     public static final String TAG = "Detector";
     private static CountDownLatch cdl;
-    public static final ExecutorService threadPool = Executors.newCachedThreadPool();
+    public static ExecutorService threadPool;
 
     public static int previousX, previousY;
     public static boolean init = true, initNet = false;
@@ -105,6 +105,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_detect_board);
+        threadPool = Executors.newCachedThreadPool();
         // 初始化Ncnn
         initNcnn = new MyTask();
         initNcnn.execute(squeezencnn);
@@ -166,24 +167,22 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             Bitmap bitmap = matToBitmap(orthogonalBoard);
             bitmapMatrix = splitImage(bitmap, WIDTH);
             savePNG_After(bitmap, "total");
-            int cnt = -1;
-            cdl = new CountDownLatch(THREAD_NUM);
-            for (int i = 0; i < WIDTH; i ++ ) {
-                for (int j = 0; j < HEIGHT; j ++ ) {
-                    if ((++ cnt % SINGLE_THREAD_TASK) == 0) {
-                        int finalI = i;
-                        int finalJ = j;
-                        threadPool.execute(() -> {
-                            Log.d(TAG, "thread work");
-                            String result = squeezencnn.Detect(bitmapMatrix[finalI][finalJ], true);
-                            Log.d(TAG, "threan work end");
-                            if (result.equals("black")) curBoard[finalI][finalJ] = BLACK;
-                            else if (result.equals("white")) curBoard[finalI][finalJ] = WHITE;
-                            else curBoard[finalI][finalJ] = BLANK;
-                            cdl.countDown();
-                        });
+            cdl = new CountDownLatch(THREAD_NUM);   // 计数器
+            for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex ++ ) {
+                int innerT = threadIndex;
+                threadPool.execute(() -> {
+                    for (int task = 0; task < SINGLE_THREAD_TASK; task ++) {
+                        // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
+                        int cnt = innerT * 19 + task;
+                        int i = cnt / 19;
+                        int j = cnt % 19;
+                        String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
+                        if (result.equals("black")) curBoard[i][j] = BLACK;
+                        else if (result.equals("white")) curBoard[i][j] = WHITE;
+                        else curBoard[i][j] = BLANK;
                     }
-                }
+                    cdl.countDown();
+                });
             }
             try {
                 cdl.await();
@@ -191,7 +190,6 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             catch (InterruptedException e) {
                 Log.e("TAG", e.toString());
             }
-            Log.d(TAG, "thread shutdown");
             StringBuilder res = new StringBuilder();
             for (int i = 0; i < 19; i ++ ) {
                 for (int j = 0; j < 19; j ++ ){
