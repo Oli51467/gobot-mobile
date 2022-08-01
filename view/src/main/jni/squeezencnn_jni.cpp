@@ -51,7 +51,7 @@ JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved)
 }
 
 // public native boolean Init(AssetManager mgr);
-JNIEXPORT jboolean JNICALL Java_com_irlab_view_SqueezeNcnn_Init(JNIEnv* env, jobject thiz, jobject assetManager)
+JNIEXPORT jboolean JNICALL Java_com_irlab_base_SqueezeNcnn_Init(JNIEnv* env, jobject thiz, jobject assetManager)
 {
     ncnn::Option opt;
     opt.lightmode = true;
@@ -91,7 +91,7 @@ JNIEXPORT jboolean JNICALL Java_com_irlab_view_SqueezeNcnn_Init(JNIEnv* env, job
 }
 
 // public native String Detect(Bitmap bitmap, boolean use_gpu);
-JNIEXPORT jstring JNICALL Java_com_irlab_view_SqueezeNcnn_Detect(JNIEnv* env, jobject thiz, jobject bitmap, jboolean use_gpu)
+JNIEXPORT jstring JNICALL Java_com_irlab_base_SqueezeNcnn_Detect(JNIEnv* env, jobject thiz, jobject bitmap, jboolean use_gpu)
 {
     if (use_gpu == JNI_TRUE && ncnn::get_gpu_count() == 0)
     {

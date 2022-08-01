@@ -1,9 +1,10 @@
 package com.irlab.view.models;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Group {
+public class Group implements Serializable {
     private final Set<Point> stones;
     private final Set<Point> liberties;
     private final Player owner;

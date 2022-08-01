@@ -1,16 +1,22 @@
 package com.irlab.view.models;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
 // 棋盘
-public class Board {
+public class Board implements Serializable {
+    public final static int EMPTY = 0;
+    public final static int BLACK_STONE = 1;
+    public final static int WHITE_STONE = 2;
+
     private final int width;
     private final int height;
     public final Point[][] points;
-    private Player P1, P2, actualPlayer;
     private final int initialHandicap;
     private final GameRecord gameRecord;
+
+    private Player P1, P2, actualPlayer;
     private int handicap;
 
     public Board(int width, int height, int handicap) {
@@ -29,8 +35,8 @@ public class Board {
         actualPlayer = P1;
 
         // 初始化棋盘
-        for (int x = 0; x < this.width; x ++ ) {
-            for (int y = 0; y < this.height; y ++ ) {
+        for (int x = 0; x < this.width; x++) {
+            for (int y = 0; y < this.height; y++) {
                 points[x][y] = new Point(this, x, y);
             }
         }
@@ -169,8 +175,7 @@ public class Board {
                 Point cross = points[i][j];
                 if (cross.getGroup() == null) {
                     board += "· ";
-                }
-                else {
+                } else {
                     board += (cross.getGroup().getOwner().getIdentifier() == 1 ? '1' : '2') + " ";
                 }
             }

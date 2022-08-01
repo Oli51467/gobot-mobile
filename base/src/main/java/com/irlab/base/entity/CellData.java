@@ -28,6 +28,14 @@ public class CellData implements Serializable {
         this.rule = rule;
     }
 
+    public int getKomi() {
+        return komi;
+    }
+
+    public void setKomi(int komi) {
+        this.komi = komi;
+    }
+
     public String getPlayerBlack() {
         return playerBlack;
     }

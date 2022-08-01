@@ -1,9 +1,10 @@
 package com.irlab.view.models;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Set;
 
-public class GameTurn {
+public class GameTurn implements Serializable {
     private final int[][] BoardState;
     private final int x, y;
     private final int hashCode;

@@ -24,13 +24,18 @@
         android:theme="@style/Theme.Robotgo"
         tools:remove="android:appComponentFactory">
         <activity
+            android:name=".activity.BattleInfoActivity"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:screenOrientation="sensorLandscape"/>
+        <activity
             android:name=".activity.InstructionActivity"
             android:exported="false"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activity.DetectBoardActivity"
-            android:launchMode="singleInstance"
             android:exported="false"
+            android:launchMode="singleInstance"
             android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".activity.SelectConfigActivity"

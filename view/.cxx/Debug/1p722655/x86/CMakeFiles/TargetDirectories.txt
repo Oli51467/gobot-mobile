@@ -1,3 +1,0 @@
-D:/AndroidProject/android_learning/jetpack/.cxx/Debug/1p722655/x86/CMakeFiles/squeezencnn.dir
-D:/AndroidProject/android_learning/jetpack/.cxx/Debug/1p722655/x86/CMakeFiles/edit_cache.dir
-D:/AndroidProject/android_learning/jetpack/.cxx/Debug/1p722655/x86/CMakeFiles/rebuild_cache.dir

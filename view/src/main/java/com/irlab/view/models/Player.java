@@ -1,6 +1,8 @@
 package com.irlab.view.models;
 
-public class Player {
+import java.io.Serializable;
+
+public class Player implements Serializable {
     private final int identifier;
     private int capturedStones;
 

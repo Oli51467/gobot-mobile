@@ -17,3 +17,4 @@ local.properties
 gradlew.bat
 gradlew
 /gradle
+/view/.cxx/Debug/

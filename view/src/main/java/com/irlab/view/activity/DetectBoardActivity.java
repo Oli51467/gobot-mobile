@@ -1,18 +1,16 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.MyApplication.initNet;
+import static com.irlab.base.MyApplication.squeezencnn;
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
 import static com.irlab.view.utils.ImageUtils.matToBitmap;
 import static com.irlab.view.utils.ImageUtils.savePNG_After;
 import static com.irlab.view.utils.ImageUtils.splitImage;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -20,11 +18,8 @@ import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.Button;
 
-import androidx.annotation.NonNull;
-
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
-import com.irlab.view.SqueezeNcnn;
 import com.irlab.view.models.Board;
 import com.irlab.view.models.Player;
 import com.irlab.view.models.Point;
@@ -40,10 +35,14 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class DetectBoardActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
 
@@ -55,36 +54,35 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public static final int THREAD_NUM = 19;
     public static final int SINGLE_THREAD_TASK = 19;
     public static final String TAG = "Detector";
+
+    public static int previousX, previousY;
+    public static boolean init = true, showUI = false;
     private static CountDownLatch cdl;
     public static ExecutorService threadPool;
 
-    public static int previousX, previousY;
-    public static boolean init = true, initNet = false;
-
     private CameraBridgeViewBase mOpenCvCameraView;
+
     private Button btnFixBoardPosition;
 
     private Mat orthogonalBoard = null;
+
     private MatOfPoint boardContour;
 
-    InitialBoardDetector initialBoardDetector;
-    BoardDetector boardDetector;
+    private InitialBoardDetector initialBoardDetector;
 
-    private String blackPlayer;
-    private String whitePlayer;
-    private String komi;
+    public BoardDetector boardDetector;
+
+    private String blackPlayer, whitePlayer, komi, rule, engine;
 
     private Bitmap[][] bitmapMatrix;
 
     public int[][] curBoard;
     public int[][] lastBoard;
 
-    private SqueezeNcnn squeezencnn;
-
     public Board board;
     public Board previousBoard;
 
-    MyTask initNcnn;
+    private List<Callable<Void>> taskList;
 
     // opencv与app交互的回调函数
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -106,17 +104,10 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_detect_board);
         threadPool = Executors.newCachedThreadPool();
-        // 初始化Ncnn
-        initNcnn = new MyTask();
-        initNcnn.execute(squeezencnn);
         initBoard();
         initViews();
         initDetector();
-
-        Intent i = getIntent();
-        blackPlayer = i.getStringExtra("blackPlayer");
-        whitePlayer = i.getStringExtra("whitePlayer");
-        komi = i.getStringExtra("komi");
+        getInfoFromActivity();
     }
 
     @Override
@@ -130,8 +121,6 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     @Override
     protected void onRestart() {
         super.onRestart();
-        initNcnn = new MyTask();
-        initNcnn.execute(squeezencnn);
     }
 
     @Override
@@ -149,14 +138,8 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
 
     public void onDestroy() {
         super.onDestroy();
-        initNcnn.cancel(true);
-        initNet = false;
         if (mOpenCvCameraView != null) mOpenCvCameraView.disableView();
     }
-
-    public void onCameraViewStarted(int width, int height) {}
-
-    public void onCameraViewStopped() {}
 
     // 模拟按下按钮提示机器已经落子的情况
     // TODO: 将点击事件改为收到落子信号
@@ -170,10 +153,10 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             cdl = new CountDownLatch(THREAD_NUM);   // 计数器
             for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex ++ ) {
                 int innerT = threadIndex;
-                threadPool.execute(() -> {
-                    for (int task = 0; task < SINGLE_THREAD_TASK; task ++) {
+                Callable<Void> task = () -> {
+                    for (int task1 = 0; task1 < SINGLE_THREAD_TASK; task1++) {
                         // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
-                        int cnt = innerT * 19 + task;
+                        int cnt = innerT * 19 + task1;
                         int i = cnt / 19;
                         int j = cnt % 19;
                         String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
@@ -182,14 +165,18 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
                         else curBoard[i][j] = BLANK;
                     }
                     cdl.countDown();
-                });
+                    return null;
+                };
+                taskList.add(task);
             }
             try {
+                threadPool.invokeAll(taskList, 1, TimeUnit.MINUTES);
                 cdl.await();
+                taskList.clear();
+            } catch (InterruptedException e) {
+                Log.d(TAG, e.toString());
             }
-            catch (InterruptedException e) {
-                Log.e("TAG", e.toString());
-            }
+            //====== 打印测试
             StringBuilder res = new StringBuilder();
             for (int i = 0; i < 19; i ++ ) {
                 for (int j = 0; j < 19; j ++ ){
@@ -200,6 +187,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
                 res.append("\n");
             }
             Log.d(TAG, "识别后的棋盘" + "\n" + res + "\n");
+            //====== 打印测试结束
             Pair<Integer, Integer> move = getMoveByDiff();
             if (move == null) ToastUtil.show(this, "未落子");
             else {
@@ -221,15 +209,15 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
                     board.nextPlayer();
                     previousX = moveX;
                     previousY = moveY;
+                    showUI = true;
                     // TODO: 将落子位置传到引擎
-
                 }
                 else {
                     Log.w(TAG, "这里不可以落子");
                     curBoard[moveX][moveY] = BLANK;
                 }
                 Log.d(TAG, board + "--------------\n" + "lastBoard:\n");
-                //Log.d(TAG, previousBoard.toString());
+                Log.d(TAG, previousBoard.toString());
             }
         }
         else if (vid == R.id.btn_return) {
@@ -258,8 +246,24 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         else if (boardContour != null) {
             Drawer.drawBoardContour(inputImage, boardContour);
         }
+        // 关闭摄像头 显示友好界面
+        if (showUI){
+            showUI = false;
+            Intent intent = new Intent(this, BattleInfoActivity.class);
+            intent.putExtra("blackPlayer", blackPlayer);
+            intent.putExtra("whitePlayer", whitePlayer);
+            intent.putExtra("komi", komi);
+            intent.putExtra("rule", rule);
+            intent.putExtra("engine", engine);
+            intent.putExtra("board", board);
+            intent.putExtra("lastMove", board.getPoint(previousX, previousY));
+            startActivity(intent);
+        }
         return inputImage;
     }
+    public void onCameraViewStarted(int width, int height) {}
+
+    public void onCameraViewStopped() {}
 
     /**
      * 初始化上一个棋盘为空
@@ -277,8 +281,9 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     }
 
     private void initViews() {
+        taskList = new ArrayList<>();
         // 设置一些CameraView的基本状态信息
-        mOpenCvCameraView = findViewById(R.id.camera_surface_view1);
+        mOpenCvCameraView = findViewById(R.id.camera_surface_view);
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 
@@ -294,6 +299,15 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     private void initDetector() {
         initialBoardDetector = new InitialBoardDetector(true);
         boardDetector = new BoardDetector();
+    }
+
+    private void getInfoFromActivity() {
+        Intent i = getIntent();
+        blackPlayer = i.getStringExtra("blackPlayer");
+        whitePlayer = i.getStringExtra("whitePlayer");
+        komi = i.getStringExtra("komi");
+        rule = i.getStringExtra("rule");
+        engine = i.getStringExtra("engine");
     }
 
     /**
@@ -325,35 +339,4 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             }
         }
     }
-
-    @SuppressLint("StaticFieldLeak")
-    public class MyTask extends AsyncTask<SqueezeNcnn, Integer, Boolean> {
-
-        @Override
-        protected Boolean doInBackground(SqueezeNcnn... squeezeNcnns) {
-            squeezencnn = new SqueezeNcnn();
-            boolean ret_init = squeezencnn.Init(getAssets());
-            if (!ret_init) {
-                Log.e(TAG, "squeezencnn Init failed");
-            }
-            else {
-                Message msg = new Message();
-                msg.what = 1;
-                handler.sendMessage(msg);
-            }
-            return ret_init;
-        }
-    }
-
-    @SuppressLint("HandlerLeak")
-    private final Handler handler = new Handler() {
-        @Override
-        public void handleMessage(@NonNull Message msg) {
-            super.handleMessage(msg);
-            if (msg.what == 1) {
-                ToastUtil.show(DetectBoardActivity.this, "初始化已完成");
-                initNet = true;
-            }
-        }
-    };
 }

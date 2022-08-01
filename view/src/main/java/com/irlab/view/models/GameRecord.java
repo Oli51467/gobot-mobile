@@ -1,8 +1,9 @@
 package com.irlab.view.models;
 
+import java.io.Serializable;
 import java.util.Stack;
 
-public class GameRecord {
+public class GameRecord implements Serializable {
 
     private final Stack<GameTurn> preceding;
 
