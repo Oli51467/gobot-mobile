@@ -35,13 +35,9 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class DetectBoardActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
@@ -57,8 +53,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
 
     public static int previousX, previousY;
     public static boolean init = true, showUI = false;
-    private static CountDownLatch cdl;
-    public static ExecutorService threadPool;
+    public static ThreadPoolExecutor threadPool;
 
     private CameraBridgeViewBase mOpenCvCameraView;
 
@@ -82,8 +77,6 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public Board board;
     public Board previousBoard;
 
-    private List<Callable<Void>> taskList;
-
     // opencv与app交互的回调函数
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -103,7 +96,8 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_detect_board);
-        threadPool = Executors.newCachedThreadPool();
+        threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 1, 10, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(360));
         initBoard();
         initViews();
         initDetector();
@@ -121,6 +115,8 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     @Override
     protected void onRestart() {
         super.onRestart();
+        //initViews();
+        //detectBoard();
     }
 
     @Override
@@ -146,79 +142,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.btnFixBoardPosition) {
-            int moveX, moveY;
-            Bitmap bitmap = matToBitmap(orthogonalBoard);
-            bitmapMatrix = splitImage(bitmap, WIDTH);
-            savePNG_After(bitmap, "total");
-            cdl = new CountDownLatch(THREAD_NUM);   // 计数器
-            for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex ++ ) {
-                int innerT = threadIndex;
-                Callable<Void> task = () -> {
-                    for (int task1 = 0; task1 < SINGLE_THREAD_TASK; task1++) {
-                        // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
-                        int cnt = innerT * 19 + task1;
-                        int i = cnt / 19;
-                        int j = cnt % 19;
-                        String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
-                        if (result.equals("black")) curBoard[i][j] = BLACK;
-                        else if (result.equals("white")) curBoard[i][j] = WHITE;
-                        else curBoard[i][j] = BLANK;
-                    }
-                    cdl.countDown();
-                    return null;
-                };
-                taskList.add(task);
-            }
-            try {
-                threadPool.invokeAll(taskList, 1, TimeUnit.MINUTES);
-                cdl.await();
-                taskList.clear();
-            } catch (InterruptedException e) {
-                Log.d(TAG, e.toString());
-            }
-            //====== 打印测试
-            StringBuilder res = new StringBuilder();
-            for (int i = 0; i < 19; i ++ ) {
-                for (int j = 0; j < 19; j ++ ){
-                    if (curBoard[i][j] == BLANK) res.append("· ");
-                    else if (curBoard[i][j] == BLACK) res.append("1 ");
-                    else res.append("2 ");
-                }
-                res.append("\n");
-            }
-            Log.d(TAG, "识别后的棋盘" + "\n" + res + "\n");
-            //====== 打印测试结束
-            Pair<Integer, Integer> move = getMoveByDiff();
-            if (move == null) ToastUtil.show(this, "未落子");
-            else {
-                moveX = move.first;
-                moveY = move.second;
-                ToastUtil.show(this, moveX + " " + moveY);
-                Player player = board.getPlayer();
-                // 可以落子
-                if (board.play(moveX, moveY, player)) {
-                    Log.d(TAG, "合法落子");
-                    if (!init) {
-                        previousBoard.play(previousX, previousY, board.getLastPlayer());
-                    }
-                    else {
-                        init = false;
-                    }
-                    // 更新一下矩阵棋盘 更新为落完子后的棋盘局面 因为可能有提子
-                    updateMetricBoard();
-                    board.nextPlayer();
-                    previousX = moveX;
-                    previousY = moveY;
-                    showUI = true;
-                    // TODO: 将落子位置传到引擎
-                }
-                else {
-                    Log.w(TAG, "这里不可以落子");
-                    curBoard[moveX][moveY] = BLANK;
-                }
-                Log.d(TAG, board + "--------------\n" + "lastBoard:\n");
-                Log.d(TAG, previousBoard.toString());
-            }
+            detectBoard();
         }
         else if (vid == R.id.btn_return) {
             Intent intent = new Intent(this, SelectConfigActivity.class);
@@ -281,7 +205,6 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     }
 
     private void initViews() {
-        taskList = new ArrayList<>();
         // 设置一些CameraView的基本状态信息
         mOpenCvCameraView = findViewById(R.id.camera_surface_view);
         mOpenCvCameraView.setCvCameraViewListener(this);
@@ -337,6 +260,73 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
                     lastBoard[i][j] = cross.getGroup().getOwner().getIdentifier();
                 }
             }
+        }
+    }
+
+    public void detectBoard() {
+        int moveX, moveY;
+        Bitmap bitmap = matToBitmap(orthogonalBoard);
+        bitmapMatrix = splitImage(bitmap, WIDTH);
+        savePNG_After(bitmap, "total");
+        //cdl = new CountDownLatch(THREAD_NUM);   // 计数器
+        for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex ++ ) {
+            int innerT = threadIndex;
+            Runnable runnable = () -> {
+                for (int mTask = 0; mTask < SINGLE_THREAD_TASK; mTask++) {
+                    // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
+                    int cnt = innerT * 19 + mTask;
+                    int i = cnt / 19;
+                    int j = cnt % 19;
+                    String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
+                    if (result.equals("black")) curBoard[i][j] = BLACK;
+                    else if (result.equals("white")) curBoard[i][j] = WHITE;
+                    else curBoard[i][j] = BLANK;
+                }
+            };
+            threadPool.execute(runnable);
+        }
+        //====== 打印测试
+        StringBuilder res = new StringBuilder();
+        for (int i = 0; i < 19; i ++ ) {
+            for (int j = 0; j < 19; j ++ ){
+                if (curBoard[i][j] == BLANK) res.append("· ");
+                else if (curBoard[i][j] == BLACK) res.append("1 ");
+                else res.append("2 ");
+            }
+            res.append("\n");
+        }
+        Log.d(TAG, "识别后的棋盘" + "\n" + res + "\n");
+        //====== 打印测试结束
+        Pair<Integer, Integer> move = getMoveByDiff();
+        if (move == null) ToastUtil.show(this, "未落子");
+        else {
+            moveX = move.first;
+            moveY = move.second;
+            ToastUtil.show(this, moveX + " " + moveY);
+            Player player = board.getPlayer();
+            // 可以落子
+            if (board.play(moveX, moveY, player)) {
+                Log.d(TAG, "合法落子");
+                if (!init) {
+                    previousBoard.play(previousX, previousY, board.getLastPlayer());
+                }
+                else {
+                    init = false;
+                }
+                // 更新一下矩阵棋盘 更新为落完子后的棋盘局面 因为可能有提子
+                updateMetricBoard();
+                board.nextPlayer();
+                previousX = moveX;
+                previousY = moveY;
+                showUI = true;
+                // TODO: 将落子位置传到引擎
+            }
+            else {
+                Log.w(TAG, "这里不可以落子");
+                curBoard[moveX][moveY] = BLANK;
+            }
+            Log.d(TAG, board + "--------------\n" + "lastBoard:\n");
+            Log.d(TAG, previousBoard.toString());
         }
     }
 }
