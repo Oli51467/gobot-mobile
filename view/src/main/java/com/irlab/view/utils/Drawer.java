@@ -57,9 +57,7 @@ public class Drawer {
         goldenPaint.setColor(Color.rgb(255, 187, 26));
         paint.setColor(Color.WHITE);
 
-        blackPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        blackPaint.setTextSize(40);
-
+        blackPaint.setTextSize(30);
         whitePaint.setTextSize(40);
 
         paint.setFlags(Paint.FILTER_BITMAP_FLAG);
@@ -95,9 +93,20 @@ public class Drawer {
         float endOfLines = 950;
         for (int i = 0; i < 19; i ++ ) {
             canvas.drawLine(x + distanceBetweenLines, y + distanceBetweenLines * (i + 1), x + endOfLines, y + distanceBetweenLines * (i + 1), blackPaint);
+            if (i == 18) {
+                for (int j = 1; j <= 19; j ++ ) {
+                    canvas.drawText(String.valueOf(j), x + endOfLines + 10, y + distanceBetweenLines * (j + 0.25f), blackPaint);
+                }
+            }
         }
         for (int i = 0; i < 19; i ++ ) {
             canvas.drawLine(x + distanceBetweenLines * (i + 1), y + distanceBetweenLines, x + distanceBetweenLines * (i + 1), y + endOfLines, blackPaint);
+            if (i == 0) {
+                for (char j = 'A'; j <= 'T'; j ++ ) {
+                    if (j == 'I') continue;
+                    canvas.drawText(String.valueOf(j), x + distanceBetweenLines * (j - 'A' + (j > 'I' ? -0.25f : 0.75f)), y + endOfLines + 40, blackPaint);
+                }
+            }
         }
         // 画棋子
         for (int i = 0; i < DIMENSION; i ++ ) {
