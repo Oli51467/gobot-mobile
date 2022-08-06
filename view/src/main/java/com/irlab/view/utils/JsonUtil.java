@@ -37,4 +37,14 @@ public class JsonUtil {
         }
         return jsonParam.toString();
     }
+
+    public static String getJsonFormOfInitEngine(String userName) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("userName", userName);
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+        }
+        return jsonParam.toString();
+    }
 }

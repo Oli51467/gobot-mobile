@@ -1,5 +1,7 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.MyApplication.SERVER;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -93,7 +95,7 @@ public class LoginActivity extends Activity implements View.OnClickListener{
      * @param password 密码
      */
     public void checkInfo(String userName, String password) {
-        HttpUtil.sendOkHttpRequest(MyApplication.SERVER + "/api/checkUserInfo?userName=" + userName + "&password=" + password, new Callback() {
+        HttpUtil.sendOkHttpRequest(SERVER + "/api/checkUserInfo?userName=" + userName + "&password=" + password, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
 

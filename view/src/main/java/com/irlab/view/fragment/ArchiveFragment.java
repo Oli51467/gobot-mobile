@@ -1,5 +1,7 @@
 package com.irlab.view.fragment;
 
+import static com.irlab.base.MyApplication.SERVER;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -73,7 +75,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
     // 从SDCard读取数据并放到list中
     private void initData(Context context) {
         list = new ArrayList<>();
-        HttpUtil.sendOkHttpRequest(MyApplication.SERVER + "/api/getGames?userName=" + userName, new Callback() {
+        HttpUtil.sendOkHttpRequest(SERVER + "/api/getGames?userName=" + userName, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
 

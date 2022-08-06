@@ -1,5 +1,7 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.MyApplication.SERVER;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -79,7 +81,7 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
         list = new ArrayList<>();
         // 从数据库拿到所有已经配置好的配置信息
         String userName = sharedPreferences.getString("userName", null);
-        HttpUtil.sendOkHttpRequest( MyApplication.SERVER + "/api/getPlayConfig?userName=" + userName, new Callback() {
+        HttpUtil.sendOkHttpRequest( SERVER + "/api/getPlayConfig?userName=" + userName, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
 
@@ -137,7 +139,7 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
                 .setConformButton("删除", () -> {
                     CellData cellData = list.get(position);
                     Long id = cellData.getId();
-                    HttpUtil.sendOkHttpDelete(MyApplication.SERVER + "/api/deletePlayConfig?id=" + id, new Callback() {
+                    HttpUtil.sendOkHttpDelete(SERVER + "/api/deletePlayConfig?id=" + id, new Callback() {
                         @Override
                         public void onFailure(@NonNull Call call, @NonNull IOException e) {
                             runOnUiThread(() -> ToastUtil.show(PlayConfigActivity.this, "服务器异常 删除失败!"));

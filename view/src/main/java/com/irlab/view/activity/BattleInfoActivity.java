@@ -1,5 +1,7 @@
 package com.irlab.view.activity;
 
+import static com.irlab.view.utils.BoardUtil.getPositionByIndex;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -86,23 +88,6 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
         engine = intent.getStringExtra("engine");
     }
 
-    /**
-     * 由检测到的二维平面坐标转化为棋盘坐标
-     */
-    private String getPositionByIndex(int x, int y) {
-        String position = "";
-        int cnt = 0;
-        for (char c = 'A'; c <= 'Z'; c ++ ) {
-            if (cnt == x) {
-                position += c;
-                break;
-            }
-            cnt ++;
-        }
-        position += " " + (y + 1);
-        return position;
-    }
-
     @Override
     public void onClick(View v) {
         int vid = v.getId();
@@ -111,4 +96,7 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
             startActivity(intent);
         }
     }
+
+    // TODO: 将落子位置传到引擎
+
 }

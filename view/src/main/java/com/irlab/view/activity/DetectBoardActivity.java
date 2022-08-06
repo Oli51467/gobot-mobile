@@ -1,5 +1,7 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.MyApplication.ENGINE_SERVER;
+import static com.irlab.base.MyApplication.JSON;
 import static com.irlab.base.MyApplication.initNet;
 import static com.irlab.base.MyApplication.squeezencnn;
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
@@ -18,6 +20,9 @@ import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.Button;
 
+import androidx.annotation.NonNull;
+
+import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 import com.irlab.view.models.Board;
@@ -27,6 +32,7 @@ import com.irlab.view.utils.Drawer;
 import com.irlab.view.processing.boardDetector.BoardDetector;
 import com.irlab.view.processing.initialBoardDetector.InitialBoardDetector;
 import com.irlab.view.utils.ImageUtils;
+import com.irlab.view.utils.JsonUtil;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -35,10 +41,17 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class DetectBoardActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
 
@@ -48,6 +61,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     public static final int WIDTH = 19;
     public static final int HEIGHT = 19;
     public static final int THREAD_NUM = 19;
+    public static final int STONE_NUM = 361;
     public static final int SINGLE_THREAD_TASK = 19;
     public static final String TAG = "Detector";
 
@@ -97,7 +111,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_detect_board);
         threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 1, 10, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(360));
+                new LinkedBlockingQueue<>(STONE_NUM));
         initBoard();
         initViews();
         initDetector();
@@ -319,7 +333,6 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
                 previousX = moveX;
                 previousY = moveY;
                 showUI = true;
-                // TODO: 将落子位置传到引擎
             }
             else {
                 Log.w(TAG, "这里不可以落子");
@@ -328,5 +341,22 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             Log.d(TAG, board + "--------------\n" + "lastBoard:\n");
             Log.d(TAG, previousBoard.toString());
         }
+    }
+
+    // 初始化引擎
+    public void InitEngine(String komi, String userName) {
+        String json = JsonUtil.getJsonFormOfInitEngine(userName);
+        RequestBody requestBody = FormBody.create(JSON, json);
+        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "", requestBody, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+
+            }
+        });
     }
 }
