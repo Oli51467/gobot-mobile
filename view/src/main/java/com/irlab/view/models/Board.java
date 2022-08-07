@@ -1,8 +1,18 @@
 package com.irlab.view.models;
 
+import android.annotation.SuppressLint;
+import android.util.Log;
+
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import onion.w4v3xrmknycexlsd.lib.sgfcharm.BuildConfig;
 
 // 棋盘
 public class Board implements Serializable {
@@ -13,6 +23,7 @@ public class Board implements Serializable {
     private final int width;
     private final int height;
     public final Point[][] points;
+    public List<Point> recordPoints;
     private final int initialHandicap;
     private final GameRecord gameRecord;
 
@@ -25,6 +36,7 @@ public class Board implements Serializable {
         this.initialHandicap = handicap;
         this.points = new Point[width][height];
         this.gameRecord = new GameRecord(width, height, handicap);
+        this.recordPoints = new ArrayList<>();
         initBoard();
     }
 
@@ -126,6 +138,7 @@ public class Board implements Serializable {
             stone.setGroup(newGroup);
         }
         gameRecord.apply(currentTurn);
+        recordPoints.add(point);
         return true;
     }
 
@@ -182,5 +195,42 @@ public class Board implements Serializable {
             board += "\n";
         }
         return board;
+    }
+
+    public String generateSgf(String blackPlayer, String whitePlayer, String komi) {
+        StringBuilder sgf = new StringBuilder();
+        writeHeader(sgf, blackPlayer, whitePlayer, komi);
+        for (Point move : recordPoints) {
+            sgf.append(move.sgf());
+        }
+        sgf.append(")");
+        return sgf.toString();
+    }
+
+    private void writeHeader(StringBuilder sgf, String blackPlayer, String whitePlayer, String komi) {
+        SimpleDateFormat sdf =  new SimpleDateFormat("yyyy-MM-dd");
+        Calendar c = Calendar.getInstance();
+        String date = sdf.format(new Date(c.getTimeInMillis()));
+
+        sgf.append("(;");
+        writeProperty(sgf, "FF", "4");     // SGF version
+        writeProperty(sgf, "GM", "1");     // Type of game (1 = Go)
+        writeProperty(sgf, "CA", "UTF-8");
+        writeProperty(sgf, "SZ", "" + width);
+        writeProperty(sgf, "DT", date);
+        writeProperty(sgf, "AP", "Kifu Recorder v" + BuildConfig.VERSION_NAME);
+        writeProperty(sgf, "KM", komi);
+        writeProperty(sgf, "PW", whitePlayer);
+        writeProperty(sgf, "PB", blackPlayer);
+        writeProperty(sgf, "Z1", "" + recordPoints.size());
+        //writeProperty(sgf, "Z2", "" + numberOfUndoes);
+        //writeProperty(sgf, "Z3", "" + numberOfManualAdditions);
+    }
+
+    private void writeProperty(StringBuilder sgf, String property, String value) {
+        sgf.append(property);
+        sgf.append("[");
+        sgf.append(value);
+        sgf.append("]");
     }
 }

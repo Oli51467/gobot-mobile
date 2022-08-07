@@ -44,7 +44,6 @@ public class GameRecord implements Serializable {
         for (int i = 0; i < following.size(); i++) {
             if (!following.get(i).equals(castedObj.following.get(i))) return false;
         }
-
         return true;
     }
 }

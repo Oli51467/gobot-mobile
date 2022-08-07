@@ -1,7 +1,7 @@
 package com.irlab.view.activity;
 
-import static com.irlab.base.MyApplication.ENGINE_SERVER;
 import static com.irlab.base.MyApplication.JSON;
+import static com.irlab.base.MyApplication.SERVER;
 import static com.irlab.base.MyApplication.initNet;
 import static com.irlab.base.MyApplication.squeezencnn;
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
@@ -9,10 +9,15 @@ import static com.irlab.view.utils.ImageUtils.matToBitmap;
 import static com.irlab.view.utils.ImageUtils.savePNG_After;
 import static com.irlab.view.utils.ImageUtils.splitImage;
 
-import android.app.Activity;
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -21,7 +26,9 @@ import android.view.WindowManager;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
+import com.irlab.base.MyApplication;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
@@ -33,7 +40,12 @@ import com.irlab.view.processing.boardDetector.BoardDetector;
 import com.irlab.view.processing.initialBoardDetector.InitialBoardDetector;
 import com.irlab.view.utils.ImageUtils;
 import com.irlab.view.utils.JsonUtil;
+import com.rosefinches.smiledialog.SmileDialog;
+import com.rosefinches.smiledialog.SmileDialogBuilder;
+import com.rosefinches.smiledialog.enums.SmileDialogType;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
@@ -43,6 +55,7 @@ import org.opencv.core.MatOfPoint;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -53,8 +66,7 @@ import okhttp3.FormBody;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class DetectBoardActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
-
+public class DetectBoardActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
     public static final int BLANK = 0;
     public static final int BLACK = 1;
     public static final int WHITE = 2;
@@ -110,6 +122,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_detect_board);
+        Objects.requireNonNull(getSupportActionBar()).hide();
         threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 1, 10, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(STONE_NUM));
         initBoard();
@@ -129,8 +142,6 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
     @Override
     protected void onRestart() {
         super.onRestart();
-        //initViews();
-        //detectBoard();
     }
 
     @Override
@@ -158,9 +169,28 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         if (vid == R.id.btnFixBoardPosition) {
             detectBoard();
         }
+        else if (vid == R.id.btn_saveSGF) {
+            SmileDialog dialog = new SmileDialogBuilder(this, SmileDialogType.WARNING)
+                    .hideTitle(true)
+                    .setContentText(getString(R.string.dialog_finish_recording))
+                    .setConformBgResColor(com.irlab.base.R.color.warning)
+                    .setConformTextColor(Color.WHITE)
+                    .setCancelTextColor(Color.BLACK)
+                    .setCancelButton("取消")
+                    .setCancelBgResColor(R.color.whiteSmoke)
+                    .setWindowAnimations(R.style.dialog_style)
+                    .setConformButton("确定", () -> {
+                        saveGameAsSgf(getApplicationContext());
+                        Intent intent = new Intent(this, SelectConfigActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        startActivity(intent);
+                    })
+                    .build();
+            dialog.show();
+        }
         else if (vid == R.id.btn_return) {
             Intent intent = new Intent(this, SelectConfigActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
     }
@@ -228,9 +258,11 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         btnFixBoardPosition.setOnClickListener(this);
         btnFixBoardPosition.setEnabled(false);
 
+        Button btnSaveSGF = findViewById(R.id.btn_saveSGF);
+        btnSaveSGF.setOnClickListener(this);
+
         Button btnReturn = findViewById(R.id.btn_return);
         btnReturn.setOnClickListener(this);
-        btnReturn.setEnabled(true);
     }
 
     private void initDetector() {
@@ -300,7 +332,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             threadPool.execute(runnable);
         }
         //====== 打印测试
-        StringBuilder res = new StringBuilder();
+        /*StringBuilder res = new StringBuilder();
         for (int i = 0; i < 19; i ++ ) {
             for (int j = 0; j < 19; j ++ ){
                 if (curBoard[i][j] == BLANK) res.append("· ");
@@ -309,7 +341,7 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
             }
             res.append("\n");
         }
-        Log.d(TAG, "识别后的棋盘" + "\n" + res + "\n");
+        Log.d(TAG, "识别后的棋盘" + "\n" + res + "\n");*/
         //====== 打印测试结束
         Pair<Integer, Integer> move = getMoveByDiff();
         if (move == null) ToastUtil.show(this, "未落子");
@@ -343,20 +375,50 @@ public class DetectBoardActivity extends Activity implements CameraBridgeViewBas
         }
     }
 
-    // 初始化引擎
-    public void InitEngine(String komi, String userName) {
-        String json = JsonUtil.getJsonFormOfInitEngine(userName);
-        RequestBody requestBody = FormBody.create(JSON, json);
-        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "", requestBody, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+    public void saveGameAsSgf(Context context) {
+        String playInfo = "黑方:   " + blackPlayer + "     白方:   " + whitePlayer;
+        SharedPreferences sharedPreferences = MyApplication.getInstance().preferences;
+        String userName = sharedPreferences.getString("userName", null);
 
-            }
+        String json = JsonUtil.getJsonFormOfGame(userName, playInfo, "白中盘胜", board.generateSgf(blackPlayer, whitePlayer, komi));
+        RequestBody requestBody = FormBody.create(JSON, json);
+        HttpUtil.sendOkHttpResponse(SERVER + "/api/saveGame", requestBody, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-
+                String responseData = response.body().string();
+                try {
+                    JSONObject jsonObject = new JSONObject(responseData);
+                    String status = jsonObject.getString("status");
+                    Message msg = new Message();
+                    msg.obj = context;
+                    if (status.equals("success")) {
+                        msg.what = 1;
+                    }
+                    else {
+                        msg.what = 2;
+                    }
+                    handler.sendMessage(msg);
+                } catch (JSONException e) {
+                    Log.d(TAG, e.toString());
+                }
             }
         });
     }
+
+    @SuppressLint("HandlerLeak")
+    private final Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == 1) {
+                ToastUtil.show((Context) msg.obj, "保存成功");
+            }
+            else if (msg.what == 2) {
+                ToastUtil.show((Context) msg.obj, "服务器异常");
+            }
+        }
+    };
 }

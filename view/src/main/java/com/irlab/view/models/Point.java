@@ -13,6 +13,8 @@ public class Point implements Serializable {
 
     private final int x, y;
 
+    private boolean isPass;
+
     // 描述该点是否在一个组内或属于哪个组
     private Group Group;
 
@@ -21,6 +23,7 @@ public class Point implements Serializable {
         this.x = x;
         this.y = y;
         this.Group = null;
+        this.isPass = false;
     }
 
     public int getX() {
@@ -83,5 +86,14 @@ public class Point implements Serializable {
             }
         }
         return emptyNeighbors;
+    }
+
+    public String sgf() {
+        int l = 'a' + x;
+        int c = 'a' + y;
+        String coordenada = "" + (char)c + (char)l;
+        if (isPass) coordenada = "";
+        char cor = this.getGroup().getOwner().getIdentifier() == Board.BLACK_STONE ? 'B' : 'W';
+        return ";" + cor + "[" + coordenada + "]";
     }
 }
