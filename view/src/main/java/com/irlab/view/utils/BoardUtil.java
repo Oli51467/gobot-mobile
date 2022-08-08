@@ -7,15 +7,15 @@ public class BoardUtil {
     public static String getPositionByIndex(int x, int y) {
         String position = "";
         int cnt = 0;
-        for (char c = 'A'; c <= 'Z'; c ++ ) {
+        for (char c = 'A'; c <= 'T'; c ++ ) {
             if (c == 'I') continue;
-            if (cnt == x) {
+            if (cnt == y) {
                 position += c;
                 break;
             }
             cnt ++;
         }
-        position += " " + (y + 1);
+        position += " " + (x + 1);
         return position;
     }
 }

@@ -110,19 +110,19 @@ public class Drawer {
         }
         // 画棋子
         for (int i = 0; i < DIMENSION; i ++ ) {
-            for (int j = 0; j < DIMENSION; j ++ ) {
+            for (int j = DIMENSION - 1; j >= 0; j -- ) {
                 float centerX = x + distanceBetweenLines + j * distanceBetweenLines;
                 float centerY = y + distanceBetweenLines + i * distanceBetweenLines;
                 if (checkIsStar(i, j)) {
                     canvas.drawCircle(centerX, centerY, STAR_RADIUS, blackPaint);
                 }
-                if (board.getPoint(j, i).getGroup() != null) {
-                    if (j == lastMove.getX() && i == lastMove.getY()) {
+                if (board.getPoint(i, j).getGroup() != null) {
+                    if (i == lastMove.getX() && j == lastMove.getY()) {
                         canvas.drawCircle(centerX, centerY, LAST_MOVE_RADIUS, bluePaint);
                     }
-                    if (board.getPoint(j, i).getGroup().getOwner().getIdentifier() == Board.BLACK_STONE) {
+                    if (board.getPoint(i, j).getGroup().getOwner().getIdentifier() == Board.BLACK_STONE) {
                         canvas.drawCircle(centerX, centerY, STONE_RADIUS, blackPaint);
-                    } else if (board.getPoint(j, i).getGroup().getOwner().getIdentifier() == Board.WHITE_STONE) {
+                    } else if (board.getPoint(i, j).getGroup().getOwner().getIdentifier() == Board.WHITE_STONE) {
                         canvas.drawCircle(centerX, centerY, STONE_RADIUS, whitePaint);
                     }
                 }

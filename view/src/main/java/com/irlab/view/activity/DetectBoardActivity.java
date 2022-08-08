@@ -4,6 +4,7 @@ import static com.irlab.base.MyApplication.JSON;
 import static com.irlab.base.MyApplication.SERVER;
 import static com.irlab.base.MyApplication.initNet;
 import static com.irlab.base.MyApplication.squeezencnn;
+
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
 import static com.irlab.view.utils.ImageUtils.matToBitmap;
 import static com.irlab.view.utils.ImageUtils.savePNG_After;
@@ -32,6 +33,7 @@ import com.irlab.base.MyApplication;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
+import com.irlab.view.jniprocessing.JniImageProcessing;
 import com.irlab.view.models.Board;
 import com.irlab.view.models.Player;
 import com.irlab.view.models.Point;
@@ -85,7 +87,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     private Button btnFixBoardPosition;
 
-    private Mat orthogonalBoard = null;
+    private Mat orthogonalBoard = null, boardPositionInImage = null;
 
     private MatOfPoint boardContour;
 
@@ -205,9 +207,10 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
         if (initialBoardDetector.process()) {
             // 拿到轮廓检测后的棋盘 Mat && MatOfPoint
-            Mat boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
+            boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
             boardContour = convertToMatOfPoint(boardPositionInImage);
             orthogonalBoard = ImageUtils.transformOrthogonally(inputImage, boardPositionInImage);
+            ImageUtils.matRotateClockWise90(orthogonalBoard);
             if (initNet) runOnUiThread(() -> btnFixBoardPosition.setEnabled(true));
         }
         // 在图像上画出轮廓

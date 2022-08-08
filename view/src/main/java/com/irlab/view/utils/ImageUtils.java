@@ -1,5 +1,8 @@
 package com.irlab.view.utils;
 
+import static org.opencv.core.Core.flip;
+import static org.opencv.core.Core.transpose;
+
 import android.graphics.Bitmap;
 import android.os.Environment;
 
@@ -80,5 +83,14 @@ public class ImageUtils {
             }
         }
         return bitmapMatrix;
+    }
+
+    public static Mat matRotateClockWise90(Mat src)
+    {
+        // 矩阵转置
+        transpose(src, src);
+        //0: 沿X轴翻转； >0: 沿Y轴翻转； <0: 沿X轴和Y轴翻转
+        flip(src, src, 1);// 翻转模式，flipCode == 0垂直翻转（沿X轴翻转），flipCode>0水平翻转（沿Y轴翻转），flipCode<0水平垂直翻转（先沿X轴翻转，再沿Y轴翻转，等价于旋转180°）
+        return src;
     }
 }

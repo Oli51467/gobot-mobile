@@ -5,9 +5,11 @@ import static com.irlab.base.MyApplication.SERVER;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,7 +21,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.TextView;
 
 import com.irlab.base.MyApplication;
 import com.irlab.base.entity.GameInfo;
@@ -27,6 +28,9 @@ import com.irlab.base.utils.HttpUtil;
 import com.irlab.view.R;
 import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.adapter.ArchiveAdapter;
+import com.rosefinches.smiledialog.SmileDialog;
+import com.rosefinches.smiledialog.SmileDialogBuilder;
+import com.rosefinches.smiledialog.enums.SmileDialogType;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,7 +44,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
-public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick, AdapterView.OnItemClickListener {
+public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick, AdapterView.OnItemClickListener, ArchiveAdapter.setLongClick {
 
     public static final String TAG = ArchiveFragment.class.getName();
 
@@ -70,6 +74,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
         mRecyclerView = view.findViewById(R.id.archive_item);
         linearLayoutManager = new LinearLayoutManager(this.getActivity(), LinearLayoutManager.VERTICAL, false);
         mAdapter.setOnItemClickListener(this);
+        mAdapter.setOnItemLongClickListener(this);
     }
 
     // 从SDCard读取数据并放到list中
@@ -92,7 +97,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
     private void addDataToMap(String jsonData, Context context) {
         try {
             JSONArray jsonArray = new JSONArray(jsonData);
-            for (int i = 0; i < jsonArray.length(); i ++ ) {
+            for (int i = jsonArray.length() - 1; i >= 0; i -- ) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 Long gid = jsonObject.getLong("id");
                 String gPlayInfo = jsonObject.getString("playInfo");
@@ -113,7 +118,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
 
 
     @SuppressLint("HandlerLeak")
-    private Handler handler = new Handler() {
+    private final Handler handler = new Handler() {
         @Override
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
@@ -143,6 +148,34 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
         bundle.putString("code", gameInfo.getCode());
         intent.putExtras(bundle);
         startActivity(intent);
+    }
+
+    @Override
+    public boolean onItemLongClickListener(View view, int position) {
+        @SuppressLint("ResourceAsColor") SmileDialog dialog = new SmileDialogBuilder((AppCompatActivity) this.getActivity(), SmileDialogType.ERROR)
+                .hideTitle(true)
+                .setContentText("你确定删除吗")
+                .setConformBgResColor(R.color.delete)
+                .setConformTextColor(Color.WHITE)
+                .setCancelTextColor(Color.BLACK)
+                .setCancelButton("取消")
+                .setCancelBgResColor(R.color.whiteSmoke)
+                .setWindowAnimations(R.style.dialog_style)
+                .setConformButton("删除", () -> {
+                    GameInfo gameInfo = list.get(position);
+                    Long id = gameInfo.getId();
+                    HttpUtil.sendOkHttpDelete(SERVER + "/api/deleteGame?id=" + id, new Callback() {
+                        @Override
+                        public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+                        @Override
+                        public void onResponse(@NonNull Call call, @NonNull Response response) {
+
+                        }
+                    });
+                })
+                .build();
+        dialog.show();
+        return false;
     }
 
     /**

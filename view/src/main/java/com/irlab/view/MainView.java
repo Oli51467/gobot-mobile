@@ -1,6 +1,6 @@
 package com.irlab.view;
 
-import androidx.fragment.app.FragmentActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -26,8 +27,10 @@ import com.irlab.view.fragment.PlayFragment;
 import com.irlab.view.fragment.ArchiveFragment;
 import com.irlab.view.fragment.SettingsFragment;
 
+import java.util.Objects;
+
 @Route(path = "/view/main")
-public class MainView extends FragmentActivity implements View.OnClickListener {
+public class MainView extends AppCompatActivity implements View.OnClickListener {
 
     // 三个布局界面
     private PlayFragment playFragment = null;
@@ -48,10 +51,6 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
     private TextView settingsText = null;
     private TextView archiveText = null;
 
-    private RelativeLayout openBluetooth = null;
-
-    private Button logout = null, play = null, playSettings = null, instruction = null;
-
     @Override
     public boolean navigateUpTo(Intent upIntent) {
         return super.navigateUpTo(upIntent);
@@ -66,8 +65,10 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // 要求窗口没有 title
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.setContentView(R.layout.activity_main_view);
+        Objects.requireNonNull(getSupportActionBar()).hide();
         // 注入Arouter
         ARouter.getInstance().inject(this);
         // 拿到SharedPreference
@@ -132,11 +133,11 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
 
     // 初始化fragment中的控件并设置监听事件
     public void initFragmentViewsAndEvents() {
-        openBluetooth = findViewById(R.id.layout_bluetooth);
-        logout = findViewById(R.id.btn_logout);
-        play = findViewById(R.id.btn_play);
-        playSettings = findViewById(R.id.btn_play_settings);
-        instruction = findViewById(R.id.btn_instruction);
+        RelativeLayout openBluetooth = findViewById(R.id.layout_bluetooth);
+        Button logout = findViewById(R.id.btn_logout);
+        Button play = findViewById(R.id.btn_play);
+        Button playSettings = findViewById(R.id.btn_play_settings);
+        Button instruction = findViewById(R.id.btn_instruction);
 
         openBluetooth.setOnClickListener(this);
         logout.setOnClickListener(this);
@@ -164,7 +165,7 @@ public class MainView extends FragmentActivity implements View.OnClickListener {
             // 退出登录时, 清空SharedPreferences中保存的用户信息, 下次登录时不再自动登录
             SharedPreferences.Editor editor = preferences.edit();
             editor.remove("userName");
-            editor.commit();
+            editor.apply();
             ToastUtil.show(this, "退出登录");
             // 跳转到登录界面
             ARouter.getInstance().build("/auth/login")
