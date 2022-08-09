@@ -75,11 +75,11 @@ public class ImageUtils {
         int unitHeight = rawBitmap.getHeight() / piece;
         int unitWidth = rawBitmap.getWidth() / piece;
         Bitmap unitBitmap;
-        for (int i = 0; i < piece; i++) {
-            for (int j = 0; j < piece; j++) {
+        for (int i = 0; i < piece; i ++ ) {
+            for (int j = 0; j < piece; j ++ ) {
                 unitBitmap = Bitmap.createBitmap(rawBitmap, j * unitWidth, i * unitHeight, unitWidth, unitHeight);
                 bitmapMatrix[i][j] = unitBitmap;
-                savePNG_After(unitBitmap, i + "_" + j);
+                savePNG_After(unitBitmap, i + "==" + j);
             }
         }
         return bitmapMatrix;
@@ -89,8 +89,7 @@ public class ImageUtils {
     {
         // 矩阵转置
         transpose(src, src);
-        //0: 沿X轴翻转； >0: 沿Y轴翻转； <0: 沿X轴和Y轴翻转
-        flip(src, src, 1);// 翻转模式，flipCode == 0垂直翻转（沿X轴翻转），flipCode>0水平翻转（沿Y轴翻转），flipCode<0水平垂直翻转（先沿X轴翻转，再沿Y轴翻转，等价于旋转180°）
+        flip(src, src, 0);
         return src;
     }
 }

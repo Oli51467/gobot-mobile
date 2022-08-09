@@ -1,5 +1,6 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.MyApplication.ENGINE_SERVER;
 import static com.irlab.base.MyApplication.JSON;
 import static com.irlab.base.MyApplication.SERVER;
 import static com.irlab.base.MyApplication.initNet;
@@ -30,10 +31,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.irlab.base.MyApplication;
+import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
-import com.irlab.view.jniprocessing.JniImageProcessing;
 import com.irlab.view.models.Board;
 import com.irlab.view.models.Player;
 import com.irlab.view.models.Point;
@@ -64,7 +65,6 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.FormBody;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
@@ -87,7 +87,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     private Button btnFixBoardPosition;
 
-    private Mat orthogonalBoard = null, boardPositionInImage = null;
+    private Mat orthogonalBoard = null;
 
     private MatOfPoint boardContour;
 
@@ -127,6 +127,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         Objects.requireNonNull(getSupportActionBar()).hide();
         threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 1, 10, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(STONE_NUM));
+        initEngine(getApplicationContext());
         initBoard();
         initViews();
         initDetector();
@@ -207,10 +208,11 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
         if (initialBoardDetector.process()) {
             // 拿到轮廓检测后的棋盘 Mat && MatOfPoint
-            boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
+            Mat boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
             boardContour = convertToMatOfPoint(boardPositionInImage);
             orthogonalBoard = ImageUtils.transformOrthogonally(inputImage, boardPositionInImage);
-            ImageUtils.matRotateClockWise90(orthogonalBoard);
+            if (boardContour != null) Drawer.drawBoardContour(inputImage, boardContour);
+            orthogonalBoard = ImageUtils.matRotateClockWise90(orthogonalBoard);
             if (initNet) runOnUiThread(() -> btnFixBoardPosition.setEnabled(true));
         }
         // 在图像上画出轮廓
@@ -273,6 +275,36 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         boardDetector = new BoardDetector();
     }
 
+    private void initEngine(Context context) {
+        String userName = MyApplication.getInstance().preferences.getString("userName", null);
+        String json = JsonUtil.getJsonFormOfInitEngine(userName);
+        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/init", requestBody, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseData = Objects.requireNonNull(response.body()).string();
+                try {
+                    JSONObject jsonObject = new JSONObject(responseData);
+                    int code = jsonObject.getInt("code");
+                    Message msg = new Message();
+                    msg.obj = context;
+                    if (code == 1000) {
+                        msg.what = ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getCode();
+                    }
+                    else {
+                        msg.what = ResponseCode.ENGINE_CONNECT_FAILED.getCode();
+                    }
+                    handler.sendMessage(msg);
+                } catch (JSONException e) {
+                    Log.d(TAG, e.toString());
+                }
+            }
+        });
+    }
+
     private void getInfoFromActivity() {
         Intent i = getIntent();
         blackPlayer = i.getStringExtra("blackPlayer");
@@ -317,7 +349,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         Bitmap bitmap = matToBitmap(orthogonalBoard);
         bitmapMatrix = splitImage(bitmap, WIDTH);
         savePNG_After(bitmap, "total");
-        //cdl = new CountDownLatch(THREAD_NUM);   // 计数器
         for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex ++ ) {
             int innerT = threadIndex;
             Runnable runnable = () -> {
@@ -351,7 +382,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         else {
             moveX = move.first;
             moveY = move.second;
-            ToastUtil.show(this, moveX + " " + moveY);
+            ToastUtil.show(this, (moveX + 1) + " " + (moveY + 1));
             Player player = board.getPlayer();
             // 可以落子
             if (board.play(moveX, moveY, player)) {
@@ -384,24 +415,24 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         String userName = sharedPreferences.getString("userName", null);
 
         String json = JsonUtil.getJsonFormOfGame(userName, playInfo, "白中盘胜", board.generateSgf(blackPlayer, whitePlayer, komi));
-        RequestBody requestBody = FormBody.create(JSON, json);
+        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(SERVER + "/api/saveGame", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {}
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = response.body().string();
+                String responseData = Objects.requireNonNull(response.body()).string();
                 try {
                     JSONObject jsonObject = new JSONObject(responseData);
                     String status = jsonObject.getString("status");
                     Message msg = new Message();
                     msg.obj = context;
                     if (status.equals("success")) {
-                        msg.what = 1;
+                        msg.what = ResponseCode.SAVE_SGF_SUCCESSFULLY.getCode();
                     }
                     else {
-                        msg.what = 2;
+                        msg.what = ResponseCode.SERVER_FAILED.getCode();
                     }
                     handler.sendMessage(msg);
                 } catch (JSONException e) {
@@ -416,11 +447,17 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if (msg.what == 1) {
-                ToastUtil.show((Context) msg.obj, "保存成功");
+            if (msg.what == ResponseCode.SAVE_SGF_SUCCESSFULLY.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.SAVE_SGF_SUCCESSFULLY.getMsg());
             }
-            else if (msg.what == 2) {
-                ToastUtil.show((Context) msg.obj, "服务器异常");
+            else if (msg.what == ResponseCode.SERVER_FAILED.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.SERVER_FAILED.getMsg());
+            }
+            else if (msg.what == ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getMsg());
+            }
+            else if (msg.what == ResponseCode.ENGINE_CONNECT_FAILED.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_FAILED.getMsg());
             }
         }
     };

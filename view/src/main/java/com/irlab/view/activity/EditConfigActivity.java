@@ -25,6 +25,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import com.irlab.base.MyApplication;
 import com.irlab.base.entity.CellData;
+import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.ButtonListenerUtil;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.view.R;
@@ -40,7 +41,6 @@ import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.FormBody;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
@@ -53,23 +53,12 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
 
     private SharedPreferences preferences;
 
-    // 选择让几子的String适配器
-    private ArrayAdapter<String> tAdapter, engineAdapter;
-
     // 分别为选择规则的下拉列表
     private Spinner tSpinner, engineSpinner;
 
-    private RadioButton chineseRule, japaneseRule;
-
-    private RadioGroup mRule;
-
     private Button save = null;
 
-    private ImageView back = null;
-
     private EditText mPlayerBlack, mPlayerWhite, mDescription;
-
-    private CellData configInfo = null;
 
     private Map<String, Object> config;
 
@@ -82,7 +71,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_config);
         // 从bundle中拿到传来的CellData
-        configInfo = (CellData) getIntent().getSerializableExtra("configItem");
+        CellData configInfo = (CellData) getIntent().getSerializableExtra("configItem");
         preferences = MyApplication.getInstance().preferences;
         // 根据id找到对应的配置信息
         id = configInfo.getId();
@@ -104,7 +93,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
                     config.put("komi", jsonObject.getInt("komi"));
                     config.put("rule", jsonObject.getInt("rule"));
                     Message msg = new Message();
-                    msg.what = 1;
+                    msg.what = ResponseCode.GET_PLAY_CONFIG_SUCCESSFULLY.getCode();
                     handler.sendMessage(msg);
                 } catch (JSONException e) {
                     Log.d(TAG, e.toString());
@@ -114,16 +103,16 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
     }
 
     private void initView() {
-        mRule = findViewById(R.id.rg_rule);
+        RadioGroup mRule = findViewById(R.id.rg_rule);
         tSpinner = findViewById(R.id.spinner_T);
         engineSpinner = findViewById(R.id.spinner_engine);
         save = findViewById(R.id.btn_save);
-        back = findViewById(R.id.header_back);
+        ImageView back = findViewById(R.id.header_back);
         mPlayerBlack = findViewById(R.id.et_player_black);
         mPlayerWhite = findViewById(R.id.et_player_white);
         mDescription = findViewById(R.id.et_desc);
-        chineseRule = findViewById(R.id.rb_chinese_rule);
-        japaneseRule = findViewById(R.id.rb_japanese_rule);
+        RadioButton chineseRule = findViewById(R.id.rb_chinese_rule);
+        RadioButton japaneseRule = findViewById(R.id.rb_japanese_rule);
 
         // 设置内容
         mPlayerBlack.setText(Objects.requireNonNull(config.get("playerBlack")).toString());
@@ -131,7 +120,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         mDescription.setText(Objects.requireNonNull(config.get("desc")).toString());
         posT = (Integer) config.get("komi");
         // ### 暂时手动判断 这里以后要看一下怎么改方便
-        if (config.get("engine").equals("b20")) posEngine = 0;
+        if (Objects.equals(config.get("engine"), "b20")) posEngine = 0;
         else posEngine = 1;
         if ((Integer) config.get("rule") == 0) {
             chineseRule.setChecked(true);
@@ -147,8 +136,9 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
 
     private void initData() {
         // 初始化适配器
-        tAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.T);
-        engineAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.ENGINES);
+        // 选择让几子的String适配器
+        ArrayAdapter<String> tAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.T);
+        ArrayAdapter<String> engineAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.ENGINES);
         // 将adapter 添加到spinner中
         tSpinner.setAdapter(tAdapter);
         engineSpinner.setAdapter(engineAdapter);
@@ -175,7 +165,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
             String desc = mDescription.getText().toString();
             // 将该配置封装成一个对象插入到数据库
             String json = JsonUtil.getJsonFormOfPlayConfig(userName, playerBlack, playerWhite, MyApplication.ENGINES[posEngine], desc, posT, rule);
-            RequestBody requestBody = FormBody.create(JSON, json);
+            RequestBody requestBody = RequestBody.Companion.create(json, JSON);
             // 插入成功后跳转
             HttpUtil.sendOkHttpResponse(SERVER + "/api/updatePlayConfig?id=" + id, requestBody, new Callback() {
                 @Override
@@ -228,11 +218,11 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
     }
 
     @SuppressLint("HandlerLeak")
-    private Handler handler = new Handler() {
+    private final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if (msg.what == 1) {
+            if (msg.what == ResponseCode.GET_PLAY_CONFIG_SUCCESSFULLY.getCode()) {
                 // 初始化界面和数据
                 initView();
                 initData();

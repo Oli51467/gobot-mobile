@@ -26,10 +26,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.FormBody;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
@@ -104,23 +104,22 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
                 }
                 @Override
                 public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    String responseData = response.body().string();
+                    String responseData = Objects.requireNonNull(response.body()).string();
                     try {
                         JSONObject jsonObject = new JSONObject(responseData);
                         String status = jsonObject.getString("status");
                         // 该用户名没有被注册
                         if (status.equals("nullObject")) {
                             String json = getJson(userName, password);
-                            RequestBody requestBody = FormBody.create(JSON, json);
-
+                            RequestBody requestBody = RequestBody.Companion.create(json, JSON);
                             HttpUtil.sendOkHttpResponse(SERVER + "/api/addUser", requestBody, new Callback() {
                                 @Override
-                                public void onFailure(Call call, IOException e) {
+                                public void onFailure(@NonNull Call call, @NonNull IOException e) {
 
                                 }
                                 @Override
-                                public void onResponse(Call call, Response response) throws IOException {
-                                    String responseData = response.body().string();
+                                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                                    String responseData = Objects.requireNonNull(response.body()).string();
                                     try {
                                         JSONObject jsonObject = new JSONObject(responseData);
                                         String status = jsonObject.getString("status");

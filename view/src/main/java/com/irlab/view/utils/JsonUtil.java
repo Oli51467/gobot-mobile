@@ -41,7 +41,29 @@ public class JsonUtil {
     public static String getJsonFormOfInitEngine(String userName) {
         JSONObject jsonParam = new JSONObject();
         try {
-            jsonParam.put("userName", userName);
+            jsonParam.put("username", userName);
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+        }
+        return jsonParam.toString();
+    }
+
+    public static String getJsonFormOfPlayIndex(String userName, String playIndex) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("username", userName);
+            jsonParam.put("cmd", playIndex);
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+        }
+        return jsonParam.toString();
+    }
+
+    public static String getJsonFormOfgenMove(String userName, String which) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("username", userName);
+            jsonParam.put("cmd", "genmove " + which);
         } catch (JSONException e) {
             Log.d(TAG, e.toString());
         }
