@@ -38,7 +38,6 @@ import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.FormBody;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
@@ -69,6 +68,8 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
         getInfoFromActivity();
         sendToEngine(getApplicationContext());
         initView();
+        if (identifier == Board.BLACK_STONE) genMove(getApplicationContext());
+        showBoardByEngine(getApplicationContext());
     }
 
     @Override
@@ -81,6 +82,11 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
     @Override
     protected void onStart() {
         super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         if (identifier == Board.BLACK_STONE) genMove(getApplicationContext());
         showBoardByEngine(getApplicationContext());
     }
@@ -147,9 +153,9 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 String responseData = Objects.requireNonNull(response.body()).string();
-                Log.d("djnxyxy", "send to engine ..." + responseData);
                 try {
                     JSONObject jsonObject = new JSONObject(responseData);
+                    Log.d("djnxyxy", "send to engine ..." + jsonObject);
                     int code = jsonObject.getInt("code");
                     Message msg = new Message();
                     msg.obj = context;
@@ -173,7 +179,8 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
     引擎产生下一步
      */
     private void genMove(Context context) {
-        String json = JsonUtil.getJsonFormOfgenMove(userName,"W");
+        String json = JsonUtil.getJsonFormOfgenMove(userName, "W");
+        Log.d("djnxyxy", json);
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
@@ -184,14 +191,16 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
                 String responseData = Objects.requireNonNull(response.body()).string();
                 try {
                     JSONObject jsonObject = new JSONObject(responseData);
-                    Log.d("djnxyxy", "引擎走棋回调：" + responseData);
+                    Log.d("djnxyxy", "引擎走棋回调：" + jsonObject);
                     int code = jsonObject.getInt("code");
                     Message msg = new Message();
                     msg.obj = context;
                     if (code == 1000) {
                         msg.what = ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode();
                         Log.d("djnxyxy", "引擎gen move 成功");
-                        // TODO: 从返回信息中拿到引擎落子位置及并传给下位机下白棋
+                        String jsonData = jsonObject.getString("data").substring(2);
+                        Log.d("djnxyxy", jsonData);
+                        // TODO: 将引擎落子位置及并传给下位机下白棋
                     }
                     else {
                         msg.what = ResponseCode.ENGINE_PLAY_FAILED.getCode();
@@ -221,7 +230,7 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
                 String responseData = Objects.requireNonNull(response.body()).string();
                 try {
                     JSONObject jsonObject = new JSONObject(responseData);
-                    Log.d("djnxyxy", "展示棋盘" + responseData);
+                    Log.d("djnxyxy", "展示棋盘" + jsonObject);
                     int code = jsonObject.getInt("code");
                     Message msg = new Message();
                     msg.obj = context;

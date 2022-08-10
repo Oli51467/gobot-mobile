@@ -6,7 +6,6 @@ import static com.irlab.base.MyApplication.SERVER;
 import static com.irlab.base.MyApplication.initNet;
 import static com.irlab.base.MyApplication.squeezencnn;
 
-import static com.irlab.view.utils.BoardUtil.genPlayCmd;
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
 import static com.irlab.view.utils.ImageUtils.matToBitmap;
 import static com.irlab.view.utils.ImageUtils.savePNG_After;
@@ -15,7 +14,6 @@ import static com.irlab.view.utils.ImageUtils.splitImage;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -438,7 +436,18 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             public void onFailure(@NonNull Call call, @NonNull IOException e) {}
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseData = Objects.requireNonNull(response.body()).string();
+                try {
+                    JSONObject jsonObject = new JSONObject(responseData);
+                    Log.d("djnxyxy", String.valueOf(jsonObject));
+                    int code = jsonObject.getInt("code");
+                    if (code == 1000) {
+                        Log.d("djnxyxy", "关闭检测器，清空棋盘");
+                    }
+                } catch (JSONException e) {
+                    Log.d(TAG, e.toString());
+                }
             }
         });
     }

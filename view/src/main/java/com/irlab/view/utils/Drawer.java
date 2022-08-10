@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.graphics.Typeface;
 
 import com.irlab.view.models.Board;
 
@@ -110,7 +109,7 @@ public class Drawer {
         }
         // 画棋子
         for (int i = 0; i < DIMENSION; i ++ ) {
-            for (int j = DIMENSION - 1; j >= 0; j -- ) {
+            for (int j = 0; j < DIMENSION; j ++ ) {
                 float centerX = x + distanceBetweenLines + j * distanceBetweenLines;
                 float centerY = y + distanceBetweenLines + i * distanceBetweenLines;
                 if (checkIsStar(i, j)) {
