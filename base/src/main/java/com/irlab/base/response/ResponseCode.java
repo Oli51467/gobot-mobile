@@ -15,11 +15,17 @@ public enum ResponseCode {
 
     GET_PLAY_CONFIG_SUCCESSFULLY(20005, null),
 
+    SHOW_BOARD_SUCCESSFULLY(20006, "展示棋盘"),
+
     ENGINE_CONNECT_FAILED(40001, "引擎连接失败"),
 
     PLAY_PASS_TO_ENGINE_FAILED(40002, "落子传递引擎失败"),
 
-    ENGINE_PLAY_FAILED(40003, "引擎落子失败");
+    ENGINE_PLAY_FAILED(40003, "引擎落子失败"),
+
+    SHOW_BOARD_FAILED(40004, "展示棋盘失败"),
+
+    ;
 
     /**
      * 状态码

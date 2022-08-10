@@ -38,6 +38,7 @@ import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.FormBody;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
@@ -52,7 +53,9 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
 
     private String blackPlayer, whitePlayer, komi, rule, engine;
 
-    private static String userName;
+    private int identifier;
+
+    private String userName;
 
     private Board board = null;
     private Point lastMove = null;
@@ -78,7 +81,8 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
     @Override
     protected void onStart() {
         super.onStart();
-        genMove(getApplicationContext());
+        if (identifier == Board.BLACK_STONE) genMove(getApplicationContext());
+        showBoardByEngine(getApplicationContext());
     }
 
     /**
@@ -103,7 +107,7 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
         Bitmap bitmap4PlayerInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
         Bitmap bitmap4PlayInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
         Bitmap playerInfo = drawer.drawPlayerInfo(bitmap4PlayerInfo, blackPlayer, whitePlayer, rule, komi, engine);
-        Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, lastMove.getGroup().getOwner().getIdentifier(), getPositionByIndex(lastMove.getX(), lastMove.getY()));
+        Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, identifier, getPositionByIndex(lastMove.getX(), lastMove.getY()));
 
         ImageView playerInfoView = findViewById(R.id.iv_player_info);
         ImageView boardView = findViewById(R.id.iv_board);
@@ -114,6 +118,9 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
         playView.setImageBitmap(playInfo);
     }
 
+    /*
+    从DetectBoardActivity拿到数据
+     */
     private void getInfoFromActivity() {
         Intent intent = getIntent();
         board = (Board) intent.getSerializableExtra("board");
@@ -123,11 +130,15 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
         komi = intent.getStringExtra("komi");
         rule = intent.getStringExtra("rule");
         engine = intent.getStringExtra("engine");
+        identifier = lastMove.getGroup().getOwner().getIdentifier();
     }
 
-    // 将落子传到引擎
+    /*
+    将落子传到引擎
+     */
     public void sendToEngine(Context context) {
         String json = JsonUtil.getJsonFormOfPlayIndex(userName, genPlayCmd(lastMove));
+        Log.d("djnxyxy", genPlayCmd(lastMove));
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
@@ -136,6 +147,7 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 String responseData = Objects.requireNonNull(response.body()).string();
+                Log.d("djnxyxy", "send to engine ..." + responseData);
                 try {
                     JSONObject jsonObject = new JSONObject(responseData);
                     int code = jsonObject.getInt("code");
@@ -143,9 +155,11 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
                     msg.obj = context;
                     if (code == 1000) {
                         msg.what = ResponseCode.PLAY_PASS_TO_ENGINE_SUCCESSFULLY.getCode();
+                        Log.d("djnxyxy", "发送给引擎成功");
                     }
                     else {
                         msg.what = ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode();
+                        Log.d("djnxyxy", "发送给引擎失败");
                     }
                     handler.sendMessage(msg);
                 } catch (JSONException e) {
@@ -155,8 +169,11 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
         });
     }
 
+    /*
+    引擎产生下一步
+     */
     private void genMove(Context context) {
-        String json = JsonUtil.getJsonFormOfgenMove(userName, lastMove.getGroup().getOwner().getIdentifier() == Board.BLACK_STONE ? "W" : "B");
+        String json = JsonUtil.getJsonFormOfgenMove(userName,"W");
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
@@ -167,16 +184,56 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
                 String responseData = Objects.requireNonNull(response.body()).string();
                 try {
                     JSONObject jsonObject = new JSONObject(responseData);
+                    Log.d("djnxyxy", "引擎走棋回调：" + responseData);
                     int code = jsonObject.getInt("code");
                     Message msg = new Message();
                     msg.obj = context;
                     if (code == 1000) {
                         msg.what = ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode();
+                        Log.d("djnxyxy", "引擎gen move 成功");
                         // TODO: 从返回信息中拿到引擎落子位置及并传给下位机下白棋
                     }
                     else {
                         msg.what = ResponseCode.ENGINE_PLAY_FAILED.getCode();
+                        Log.d("djnxyxy", "引擎gen move 失败");
                         // TODO: 分析不同的错误码 并做出相应的处理
+                    }
+                    handler.sendMessage(msg);
+                } catch (JSONException e) {
+                    Log.d("djnxyxy", e.toString());
+                }
+            }
+        });
+    }
+
+    /*
+    展示棋盘
+     */
+    private void showBoardByEngine(Context context) {
+        String json = JsonUtil.getJsonFormOfShowBoard(userName);
+        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseData = Objects.requireNonNull(response.body()).string();
+                try {
+                    JSONObject jsonObject = new JSONObject(responseData);
+                    Log.d("djnxyxy", "展示棋盘" + responseData);
+                    int code = jsonObject.getInt("code");
+                    Message msg = new Message();
+                    msg.obj = context;
+                    if (code == 1000) {
+                        // 展示棋盘
+                        String engineBoard = jsonObject.getString("data");
+                        Log.d("djnxyxy", "展示棋盘成功：" + engineBoard);
+                        msg.what = ResponseCode.SHOW_BOARD_SUCCESSFULLY.getCode();
+                    }
+                    else {
+                        msg.what = ResponseCode.SHOW_BOARD_FAILED.getCode();
+                        Log.d("djnxyxy", "展示棋盘失败");
                     }
                     handler.sendMessage(msg);
                 } catch (JSONException e) {
@@ -206,11 +263,17 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
             else if (msg.what == ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getMsg());
             }
-            if (msg.what == ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode()) {
+            else if (msg.what == ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getMsg());
             }
             else if (msg.what == ResponseCode.ENGINE_PLAY_FAILED.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_FAILED.getMsg());
+            }
+            else if (msg.what == ResponseCode.SHOW_BOARD_SUCCESSFULLY.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.SHOW_BOARD_SUCCESSFULLY.getMsg());
+            }
+            else if (msg.what == ResponseCode.SHOW_BOARD_FAILED.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.SHOW_BOARD_FAILED.getMsg());
             }
         }
     };

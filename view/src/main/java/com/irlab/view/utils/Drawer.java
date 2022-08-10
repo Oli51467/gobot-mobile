@@ -95,7 +95,7 @@ public class Drawer {
             canvas.drawLine(x + distanceBetweenLines, y + distanceBetweenLines * (i + 1), x + endOfLines, y + distanceBetweenLines * (i + 1), blackPaint);
             if (i == 18) {
                 for (int j = 1; j <= 19; j ++ ) {
-                    canvas.drawText(String.valueOf(j), x + endOfLines + 10, y + distanceBetweenLines * (j + 0.25f), blackPaint);
+                    canvas.drawText(String.valueOf(20 - j), x + endOfLines + 10, y + distanceBetweenLines * (j + 0.25f), blackPaint);
                 }
             }
         }

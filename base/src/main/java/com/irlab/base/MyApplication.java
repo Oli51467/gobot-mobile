@@ -20,7 +20,7 @@ import okhttp3.MediaType;
 public class MyApplication extends Application {
 
     public static final String SERVER = "http://8.142.10.225:8081";
-    public static final String ENGINE_SERVER = "http://8.142.10.225:5000";
+    public static final String ENGINE_SERVER = "http://10.102.33.40:5000";
     public static final String[] T = {"让先", "让2子", "让3子", "让4子", "让5子", "让6子", "让7子", "让8子", "让9子"};
     public static final String[] ENGINES = {"b20", "b40"};
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");

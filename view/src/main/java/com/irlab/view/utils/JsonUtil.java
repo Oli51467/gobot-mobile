@@ -69,4 +69,26 @@ public class JsonUtil {
         }
         return jsonParam.toString();
     }
+
+    public static String getJsonFormOfShowBoard(String userName) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("username", userName);
+            jsonParam.put("cmd", "showboard");
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+        }
+        return jsonParam.toString();
+    }
+
+    public static String getJsonFormOfClearBoard(String userName) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("username", userName);
+            jsonParam.put("cmd", "clear_board");
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+        }
+        return jsonParam.toString();
+    }
 }

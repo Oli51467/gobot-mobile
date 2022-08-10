@@ -6,6 +6,7 @@ import static com.irlab.base.MyApplication.SERVER;
 import static com.irlab.base.MyApplication.initNet;
 import static com.irlab.base.MyApplication.squeezencnn;
 
+import static com.irlab.view.utils.BoardUtil.genPlayCmd;
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
 import static com.irlab.view.utils.ImageUtils.matToBitmap;
 import static com.irlab.view.utils.ImageUtils.savePNG_After;
@@ -95,7 +96,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     public BoardDetector boardDetector;
 
-    private String blackPlayer, whitePlayer, komi, rule, engine;
+    private String blackPlayer, whitePlayer, komi, rule, engine, userName;
 
     private Bitmap[][] bitmapMatrix;
 
@@ -125,9 +126,11 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_detect_board);
         Objects.requireNonNull(getSupportActionBar()).hide();
+        userName = MyApplication.getInstance().preferences.getString("userName", null);
         threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 1, 10, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(STONE_NUM));
         initEngine(getApplicationContext());
+        clearBoard();
         initBoard();
         initViews();
         initDetector();
@@ -163,6 +166,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     public void onDestroy() {
         super.onDestroy();
         if (mOpenCvCameraView != null) mOpenCvCameraView.disableView();
+        clearBoard();
     }
 
     // 模拟按下按钮提示机器已经落子的情况
@@ -276,7 +280,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     }
 
     private void initEngine(Context context) {
-        String userName = MyApplication.getInstance().preferences.getString("userName", null);
         String json = JsonUtil.getJsonFormOfInitEngine(userName);
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/init", requestBody, new Callback() {
@@ -365,18 +368,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             };
             threadPool.execute(runnable);
         }
-        //====== 打印测试
-        /*StringBuilder res = new StringBuilder();
-        for (int i = 0; i < 19; i ++ ) {
-            for (int j = 0; j < 19; j ++ ){
-                if (curBoard[i][j] == BLANK) res.append("· ");
-                else if (curBoard[i][j] == BLACK) res.append("1 ");
-                else res.append("2 ");
-            }
-            res.append("\n");
-        }
-        Log.d(TAG, "识别后的棋盘" + "\n" + res + "\n");*/
-        //====== 打印测试结束
         Pair<Integer, Integer> move = getMoveByDiff();
         if (move == null) ToastUtil.show(this, "未落子");
         else {
@@ -411,9 +402,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     public void saveGameAsSgf(Context context) {
         String playInfo = "黑方:   " + blackPlayer + "     白方:   " + whitePlayer;
-        SharedPreferences sharedPreferences = MyApplication.getInstance().preferences;
-        String userName = sharedPreferences.getString("userName", null);
-
         String json = JsonUtil.getJsonFormOfGame(userName, playInfo, "白中盘胜", board.generateSgf(blackPlayer, whitePlayer, komi));
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(SERVER + "/api/saveGame", requestBody, new Callback() {
@@ -438,6 +426,19 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                 } catch (JSONException e) {
                     Log.d(TAG, e.toString());
                 }
+            }
+        });
+    }
+
+    private void clearBoard() {
+        String json = JsonUtil.getJsonFormOfClearBoard(userName);
+        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
             }
         });
     }

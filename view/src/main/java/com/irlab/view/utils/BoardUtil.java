@@ -18,7 +18,7 @@ public class BoardUtil {
             }
             cnt ++;
         }
-        position += (x + 1);
+        position += 19 - x;
         return position;
     }
 
