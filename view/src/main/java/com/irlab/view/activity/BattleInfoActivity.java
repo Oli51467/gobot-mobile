@@ -2,8 +2,6 @@ package com.irlab.view.activity;
 
 import static com.irlab.base.MyApplication.ENGINE_SERVER;
 import static com.irlab.base.MyApplication.JSON;
-import static com.irlab.view.utils.BoardUtil.genPlayCmd;
-import static com.irlab.view.utils.BoardUtil.getPositionByIndex;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -44,13 +42,14 @@ import okhttp3.Response;
 public class BattleInfoActivity extends Activity implements View.OnClickListener {
 
     public static final String TAG = BattleInfoActivity.class.getName();
+    public static final String Logger = "djnxyxy";
     public static final int BOARD_WIDTH = 1000;
     public static final int BOARD_HEIGHT = 1000;
     public static final int INFO_WIDTH = 880;
     public static final int INFO_HEIGHT = 350;
     public static Drawer drawer;
 
-    private String blackPlayer, whitePlayer, komi, rule, engine;
+    private String blackPlayer, whitePlayer, komi, rule, engine, playPosition;
 
     private int identifier;
 
@@ -66,9 +65,7 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
         drawer = new Drawer();
         userName = MyApplication.getInstance().preferences.getString("userName", null);
         getInfoFromActivity();
-        sendToEngine(getApplicationContext());
         initView();
-        if (identifier == Board.BLACK_STONE) genMove(getApplicationContext());
         showBoardByEngine(getApplicationContext());
     }
 
@@ -87,7 +84,6 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
     @Override
     protected void onResume() {
         super.onResume();
-        if (identifier == Board.BLACK_STONE) genMove(getApplicationContext());
         showBoardByEngine(getApplicationContext());
     }
 
@@ -113,7 +109,7 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
         Bitmap bitmap4PlayerInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
         Bitmap bitmap4PlayInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
         Bitmap playerInfo = drawer.drawPlayerInfo(bitmap4PlayerInfo, blackPlayer, whitePlayer, rule, komi, engine);
-        Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, identifier, getPositionByIndex(lastMove.getX(), lastMove.getY()));
+        Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, identifier, playPosition);
 
         ImageView playerInfoView = findViewById(R.id.iv_player_info);
         ImageView boardView = findViewById(R.id.iv_board);
@@ -136,84 +132,10 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
         komi = intent.getStringExtra("komi");
         rule = intent.getStringExtra("rule");
         engine = intent.getStringExtra("engine");
+        playPosition = intent.getStringExtra("playPosition");
         identifier = lastMove.getGroup().getOwner().getIdentifier();
     }
 
-    /*
-    将落子传到引擎
-     */
-    public void sendToEngine(Context context) {
-        String json = JsonUtil.getJsonFormOfPlayIndex(userName, genPlayCmd(lastMove));
-        Log.d("djnxyxy", genPlayCmd(lastMove));
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
-        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = Objects.requireNonNull(response.body()).string();
-                try {
-                    JSONObject jsonObject = new JSONObject(responseData);
-                    Log.d("djnxyxy", "send to engine ..." + jsonObject);
-                    int code = jsonObject.getInt("code");
-                    Message msg = new Message();
-                    msg.obj = context;
-                    if (code == 1000) {
-                        msg.what = ResponseCode.PLAY_PASS_TO_ENGINE_SUCCESSFULLY.getCode();
-                        Log.d("djnxyxy", "发送给引擎成功");
-                    }
-                    else {
-                        msg.what = ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode();
-                        Log.d("djnxyxy", "发送给引擎失败");
-                    }
-                    handler.sendMessage(msg);
-                } catch (JSONException e) {
-                    Log.d(TAG, e.toString());
-                }
-            }
-        });
-    }
-
-    /*
-    引擎产生下一步
-     */
-    private void genMove(Context context) {
-        String json = JsonUtil.getJsonFormOfgenMove(userName, "W");
-        Log.d("djnxyxy", json);
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
-        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = Objects.requireNonNull(response.body()).string();
-                try {
-                    JSONObject jsonObject = new JSONObject(responseData);
-                    Log.d("djnxyxy", "引擎走棋回调：" + jsonObject);
-                    int code = jsonObject.getInt("code");
-                    Message msg = new Message();
-                    msg.obj = context;
-                    if (code == 1000) {
-                        msg.what = ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode();
-                        Log.d("djnxyxy", "引擎gen move 成功");
-                        String jsonData = jsonObject.getString("data").substring(2);
-                        Log.d("djnxyxy", jsonData);
-                        // TODO: 将引擎落子位置及并传给下位机下白棋
-                    }
-                    else {
-                        msg.what = ResponseCode.ENGINE_PLAY_FAILED.getCode();
-                        Log.d("djnxyxy", "引擎gen move 失败");
-                        // TODO: 分析不同的错误码 并做出相应的处理
-                    }
-                    handler.sendMessage(msg);
-                } catch (JSONException e) {
-                    Log.d("djnxyxy", e.toString());
-                }
-            }
-        });
-    }
 
     /*
     展示棋盘
@@ -230,23 +152,23 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
                 String responseData = Objects.requireNonNull(response.body()).string();
                 try {
                     JSONObject jsonObject = new JSONObject(responseData);
-                    Log.d("djnxyxy", "展示棋盘" + jsonObject);
+                    Log.d(Logger, "展示棋盘" + jsonObject);
                     int code = jsonObject.getInt("code");
                     Message msg = new Message();
                     msg.obj = context;
                     if (code == 1000) {
                         // 展示棋盘
                         String engineBoard = jsonObject.getString("data");
-                        Log.d("djnxyxy", "展示棋盘成功：" + engineBoard);
+                        Log.d(Logger, "展示棋盘成功：" + engineBoard);
                         msg.what = ResponseCode.SHOW_BOARD_SUCCESSFULLY.getCode();
                     }
                     else {
                         msg.what = ResponseCode.SHOW_BOARD_FAILED.getCode();
-                        Log.d("djnxyxy", "展示棋盘失败");
+                        Log.d(Logger, "展示棋盘失败");
                     }
                     handler.sendMessage(msg);
                 } catch (JSONException e) {
-                    Log.d(TAG, e.toString());
+                    Log.d(Logger, e.toString());
                 }
             }
         });

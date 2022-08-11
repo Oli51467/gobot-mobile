@@ -108,10 +108,10 @@ public class Drawer {
             }
         }
         // 画棋子
-        for (int i = 0; i < DIMENSION; i ++ ) {
-            for (int j = 0; j < DIMENSION; j ++ ) {
-                float centerX = x + distanceBetweenLines + j * distanceBetweenLines;
-                float centerY = y + distanceBetweenLines + i * distanceBetweenLines;
+        for (int i = 1; i <= DIMENSION; i ++ ) {
+            for (int j = 1; j <= DIMENSION; j ++ ) {
+                float centerX = x + distanceBetweenLines + (j - 1) * distanceBetweenLines;
+                float centerY = y + distanceBetweenLines + (i - 1) * distanceBetweenLines;
                 if (checkIsStar(i, j)) {
                     canvas.drawCircle(centerX, centerY, STAR_RADIUS, blackPaint);
                 }
@@ -182,8 +182,8 @@ public class Drawer {
     }
 
     private static boolean checkIsStar(int i, int j) {
-        return i == 3 && j == 3 || i == 9 && j == 9 || i == 15 && j == 15
-                || i == 9 && j == 3 || i == 3 && j == 9 || i == 15 && j == 3
-                || i == 3 && j == 15 || i == 15 && j == 9 || i == 9 && j == 15;
+        return i == 4 && j == 4 || i == 10 && j == 10 || i == 16 && j == 16
+                || i == 10 && j == 4 || i == 4 && j == 10 || i == 16 && j == 4
+                || i == 4 && j == 16 || i == 16 && j == 10 || i == 10 && j == 16;
     }
 }

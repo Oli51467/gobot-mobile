@@ -34,7 +34,7 @@ public class Board implements Serializable {
         this.width = width;
         this.height = height;
         this.initialHandicap = handicap;
-        this.points = new Point[width][height];
+        this.points = new Point[width + 1][height + 1];
         this.gameRecord = new GameRecord(width, height, handicap);
         this.recordPoints = new ArrayList<>();
         initBoard();
@@ -47,8 +47,8 @@ public class Board implements Serializable {
         actualPlayer = P1;
 
         // 初始化棋盘
-        for (int x = 0; x < this.width; x++) {
-            for (int y = 0; y < this.height; y++) {
+        for (int x = 1; x <= this.width; x ++ ) {
+            for (int y = 1; y <= this.height; y ++ ) {
                 points[x][y] = new Point(this, x, y);
             }
         }
@@ -56,7 +56,7 @@ public class Board implements Serializable {
     }
 
     public boolean isInBoard(int x, int y) {
-        return (x >= 0 && x < width && y >= 0 && y < height);
+        return (x > 0 && x <= width && y > 0 && y <= height);
     }
 
     public boolean isInBoard(Point Point) {
@@ -183,8 +183,8 @@ public class Board implements Serializable {
     @Override
     public String toString() {
         String board = "";
-        for (int i = 0; i < width; i++) {
-            for (int j = 0; j < height; j++) {
+        for (int i = 1; i <= width; i ++ ) {
+            for (int j = 1; j <= height; j ++ ) {
                 Point cross = points[i][j];
                 if (cross.getGroup() == null) {
                     board += "· ";

@@ -6,6 +6,8 @@ import static com.irlab.base.MyApplication.SERVER;
 import static com.irlab.base.MyApplication.initNet;
 import static com.irlab.base.MyApplication.squeezencnn;
 
+import static com.irlab.view.utils.BoardUtil.genPlayCmd;
+import static com.irlab.view.utils.BoardUtil.transformIndex;
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
 import static com.irlab.view.utils.ImageUtils.matToBitmap;
 import static com.irlab.view.utils.ImageUtils.savePNG_After;
@@ -68,6 +70,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class DetectBoardActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
+
     public static final int BLANK = 0;
     public static final int BLACK = 1;
     public static final int WHITE = 2;
@@ -77,6 +80,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     public static final int STONE_NUM = 361;
     public static final int SINGLE_THREAD_TASK = 19;
     public static final String TAG = "Detector";
+    public static final String Logger = "djnxyxy";
 
     public static int previousX, previousY;
     public static boolean init = true, showUI = false;
@@ -94,7 +98,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     public BoardDetector boardDetector;
 
-    private String blackPlayer, whitePlayer, komi, rule, engine, userName;
+    private String blackPlayer, whitePlayer, komi, rule, engine, userName, playPosition;
 
     private Bitmap[][] bitmapMatrix;
 
@@ -103,6 +107,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     public Board board;
     public Board previousBoard;
+
+    public Point lastMove;
 
     // opencv与app交互的回调函数
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -222,18 +228,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             Drawer.drawBoardContour(inputImage, boardContour);
         }
         // 关闭摄像头 显示友好界面
-        if (showUI){
-            showUI = false;
-            Intent intent = new Intent(this, BattleInfoActivity.class);
-            intent.putExtra("blackPlayer", blackPlayer);
-            intent.putExtra("whitePlayer", whitePlayer);
-            intent.putExtra("komi", komi);
-            intent.putExtra("rule", rule);
-            intent.putExtra("engine", engine);
-            intent.putExtra("board", board);
-            intent.putExtra("lastMove", board.getPoint(previousX, previousY));
-            startActivity(intent);
-        }
         return inputImage;
     }
     public void onCameraViewStarted(int width, int height) {}
@@ -247,9 +241,9 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         board = new Board(WIDTH, HEIGHT, 0);
         previousBoard = new Board(WIDTH, HEIGHT, 0);
 
-        lastBoard = new int[WIDTH][HEIGHT];
-        curBoard = new int[WIDTH][HEIGHT];
-        for (int i = 0; i < WIDTH; i ++ ) {
+        lastBoard = new int[WIDTH + 1][HEIGHT + 1];
+        curBoard = new int[WIDTH + 1][HEIGHT + 1];
+        for (int i = 1; i <= WIDTH; i ++ ) {
             Arrays.fill(lastBoard[i], BLANK);
             Arrays.fill(curBoard[i], BLANK);
         }
@@ -320,8 +314,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
      */
     private Pair<Integer, Integer> getMoveByDiff() {
         Pair<Integer, Integer> move;
-        for (int i = 0; i < WIDTH; i ++ ) {
-            for (int j = 0; j < HEIGHT; j ++ ) {
+        for (int i = 1; i <= WIDTH; i ++ ) {
+            for (int j = 1; j <= HEIGHT; j ++ ) {
                 if (lastBoard[i][j] == BLANK && curBoard[i][j] != BLANK) {
                     move = new Pair<>(i, j);
                     return move;
@@ -332,8 +326,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     }
 
     private void updateMetricBoard() {
-        for (int i = 0; i < WIDTH; i ++ ) {
-            for (int j = 0; j < HEIGHT; j ++ ) {
+        for (int i = 1; i <= WIDTH; i ++ ) {
+            for (int j = 1; j <= HEIGHT; j ++ ) {
                 Point cross = board.points[i][j];
                 if (cross.getGroup() == null) {
                     lastBoard[i][j] = BLANK;
@@ -356,8 +350,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                 for (int mTask = 0; mTask < SINGLE_THREAD_TASK; mTask++) {
                     // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
                     int cnt = innerT * 19 + mTask;
-                    int i = cnt / 19;
-                    int j = cnt % 19;
+                    int i = cnt / 19 + 1;
+                    int j = cnt % 19 + 1;
                     String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
                     if (result.equals("black")) curBoard[i][j] = BLACK;
                     else if (result.equals("white")) curBoard[i][j] = WHITE;
@@ -371,7 +365,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         else {
             moveX = move.first;
             moveY = move.second;
-            ToastUtil.show(this, (moveX + 1) + " " + (moveY + 1));
+            ToastUtil.show(this, moveX + " " + moveY);
             Player player = board.getPlayer();
             // 可以落子
             if (board.play(moveX, moveY, player)) {
@@ -387,7 +381,9 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                 board.nextPlayer();
                 previousX = moveX;
                 previousY = moveY;
-                showUI = true;
+                // 将落子传到引擎 引擎走棋 更新
+                lastMove = board.getPoint(previousX, previousY);
+                sendToEngine(getApplicationContext());
             }
             else {
                 Log.w(TAG, "这里不可以落子");
@@ -423,6 +419,108 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                     handler.sendMessage(msg);
                 } catch (JSONException e) {
                     Log.d(TAG, e.toString());
+                }
+            }
+        });
+    }
+
+    /*
+    将落子传到引擎
+     */
+    public void sendToEngine(Context context) {
+        String json = JsonUtil.getJsonFormOfPlayIndex(userName, genPlayCmd(lastMove));
+        Log.d(Logger, genPlayCmd(lastMove));
+        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseData = Objects.requireNonNull(response.body()).string();
+                try {
+                    JSONObject jsonObject = new JSONObject(responseData);
+                    Log.d(Logger, "send to engine ..." + jsonObject);
+                    int code = jsonObject.getInt("code");
+                    Message msg = new Message();
+                    msg.obj = context;
+                    if (code == 1000) {
+                        msg.what = ResponseCode.PLAY_PASS_TO_ENGINE_SUCCESSFULLY.getCode();
+                        handler.sendMessage(msg);
+                        Log.d(Logger, "发送给引擎成功");
+                        int identifier = lastMove.getGroup().getOwner().getIdentifier();
+                        if (identifier == Board.BLACK_STONE) {
+                            genMove(getApplicationContext());
+                        }
+                    }
+                    else {
+                        msg.what = ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode();
+                        handler.sendMessage(msg);
+                        Log.d(Logger, "发送给引擎失败");
+                    }
+                } catch (JSONException e) {
+                    Log.d(TAG, e.toString());
+                }
+            }
+        });
+    }
+
+    /*
+    引擎产生下一步
+     */
+    private void genMove(Context context) {
+        String json = JsonUtil.getJsonFormOfgenMove(userName, "W");
+        Log.d(Logger, json);
+        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseData = Objects.requireNonNull(response.body()).string();
+                try {
+                    JSONObject jsonObject = new JSONObject(responseData);
+                    Log.d(Logger, "引擎走棋回调：" + jsonObject);
+                    int code = jsonObject.getInt("code");
+                    Message msg = new Message();
+                    msg.obj = context;
+                    if (code == 1000) {
+                        msg.what = ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode();
+                        Log.d(Logger, "引擎gen move 成功");
+                        JSONObject callBackData = jsonObject.getJSONObject("data");
+                        Log.d(Logger, "引擎落子坐标:" + callBackData);
+                        playPosition = callBackData.getString("position");
+                        Log.d(Logger, "回调坐标:" + playPosition);
+                        Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
+                        Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
+                        // 将引擎下的棋走上 并更新棋盘
+                        board.play(enginePlay.first, enginePlay.second, board.getPlayer());
+                        previousBoard.play(previousX, previousY, board.getLastPlayer());
+                        updateMetricBoard();
+                        board.nextPlayer();
+                        previousX = enginePlay.first;
+                        previousY = enginePlay.second;
+                        // TODO: 将引擎落子位置传给下位机
+                        Intent intent = new Intent(DetectBoardActivity.this, BattleInfoActivity.class);
+                        intent.putExtra("blackPlayer", blackPlayer);
+                        intent.putExtra("whitePlayer", whitePlayer);
+                        intent.putExtra("komi", komi);
+                        intent.putExtra("rule", rule);
+                        intent.putExtra("engine", engine);
+                        intent.putExtra("board", board);
+                        intent.putExtra("playPosition", playPosition);
+                        intent.putExtra("lastMove", board.getPoint(previousX, previousY));
+                        startActivity(intent);
+                    }
+                    else {
+                        msg.what = ResponseCode.ENGINE_PLAY_FAILED.getCode();
+                        Log.d(Logger, "引擎gen move 失败");
+                        // TODO: 分析不同的错误码 并做出相应的处理
+                    }
+                    handler.sendMessage(msg);
+                } catch (JSONException  e) {
+                    Log.d(Logger, e.toString());
                 }
             }
         });

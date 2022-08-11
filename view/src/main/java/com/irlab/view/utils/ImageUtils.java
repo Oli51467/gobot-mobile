@@ -71,14 +71,14 @@ public class ImageUtils {
     }
 
     public static Bitmap[][] splitImage(Bitmap rawBitmap, int piece) {
-        Bitmap[][] bitmapMatrix = new Bitmap[piece][piece];
+        Bitmap[][] bitmapMatrix = new Bitmap[piece + 1][piece + 1];
         int unitHeight = rawBitmap.getHeight() / piece;
         int unitWidth = rawBitmap.getWidth() / piece;
         Bitmap unitBitmap;
         for (int i = 0; i < piece; i ++ ) {
             for (int j = 0; j < piece; j ++ ) {
                 unitBitmap = Bitmap.createBitmap(rawBitmap, j * unitWidth, i * unitHeight, unitWidth, unitHeight);
-                bitmapMatrix[i][j] = unitBitmap;
+                bitmapMatrix[i + 1][j + 1] = unitBitmap;
                 savePNG_After(unitBitmap, i + "==" + j);
             }
         }

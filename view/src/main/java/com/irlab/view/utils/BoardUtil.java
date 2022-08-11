@@ -1,5 +1,9 @@
 package com.irlab.view.utils;
 
+
+import android.util.Log;
+import android.util.Pair;
+
 import com.irlab.view.models.Board;
 import com.irlab.view.models.Point;
 
@@ -24,5 +28,18 @@ public class BoardUtil {
 
     public static String genPlayCmd(Point move) {
         return "play " + (move.getGroup().getOwner().getIdentifier() == Board.BLACK_STONE ? "B" : "W") + " " + getPositionByIndex(move.getX(), move.getY());
+    }
+
+    public static Pair<Integer, Integer> transformIndex(String index) {
+        String alpha = index.substring(0, 1);
+        String number = index.substring(1);
+        Log.d("djnxyxy", alpha + " " + number);
+        int cnt = 1;
+        for (char c = 'A'; c <= 'T'; c ++) {
+            if (c == 'I') continue;
+            if (String.valueOf(c).equals(alpha)) break;
+            cnt ++;
+        }
+        return new Pair<>(cnt, 20 - Integer.parseInt(number));
     }
 }
