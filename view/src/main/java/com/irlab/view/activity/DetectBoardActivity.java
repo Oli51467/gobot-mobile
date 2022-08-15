@@ -6,7 +6,9 @@ import static com.irlab.base.MyApplication.SERVER;
 import static com.irlab.base.MyApplication.initNet;
 import static com.irlab.base.MyApplication.squeezencnn;
 
-import static com.irlab.base.bluetooth.BluetoothActivity.bluetoothService;
+import static com.irlab.view.activity.BattleInfoActivity.blackPlayer;
+import static com.irlab.view.activity.BattleInfoActivity.komi;
+import static com.irlab.view.activity.BattleInfoActivity.whitePlayer;
 import static com.irlab.view.utils.BoardUtil.genPlayCmd;
 import static com.irlab.view.utils.BoardUtil.transformIndex;
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
@@ -99,7 +101,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     public BoardDetector boardDetector;
 
-    private String blackPlayer, whitePlayer, komi, rule, engine, userName, playPosition;
+    private String userName, playPosition;
 
     private Bitmap[][] bitmapMatrix;
 
@@ -132,14 +134,11 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         setContentView(R.layout.activity_detect_board);
         Objects.requireNonNull(getSupportActionBar()).hide();
         userName = MyApplication.getInstance().preferences.getString("userName", null);
-        threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 1, 10, TimeUnit.SECONDS,
+        threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 2, 10, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(STONE_NUM));
-        initEngine(getApplicationContext());
-        clearBoard();
         initBoard();
         initViews();
         initDetector();
-        getInfoFromActivity();
     }
 
     @Override
@@ -166,7 +165,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             Log.d(TAG, "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
-        detectBoard();
     }
 
     @Override
@@ -285,44 +283,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         boardDetector = new BoardDetector();
     }
 
-    private void initEngine(Context context) {
-        String json = JsonUtil.getJsonFormOfInitEngine(userName);
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
-        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/init", requestBody, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = Objects.requireNonNull(response.body()).string();
-                try {
-                    JSONObject jsonObject = new JSONObject(responseData);
-                    int code = jsonObject.getInt("code");
-                    Message msg = new Message();
-                    msg.obj = context;
-                    if (code == 1000) {
-                        msg.what = ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getCode();
-                    }
-                    else {
-                        msg.what = ResponseCode.ENGINE_CONNECT_FAILED.getCode();
-                    }
-                    handler.sendMessage(msg);
-                } catch (JSONException e) {
-                    Log.d(TAG, e.toString());
-                }
-            }
-        });
-    }
-
-    private void getInfoFromActivity() {
-        Intent i = getIntent();
-        blackPlayer = i.getStringExtra("blackPlayer");
-        whitePlayer = i.getStringExtra("whitePlayer");
-        komi = i.getStringExtra("komi");
-        rule = i.getStringExtra("rule");
-        engine = i.getStringExtra("engine");
-    }
-
     /**
      * 通过比较现在的棋盘和上一个棋盘获得落子位置
      */
@@ -353,7 +313,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         }
     }
 
-    public void detectBoard() {
+    public boolean detectBoard() {
         int moveX, moveY;
         Bitmap bitmap = matToBitmap(orthogonalBoard);
         bitmapMatrix = splitImage(bitmap, WIDTH);
@@ -375,7 +335,10 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             threadPool.execute(runnable);
         }
         Pair<Integer, Integer> move = getMoveByDiff();
-        if (move == null) ToastUtil.show(this, "未落子");
+        if (move == null) {
+            ToastUtil.show(this, "未落子");
+            return false;
+        }
         else {
             moveX = move.first;
             moveY = move.second;
@@ -398,13 +361,15 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                 // 将落子传到引擎 引擎走棋 更新
                 lastMove = board.getPoint(previousX, previousY);
                 sendToEngine(getApplicationContext());
+                Log.d(Logger, board + "--------------\n" + "lastBoard:\n");
+                Log.d(Logger, previousBoard.toString());
+                return true;
             }
             else {
                 Log.w(TAG, "这里不可以落子");
                 curBoard[moveX][moveY] = BLANK;
+                return false;
             }
-            Log.d(Logger, board + "--------------\n" + "lastBoard:\n");
-            Log.d(Logger, previousBoard.toString());
         }
     }
 
@@ -534,11 +499,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                             //bluetoothService.sendData("0x3f", false);
                             Log.d(Logger, "end pass");
                             Intent intent = new Intent(DetectBoardActivity.this, BattleInfoActivity.class);
-                            intent.putExtra("blackPlayer", blackPlayer);
-                            intent.putExtra("whitePlayer", whitePlayer);
-                            intent.putExtra("komi", komi);
-                            intent.putExtra("rule", rule);
-                            intent.putExtra("engine", engine);
                             intent.putExtra("board", board);
                             intent.putExtra("playPosition", playPosition);
                             intent.putExtra("lastMove", board.getPoint(previousX, previousY));

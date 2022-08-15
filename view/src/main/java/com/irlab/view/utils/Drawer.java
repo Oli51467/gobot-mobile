@@ -148,7 +148,7 @@ public class Drawer {
         canvas.drawText("VS", 290, 130, goldenPaint);
         canvas.drawText(whitePlayer, 560, 130, paint);
         canvas.drawText(rule, 270, 200, whitePaint);
-        canvas.drawText("贴目: 黑贴" + komi, 270, 260, whitePaint);
+        canvas.drawText("贴目: 黑贴" + komi + " 目", 270, 260, whitePaint);
         canvas.drawText("引擎: " + engine, 270, 320, whitePaint);
         canvas.drawCircle(230, 100, 40, blackPaint);
         canvas.drawCircle(480, 100, 40, whitePaint);
@@ -171,11 +171,13 @@ public class Drawer {
         paint.setColor(Color.WHITE);
         paint.setTextSize(70);
         canvas.drawText("落子信息", 50, 100, paint);
-        if (player == Board.BLACK_STONE) {
-            canvas.drawCircle(100, 175, 40, blackPaint);
-        }
-        else {
-            canvas.drawCircle(100, 175, 40, whitePaint);
+        if (!position.equals("")) {
+            if (player == Board.BLACK_STONE) {
+                canvas.drawCircle(100, 175, 40, blackPaint);
+            }
+            else {
+                canvas.drawCircle(100, 175, 40, whitePaint);
+            }
         }
         canvas.drawText(position, 200, 200, paint);
         return bitmap;

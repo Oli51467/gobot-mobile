@@ -25,7 +25,8 @@
         tools:remove="android:appComponentFactory">
         <activity
             android:name=".activity.DefineBoardPositionActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"/>
         <activity
             android:name=".activity.BattleInfoActivity"
             android:exported="false"

@@ -143,10 +143,10 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         // 传递黑方、白方、贴目设置
         String blackPlayer = cellData.getPlayerBlack();
         String whitePlayer = cellData.getPlayerWhite();
-        String komi = cellData.getRule() == 0 ? "7.5目" : "6.5目";
+        String komi = cellData.getRule() == 0 ? "7.5" : "6.5";
         String engine = cellData.getEngine();
         String rule = cellData.getKomi() == 0 ? "中国规则" : "日本规则";
-        Intent intent = new Intent(this, DetectBoardActivity.class);
+        Intent intent = new Intent(this, DefineBoardPositionActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         // 通过bundle向下一个activity传递一个对象 该对象必须先实现序列化接口
         intent.putExtra("blackPlayer", blackPlayer);

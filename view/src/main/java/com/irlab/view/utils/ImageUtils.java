@@ -88,8 +88,8 @@ public class ImageUtils {
     public static Mat matRotateClockWise90(Mat src)
     {
         // 矩阵转置
-        transpose(src, src);
-        flip(src, src, 0);
+        //transpose(src, src);
+        flip(src, src, 1);
         return src;
     }
 }

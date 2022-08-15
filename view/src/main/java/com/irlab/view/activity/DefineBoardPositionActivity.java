@@ -43,9 +43,6 @@ import org.opencv.core.MatOfPoint;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -54,13 +51,10 @@ import okhttp3.Response;
 
 public class DefineBoardPositionActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
 
-    public static final int THREAD_NUM = 19;
-    public static final int STONE_NUM = 361;
     public static final String TAG = "DefineContour";
     public static final String Logger = "djnxyxy";
 
     public static boolean init = true;
-    public static ThreadPoolExecutor threadPool;
 
     private CameraBridgeViewBase mOpenCvCameraView;
 
@@ -74,7 +68,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
 
     public BoardDetector boardDetector;
 
-    private String blackPlayer, whitePlayer, komi, rule, engine, userName, playPosition;
+    private String blackPlayer, whitePlayer, komi, rule, engine, userName;
 
     // opencv与app交互的回调函数
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -94,11 +88,9 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setContentView(R.layout.activity_detect_board);
+        setContentView(R.layout.activity_define_board_position);
         Objects.requireNonNull(getSupportActionBar()).hide();
         userName = MyApplication.getInstance().preferences.getString("userName", null);
-        threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 1, 10, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(STONE_NUM));
         initEngine(getApplicationContext());
         clearBoard();
         initViews();
@@ -148,13 +140,18 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
     public void onDestroy() {
         super.onDestroy();
         if (mOpenCvCameraView != null) mOpenCvCameraView.disableView();
-        clearBoard();
     }
 
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.btnFixBoardPosition) {
-
+            Intent intent = new Intent(DefineBoardPositionActivity.this, BattleInfoActivity.class);
+            intent.putExtra("blackPlayer", blackPlayer);
+            intent.putExtra("whitePlayer", whitePlayer);
+            intent.putExtra("komi", komi);
+            intent.putExtra("rule", rule);
+            intent.putExtra("engine", engine);
+            startActivity(intent);
         }
         else if (vid == R.id.btn_return) {
             Intent intent = new Intent(this, SelectConfigActivity.class);
@@ -201,8 +198,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         btnFixBoardPosition.setOnClickListener(this);
         btnFixBoardPosition.setEnabled(false);
 
-        Button btnSaveSGF = findViewById(R.id.btn_saveSGF);
-        btnSaveSGF.setOnClickListener(this);
 
         Button btnReturn = findViewById(R.id.btn_return);
         btnReturn.setOnClickListener(this);
@@ -280,10 +275,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if (msg.what == ResponseCode.SAVE_SGF_SUCCESSFULLY.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.SAVE_SGF_SUCCESSFULLY.getMsg());
-            }
-            else if (msg.what == ResponseCode.SERVER_FAILED.getCode()) {
+            if (msg.what == ResponseCode.SERVER_FAILED.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.SERVER_FAILED.getMsg());
             }
             else if (msg.what == ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getCode()) {
@@ -291,18 +283,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
             }
             else if (msg.what == ResponseCode.ENGINE_CONNECT_FAILED.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_FAILED.getMsg());
-            }
-            else if (msg.what == ResponseCode.CANNOT_PLAY.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.CANNOT_PLAY.getMsg());
-            }
-            else if (msg.what == ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getMsg());
-            }
-            else if (msg.what == ResponseCode.ENGINE_RESIGN.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_RESIGN.getMsg());
-            }
-            else if (msg.what == ResponseCode.ENGINE_PASS.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_PASS.getMsg());
             }
         }
     };

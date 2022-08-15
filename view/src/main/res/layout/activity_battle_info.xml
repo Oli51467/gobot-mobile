@@ -37,12 +37,25 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"/>
 
-        <Button
-            android:id="@+id/btn_return"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="模拟落子-返回摄像头界面"/>
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/btn_return_camera"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text="模拟落子"/>
+            <Button
+                android:id="@+id/btn_return"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text="退出"/>
+        </LinearLayout>
     </LinearLayout>
 
 

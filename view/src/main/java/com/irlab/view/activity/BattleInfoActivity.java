@@ -49,7 +49,7 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
     public static final int INFO_HEIGHT = 350;
     public static Drawer drawer;
 
-    private String blackPlayer, whitePlayer, komi, rule, engine, playPosition;
+    public static String blackPlayer, whitePlayer, komi, rule, engine, playPosition;
 
     private int identifier;
 
@@ -96,10 +96,13 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        setIntent(intent);
+        if (intent.getSerializableExtra("board") != null) setIntent(intent);
     }
 
     private void initView() {
+        Button btn_return_play = findViewById(R.id.btn_return_camera);
+        btn_return_play.setOnClickListener(this);
+
         Button btn_return = findViewById(R.id.btn_return);
         btn_return.setOnClickListener(this);
 
@@ -125,16 +128,20 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
      */
     private void getInfoFromActivity() {
         Intent intent = getIntent();
-        if (intent.getSerializableExtra("board") != null) {
+        if ((Point) intent.getSerializableExtra("lastMove") != null) {
             board = (Board) intent.getSerializableExtra("board");
             lastMove = (Point) intent.getSerializableExtra("lastMove");
+            playPosition = intent.getStringExtra("playPosition");
+            identifier = lastMove.getGroup().getOwner().getIdentifier();
+        }
+        else {
             blackPlayer = intent.getStringExtra("blackPlayer");
             whitePlayer = intent.getStringExtra("whitePlayer");
             komi = intent.getStringExtra("komi");
             rule = intent.getStringExtra("rule");
             engine = intent.getStringExtra("engine");
-            playPosition = intent.getStringExtra("playPosition");
-            identifier = lastMove.getGroup().getOwner().getIdentifier();
+            board = new Board(19, 19, 0);
+            playPosition = "";
         }
     }
 
@@ -177,10 +184,39 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
     @Override
     public void onClick(View v) {
         int vid = v.getId();
-        if (vid == R.id.btn_return) {
+        if (vid == R.id.btn_return_camera) {
             Intent intent = new Intent(this, DetectBoardActivity.class);
             startActivity(intent);
         }
+        else if (vid == R.id.btn_return) {
+            clearBoard();
+            Intent intent = new Intent(this, SelectConfigActivity.class);
+            startActivity(intent);
+        }
+    }
+
+    private void clearBoard() {
+        String json = JsonUtil.getJsonFormOfClearBoard(userName);
+        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseData = Objects.requireNonNull(response.body()).string();
+                try {
+                    JSONObject jsonObject = new JSONObject(responseData);
+                    Log.d(Logger, String.valueOf(jsonObject));
+                    int code = jsonObject.getInt("code");
+                    if (code == 1000) {
+                        Log.d(Logger, "关闭检测器，清空棋盘");
+                    }
+                } catch (JSONException e) {
+                    Log.d(TAG, e.toString());
+                }
+            }
+        });
     }
 
     @SuppressLint("HandlerLeak")
