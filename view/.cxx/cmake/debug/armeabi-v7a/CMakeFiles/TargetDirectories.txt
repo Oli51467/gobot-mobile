@@ -1,3 +1,0 @@
-D:/Android-Go/ResNet_ncnn_android/app/.cxx/cmake/debug/armeabi-v7a/CMakeFiles/squeezencnn.dir
-D:/Android-Go/ResNet_ncnn_android/app/.cxx/cmake/debug/armeabi-v7a/CMakeFiles/edit_cache.dir
-D:/Android-Go/ResNet_ncnn_android/app/.cxx/cmake/debug/armeabi-v7a/CMakeFiles/rebuild_cache.dir

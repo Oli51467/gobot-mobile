@@ -1,4 +1,5 @@
 *.iml
+*.html
 .gradle
 /local.properties
 /.idea/caches
@@ -17,4 +18,6 @@ local.properties
 gradlew.bat
 gradlew
 /gradle
-/view/.cxx/Debug/
+/view/.cxx
+/view/libs
+/view/src/main/jni/ncnn-20220701-android-vulkan
