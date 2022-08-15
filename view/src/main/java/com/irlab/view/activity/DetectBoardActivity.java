@@ -6,6 +6,7 @@ import static com.irlab.base.MyApplication.SERVER;
 import static com.irlab.base.MyApplication.initNet;
 import static com.irlab.base.MyApplication.squeezencnn;
 
+import static com.irlab.base.bluetooth.BluetoothActivity.bluetoothService;
 import static com.irlab.view.utils.BoardUtil.genPlayCmd;
 import static com.irlab.view.utils.BoardUtil.transformIndex;
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
@@ -83,7 +84,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     public static final String Logger = "djnxyxy";
 
     public static int previousX, previousY;
-    public static boolean init = true, showUI = false;
+    public static boolean init = true;
     public static ThreadPoolExecutor threadPool;
 
     private CameraBridgeViewBase mOpenCvCameraView;
@@ -142,6 +143,11 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
     public void onPause() {
         super.onPause();
         if (mOpenCvCameraView != null) {
@@ -152,6 +158,15 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     @Override
     protected void onRestart() {
         super.onRestart();
+        if (!OpenCVLoader.initDebug()) {
+            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
+        }
+        else {
+            Log.d(TAG, "OpenCV library found inside package. Using it!");
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
+        detectBoard();
     }
 
     @Override
@@ -173,7 +188,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         clearBoard();
     }
 
-    // 模拟按下按钮提示机器已经落子的情况
     // TODO: 将点击事件改为收到落子信号
     public void onClick(View v) {
         int vid = v.getId();
@@ -389,8 +403,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                 Log.w(TAG, "这里不可以落子");
                 curBoard[moveX][moveY] = BLANK;
             }
-            Log.d(TAG, board + "--------------\n" + "lastBoard:\n");
-            Log.d(TAG, previousBoard.toString());
+            Log.d(Logger, board + "--------------\n" + "lastBoard:\n");
+            Log.d(Logger, previousBoard.toString());
         }
     }
 
@@ -453,10 +467,15 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                             genMove(getApplicationContext());
                         }
                     }
+                    else if (code == 4001){
+                        msg.what = ResponseCode.CANNOT_PLAY.getCode();
+                        handler.sendMessage(msg);
+                        Log.d(Logger, "无法落子");
+                    }
                     else {
                         msg.what = ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode();
                         handler.sendMessage(msg);
-                        Log.d(Logger, "发送给引擎失败");
+                        Log.d(Logger, "传递给引擎失败");
                     }
                 } catch (JSONException e) {
                     Log.d(TAG, e.toString());
@@ -486,37 +505,49 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                     Message msg = new Message();
                     msg.obj = context;
                     if (code == 1000) {
-                        msg.what = ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode();
                         Log.d(Logger, "引擎gen move 成功");
                         JSONObject callBackData = jsonObject.getJSONObject("data");
                         Log.d(Logger, "引擎落子坐标:" + callBackData);
                         playPosition = callBackData.getString("position");
                         Log.d(Logger, "回调坐标:" + playPosition);
-                        Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
-                        Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
-                        // 将引擎下的棋走上 并更新棋盘
-                        board.play(enginePlay.first, enginePlay.second, board.getPlayer());
-                        previousBoard.play(previousX, previousY, board.getLastPlayer());
-                        updateMetricBoard();
-                        board.nextPlayer();
-                        previousX = enginePlay.first;
-                        previousY = enginePlay.second;
-                        // TODO: 将引擎落子位置传给下位机
-                        Intent intent = new Intent(DetectBoardActivity.this, BattleInfoActivity.class);
-                        intent.putExtra("blackPlayer", blackPlayer);
-                        intent.putExtra("whitePlayer", whitePlayer);
-                        intent.putExtra("komi", komi);
-                        intent.putExtra("rule", rule);
-                        intent.putExtra("engine", engine);
-                        intent.putExtra("board", board);
-                        intent.putExtra("playPosition", playPosition);
-                        intent.putExtra("lastMove", board.getPoint(previousX, previousY));
-                        startActivity(intent);
+                        if (playPosition.equals("resign")) {
+                            Log.d(Logger, "引擎认输");
+                            msg.what = ResponseCode.ENGINE_RESIGN.getCode();
+                        }
+                        else if (playPosition.equals("pass")) {
+                            Log.d(Logger, "引擎停一手");
+                            msg.what = ResponseCode.ENGINE_PASS.getCode();
+                        }
+                        else {
+                            msg.what = ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode();
+                            Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
+                            Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
+                            // 将引擎下的棋走上 并更新棋盘
+                            board.play(enginePlay.second, enginePlay.first, board.getPlayer());
+                            previousBoard.play(previousX, previousY, board.getLastPlayer());
+                            updateMetricBoard();
+                            board.nextPlayer();
+                            previousX = enginePlay.second;
+                            previousY = enginePlay.first;
+                            // TODO: 将引擎落子位置传给下位机
+                            Log.d(Logger, "begin pass");
+                            //bluetoothService.sendData("0x3f", false);
+                            Log.d(Logger, "end pass");
+                            Intent intent = new Intent(DetectBoardActivity.this, BattleInfoActivity.class);
+                            intent.putExtra("blackPlayer", blackPlayer);
+                            intent.putExtra("whitePlayer", whitePlayer);
+                            intent.putExtra("komi", komi);
+                            intent.putExtra("rule", rule);
+                            intent.putExtra("engine", engine);
+                            intent.putExtra("board", board);
+                            intent.putExtra("playPosition", playPosition);
+                            intent.putExtra("lastMove", board.getPoint(previousX, previousY));
+                            startActivity(intent);
+                        }
                     }
                     else {
                         msg.what = ResponseCode.ENGINE_PLAY_FAILED.getCode();
                         Log.d(Logger, "引擎gen move 失败");
-                        // TODO: 分析不同的错误码 并做出相应的处理
                     }
                     handler.sendMessage(msg);
                 } catch (JSONException  e) {
@@ -538,10 +569,10 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                 String responseData = Objects.requireNonNull(response.body()).string();
                 try {
                     JSONObject jsonObject = new JSONObject(responseData);
-                    Log.d("djnxyxy", String.valueOf(jsonObject));
+                    Log.d(Logger, String.valueOf(jsonObject));
                     int code = jsonObject.getInt("code");
                     if (code == 1000) {
-                        Log.d("djnxyxy", "关闭检测器，清空棋盘");
+                        Log.d(Logger, "关闭检测器，清空棋盘");
                     }
                 } catch (JSONException e) {
                     Log.d(TAG, e.toString());
@@ -566,6 +597,18 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             }
             else if (msg.what == ResponseCode.ENGINE_CONNECT_FAILED.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_FAILED.getMsg());
+            }
+            else if (msg.what == ResponseCode.CANNOT_PLAY.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.CANNOT_PLAY.getMsg());
+            }
+            else if (msg.what == ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getMsg());
+            }
+            else if (msg.what == ResponseCode.ENGINE_RESIGN.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_RESIGN.getMsg());
+            }
+            else if (msg.what == ResponseCode.ENGINE_PASS.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_PASS.getMsg());
             }
         }
     };

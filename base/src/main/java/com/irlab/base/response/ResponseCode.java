@@ -17,6 +17,10 @@ public enum ResponseCode {
 
     SHOW_BOARD_SUCCESSFULLY(20006, "展示棋盘"),
 
+    ENGINE_RESIGN(20007, "引擎认输"),
+
+    ENGINE_PASS(20008, "引擎停一手"),
+
     ENGINE_CONNECT_FAILED(40001, "引擎连接失败"),
 
     PLAY_PASS_TO_ENGINE_FAILED(40002, "落子传递引擎失败"),
@@ -24,6 +28,8 @@ public enum ResponseCode {
     ENGINE_PLAY_FAILED(40003, "引擎落子失败"),
 
     SHOW_BOARD_FAILED(40004, "展示棋盘失败"),
+
+    CANNOT_PLAY(40005, "这里不能落子")
 
     ;
 

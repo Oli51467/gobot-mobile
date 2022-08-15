@@ -16,12 +16,7 @@
 
         <Button
             android:id="@+id/btnFixBoardPosition"
-            android:text="手动捕获"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <Button
-            android:id="@+id/btn_saveSGF"
-            android:text="保存棋谱"
+            android:text="确定位置"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <Button

@@ -125,15 +125,17 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
      */
     private void getInfoFromActivity() {
         Intent intent = getIntent();
-        board = (Board) intent.getSerializableExtra("board");
-        lastMove = (Point) intent.getSerializableExtra("lastMove");
-        blackPlayer = intent.getStringExtra("blackPlayer");
-        whitePlayer = intent.getStringExtra("whitePlayer");
-        komi = intent.getStringExtra("komi");
-        rule = intent.getStringExtra("rule");
-        engine = intent.getStringExtra("engine");
-        playPosition = intent.getStringExtra("playPosition");
-        identifier = lastMove.getGroup().getOwner().getIdentifier();
+        if (intent.getSerializableExtra("board") != null) {
+            board = (Board) intent.getSerializableExtra("board");
+            lastMove = (Point) intent.getSerializableExtra("lastMove");
+            blackPlayer = intent.getStringExtra("blackPlayer");
+            whitePlayer = intent.getStringExtra("whitePlayer");
+            komi = intent.getStringExtra("komi");
+            rule = intent.getStringExtra("rule");
+            engine = intent.getStringExtra("engine");
+            playPosition = intent.getStringExtra("playPosition");
+            identifier = lastMove.getGroup().getOwner().getIdentifier();
+        }
     }
 
 
@@ -154,19 +156,17 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
                     JSONObject jsonObject = new JSONObject(responseData);
                     Log.d(Logger, "展示棋盘" + jsonObject);
                     int code = jsonObject.getInt("code");
-                    Message msg = new Message();
-                    msg.obj = context;
                     if (code == 1000) {
-                        // 展示棋盘
                         String engineBoard = jsonObject.getString("data");
                         Log.d(Logger, "展示棋盘成功：" + engineBoard);
-                        msg.what = ResponseCode.SHOW_BOARD_SUCCESSFULLY.getCode();
                     }
                     else {
+                        Message msg = new Message();
+                        msg.obj = context;
                         msg.what = ResponseCode.SHOW_BOARD_FAILED.getCode();
+                        handler.sendMessage(msg);
                         Log.d(Logger, "展示棋盘失败");
                     }
-                    handler.sendMessage(msg);
                 } catch (JSONException e) {
                     Log.d(Logger, e.toString());
                 }
@@ -188,19 +188,7 @@ public class BattleInfoActivity extends Activity implements View.OnClickListener
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if (msg.what == ResponseCode.PLAY_PASS_TO_ENGINE_SUCCESSFULLY.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.PLAY_PASS_TO_ENGINE_SUCCESSFULLY.getMsg());
-            }
-            else if (msg.what == ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getMsg());
-            }
-            else if (msg.what == ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getMsg());
-            }
-            else if (msg.what == ResponseCode.ENGINE_PLAY_FAILED.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_FAILED.getMsg());
-            }
-            else if (msg.what == ResponseCode.SHOW_BOARD_SUCCESSFULLY.getCode()) {
+            if (msg.what == ResponseCode.SHOW_BOARD_SUCCESSFULLY.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.SHOW_BOARD_SUCCESSFULLY.getMsg());
             }
             else if (msg.what == ResponseCode.SHOW_BOARD_FAILED.getCode()) {

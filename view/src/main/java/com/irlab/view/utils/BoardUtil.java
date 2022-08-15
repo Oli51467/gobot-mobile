@@ -33,7 +33,6 @@ public class BoardUtil {
     public static Pair<Integer, Integer> transformIndex(String index) {
         String alpha = index.substring(0, 1);
         String number = index.substring(1);
-        Log.d("djnxyxy", alpha + " " + number);
         int cnt = 1;
         for (char c = 'A'; c <= 'T'; c ++) {
             if (c == 'I') continue;
