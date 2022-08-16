@@ -28,11 +28,6 @@
             android:exported="false"
             android:screenOrientation="sensorLandscape"/>
         <activity
-            android:name=".activity.BattleInfoActivity"
-            android:exported="false"
-            android:launchMode="singleInstance"
-            android:screenOrientation="sensorLandscape" />
-        <activity
             android:name=".activity.InstructionActivity"
             android:exported="false"
             android:screenOrientation="portrait" />

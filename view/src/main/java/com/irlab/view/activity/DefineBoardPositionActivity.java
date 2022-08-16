@@ -5,6 +5,8 @@ import static com.irlab.base.MyApplication.JSON;
 import static com.irlab.base.MyApplication.initNet;
 
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
+import static com.irlab.view.utils.ImageUtils.matRotateClockWise90;
+import static com.irlab.view.utils.ImageUtils.transformOrthogonally;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -29,7 +31,6 @@ import com.irlab.view.R;
 import com.irlab.view.utils.Drawer;
 import com.irlab.view.processing.boardDetector.BoardDetector;
 import com.irlab.view.processing.initialBoardDetector.InitialBoardDetector;
-import com.irlab.view.utils.ImageUtils;
 import com.irlab.view.utils.JsonUtil;
 
 import org.json.JSONException;
@@ -60,8 +61,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
 
     private Button btnFixBoardPosition;
 
-    private Mat orthogonalBoard = null;
-
     private MatOfPoint boardContour;
 
     private InitialBoardDetector initialBoardDetector;
@@ -69,6 +68,8 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
     public BoardDetector boardDetector;
 
     private String blackPlayer, whitePlayer, komi, rule, engine, userName;
+
+    private Mat orthogonalBoard;
 
     // opencv与app交互的回调函数
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -145,7 +146,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.btnFixBoardPosition) {
-            Intent intent = new Intent(DefineBoardPositionActivity.this, BattleInfoActivity.class);
+            Intent intent = new Intent(DefineBoardPositionActivity.this, DetectBoardActivity.class);
             intent.putExtra("blackPlayer", blackPlayer);
             intent.putExtra("whitePlayer", whitePlayer);
             intent.putExtra("komi", komi);
@@ -172,9 +173,8 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
             // 拿到轮廓检测后的棋盘 Mat && MatOfPoint
             Mat boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
             boardContour = convertToMatOfPoint(boardPositionInImage);
-            orthogonalBoard = ImageUtils.transformOrthogonally(inputImage, boardPositionInImage);
+            orthogonalBoard = matRotateClockWise90(transformOrthogonally(inputImage, boardPositionInImage));
             if (boardContour != null) Drawer.drawBoardContour(inputImage, boardContour);
-            orthogonalBoard = ImageUtils.matRotateClockWise90(orthogonalBoard);
             if (initNet) runOnUiThread(() -> btnFixBoardPosition.setEnabled(true));
         }
         // 在图像上画出轮廓
