@@ -1,0 +1,2 @@
+ninja: Entering directory `D:\AndroidProject\go-robot\view\.cxx\Debug\2f1b6ib4\arm64-v8a'
+ninja: no work to do.

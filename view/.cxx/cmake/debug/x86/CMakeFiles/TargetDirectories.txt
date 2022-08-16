@@ -1,0 +1,3 @@
+D:/Android-Go/ResNet_ncnn_android/app/.cxx/cmake/debug/x86/CMakeFiles/squeezencnn.dir
+D:/Android-Go/ResNet_ncnn_android/app/.cxx/cmake/debug/x86/CMakeFiles/edit_cache.dir
+D:/Android-Go/ResNet_ncnn_android/app/.cxx/cmake/debug/x86/CMakeFiles/rebuild_cache.dir

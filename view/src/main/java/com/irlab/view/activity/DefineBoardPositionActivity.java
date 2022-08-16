@@ -173,8 +173,8 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
             // 拿到轮廓检测后的棋盘 Mat && MatOfPoint
             Mat boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
             boardContour = convertToMatOfPoint(boardPositionInImage);
-            orthogonalBoard = matRotateClockWise90(transformOrthogonally(inputImage, boardPositionInImage));
-            if (boardContour != null) Drawer.drawBoardContour(inputImage, boardContour);
+            //orthogonalBoard = matRotateClockWise90(transformOrthogonally(inputImage, boardPositionInImage));
+            Drawer.drawBoardContour(inputImage, boardContour);
             if (initNet) runOnUiThread(() -> btnFixBoardPosition.setEnabled(true));
         }
         // 在图像上画出轮廓

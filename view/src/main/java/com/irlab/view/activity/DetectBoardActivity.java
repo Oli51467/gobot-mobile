@@ -235,6 +235,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                     mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
                 }
                 initViews();
+                detectBoard();
             });
         }
         else if (vid == R.id.btn_exit) {

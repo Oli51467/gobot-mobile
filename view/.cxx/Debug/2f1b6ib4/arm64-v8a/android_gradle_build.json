@@ -1,0 +1,40 @@
+{
+  "stringTable": {},
+  "buildFiles": [
+    "D:\\AndroidProject\\go-robot\\view\\src\\main\\jni\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "D:\\Android\\AndroidSDK\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+      "-C",
+      "D:\\AndroidProject\\go-robot\\view\\.cxx\\Debug\\2f1b6ib4\\arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "D:\\Android\\AndroidSDK\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+    "-C",
+    "D:\\AndroidProject\\go-robot\\view\\.cxx\\Debug\\2f1b6ib4\\arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "squeezencnn-Debug-arm64-v8a": {
+      "buildCommandComponents": [
+        "D:\\Android\\AndroidSDK\\cmake\\3.10.2.4988404\\bin\\ninja.exe",
+        "-C",
+        "D:\\AndroidProject\\go-robot\\view\\.cxx\\Debug\\2f1b6ib4\\arm64-v8a",
+        "squeezencnn"
+      ],
+      "buildType": "debug",
+      "abi": "arm64-v8a",
+      "artifactName": "squeezencnn",
+      "output": "D:\\AndroidProject\\go-robot\\view\\build\\intermediates\\cxx\\Debug\\2f1b6ib4\\obj\\arm64-v8a\\libsqueezencnn.so",
+      "runtimeFiles": []
+    }
+  },
+  "toolchains": {},
+  "cFileExtensions": [],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}
