@@ -72,6 +72,10 @@ public class InitialBoardDetector {
         return true;
     }
 
+    /**
+     * 检测边缘
+     * @return
+     */
     private Mat detectBorders() {
         Mat intermediaryImage = new Mat();
         // 边缘检测

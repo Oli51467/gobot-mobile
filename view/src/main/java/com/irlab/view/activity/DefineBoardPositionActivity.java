@@ -194,20 +194,28 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 
+        // 设置确定位置按钮
         btnFixBoardPosition = findViewById(R.id.btnFixBoardPosition);
         btnFixBoardPosition.setOnClickListener(this);
         btnFixBoardPosition.setEnabled(false);
 
-
+        // 设置返回按钮
         Button btnReturn = findViewById(R.id.btn_return);
         btnReturn.setOnClickListener(this);
     }
 
+    /**
+     * 初始化棋盘检测
+     */
     private void initDetector() {
         initialBoardDetector = new InitialBoardDetector(true);
         boardDetector = new BoardDetector();
     }
 
+    /**
+     * 初始化围棋引擎
+     * @param context
+     */
     private void initEngine(Context context) {
         String json = JsonUtil.getJsonFormOfInitEngine(userName);
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
@@ -229,6 +237,8 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
                     else {
                         msg.what = ResponseCode.ENGINE_CONNECT_FAILED.getCode();
                     }
+                    // 目前是发送toast通知的形式来展示是否已经连接引擎
+                    // TODO: 后期应该改为状态展示的方式，在页面上展示引擎连接状态，比如一个绿灯
                     handler.sendMessage(msg);
                 } catch (JSONException e) {
                     Log.d(TAG, e.toString());

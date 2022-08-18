@@ -55,6 +55,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
     private Button begin = null;
 
     // 每一条数据都是一个CellData实体 放到list中
+    //TODO 对 CellData list重命名，直接用list不好
     private List<CellData> list;
 
     private SharedPreferences sharedPreferences;

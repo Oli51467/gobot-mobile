@@ -76,8 +76,9 @@ public class MyApplication extends Application {
             boolean ret_init = squeezencnn.Init(getAssets());
             if (!ret_init) {
                 Log.e(TAG, "squeezencnn Init failed");
+            } else {
+                initNet = true;
             }
-            else initNet = true;
             return ret_init;
         }
     }
