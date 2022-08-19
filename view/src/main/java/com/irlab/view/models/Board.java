@@ -95,15 +95,15 @@ public class Board implements Serializable {
         Set<Group> adjGroups = point.getAdjacentGroups();
         Group newGroup = new Group(point, player);
         point.setGroup(newGroup);
-        for (com.irlab.view.models.Group Group : adjGroups) {
-            if (Group.getOwner() == player) {
-                newGroup.add(Group, point);
+        for (com.irlab.view.models.Group group : adjGroups) {
+            if (group.getOwner() == player) {
+                newGroup.add(group, point);
             } else {
-                Group.removeLiberty(point);
-                if (Group.getLiberties().size() == 0) {
-                    capturedStones.addAll(Group.getStones());
-                    capturedGroups.add(new Group(Group));
-                    Group.die();
+                group.removeLiberty(point);
+                if (group.getLiberties().size() == 0) {
+                    capturedStones.addAll(group.getStones());
+                    capturedGroups.add(new Group(group));
+                    group.die();
                 }
             }
         }

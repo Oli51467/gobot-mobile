@@ -4,9 +4,8 @@ import static com.irlab.base.MyApplication.ENGINE_SERVER;
 import static com.irlab.base.MyApplication.JSON;
 import static com.irlab.base.MyApplication.initNet;
 
+import static com.irlab.view.engine.EngineInterface.clearBoard;
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
-import static com.irlab.view.utils.ImageUtils.matRotateClockWise90;
-import static com.irlab.view.utils.ImageUtils.transformOrthogonally;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -69,8 +68,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
 
     private String blackPlayer, whitePlayer, komi, rule, engine, userName;
 
-    private Mat orthogonalBoard;
-
     // opencv与app交互的回调函数
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -93,7 +90,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         Objects.requireNonNull(getSupportActionBar()).hide();
         userName = MyApplication.getInstance().preferences.getString("userName", null);
         initEngine(getApplicationContext());
-        clearBoard();
+        clearBoard(userName);
         initViews();
         initDetector();
         getInfoFromActivity();
@@ -173,7 +170,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
             // 拿到轮廓检测后的棋盘 Mat && MatOfPoint
             Mat boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
             boardContour = convertToMatOfPoint(boardPositionInImage);
-            //orthogonalBoard = matRotateClockWise90(transformOrthogonally(inputImage, boardPositionInImage));
             Drawer.drawBoardContour(inputImage, boardContour);
             if (initNet) runOnUiThread(() -> btnFixBoardPosition.setEnabled(true));
         }
@@ -214,7 +210,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
 
     /**
      * 初始化围棋引擎
-     * @param context
      */
     private void initEngine(Context context) {
         String json = JsonUtil.getJsonFormOfInitEngine(userName);
@@ -254,30 +249,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         komi = i.getStringExtra("komi");
         rule = i.getStringExtra("rule");
         engine = i.getStringExtra("engine");
-    }
-
-    private void clearBoard() {
-        String json = JsonUtil.getJsonFormOfClearBoard(userName);
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
-        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = Objects.requireNonNull(response.body()).string();
-                try {
-                    JSONObject jsonObject = new JSONObject(responseData);
-                    Log.d(Logger, String.valueOf(jsonObject));
-                    int code = jsonObject.getInt("code");
-                    if (code == 1000) {
-                        Log.d(Logger, "关闭检测器，清空棋盘");
-                    }
-                } catch (JSONException e) {
-                    Log.d(TAG, e.toString());
-                }
-            }
-        });
     }
 
     @SuppressLint("HandlerLeak")

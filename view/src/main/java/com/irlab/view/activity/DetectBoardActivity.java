@@ -63,6 +63,7 @@ import org.opencv.core.MatOfPoint;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -219,6 +220,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         }
         // 开启摄像头 模拟落子信号
         else if (vid == R.id.btn_return_camera) {
+            CountDownLatch ctl = new CountDownLatch(1);
             runOnUiThread(() -> {
                 setContentView(R.layout.activity_detect_board);
                 if (!OpenCVLoader.initDebug()) {
@@ -229,8 +231,17 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                     mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
                 }
                 initViews();
-                detectBoard();
+                ctl.countDown();
             });
+            // TODO: 这种自动化检测方法待商榷
+            try {
+                ctl.await();
+            } catch (InterruptedException e) {
+                Log.d(Logger, e.toString());
+            }
+            while(true) {
+                if (detectBoard()) break;
+            }
         } else if (vid == R.id.btn_exit) {
             clearBoard(userName);
             Intent intent = new Intent(this, SelectConfigActivity.class);
@@ -351,7 +362,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     /**
      * 检测棋盘
      */
-    public void detectBoard() {
+    public boolean detectBoard() {
         int moveX, moveY;
         Bitmap bitmap = matToBitmap(orthogonalBoard);
         bitmapMatrix = splitImage(bitmap, WIDTH);
@@ -379,6 +390,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         Pair<Integer, Integer> move = getMoveByDiff();
         if (move == null) {
             ToastUtil.show(this, "未落子");
+            return false;
         } else {
             moveX = move.first;
             moveY = move.second;
@@ -402,9 +414,11 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                 sendToEngine(getApplicationContext());
                 Log.d(Logger, board + "--------------\n" + "lastBoard:\n");
                 Log.d(Logger, previousBoard.toString());
+                return true;
             } else {
                 Log.w(TAG, "这里不可以落子");
                 curBoard[moveX][moveY] = BLANK;
+                return false;
             }
         }
     }
