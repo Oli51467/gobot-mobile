@@ -125,8 +125,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             if (status == LoaderCallbackInterface.SUCCESS) {
                 Log.i(TAG, "OpenCV loaded successfully");
                 mOpenCvCameraView.enableView();
-            }
-            else {
+            } else {
                 super.onManagerConnected(status);
             }
         }
@@ -166,8 +165,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         if (!OpenCVLoader.initDebug()) {
             Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
-        }
-        else {
+        } else {
             Log.d(TAG, "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
@@ -179,8 +177,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         if (!OpenCVLoader.initDebug()) {
             Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
-        }
-        else {
+        } else {
             Log.d(TAG, "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
@@ -197,8 +194,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         int vid = v.getId();
         if (vid == R.id.btnFixBoardPosition) {
             detectBoard();
-        }
-        else if (vid == R.id.btn_saveSGF) {
+        } else if (vid == R.id.btn_saveSGF) {
             SmileDialog dialog = new SmileDialogBuilder(this, SmileDialogType.WARNING)
                     .hideTitle(true)
                     .setContentText(getString(R.string.dialog_finish_recording))
@@ -216,8 +212,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                     })
                     .build();
             dialog.show();
-        }
-        else if (vid == R.id.btn_return) {
+        } else if (vid == R.id.btn_return) {
             Intent intent = new Intent(this, SelectConfigActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
@@ -229,16 +224,14 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                 if (!OpenCVLoader.initDebug()) {
                     Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
                     OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
-                }
-                else {
+                } else {
                     Log.d(TAG, "OpenCV library found inside package. Using it!");
                     mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
                 }
                 initViews();
                 detectBoard();
             });
-        }
-        else if (vid == R.id.btn_exit) {
+        } else if (vid == R.id.btn_exit) {
             clearBoard(userName);
             Intent intent = new Intent(this, SelectConfigActivity.class);
             startActivity(intent);
@@ -279,9 +272,12 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         // 关闭摄像头 显示友好界面
         return inputImage;
     }
-    public void onCameraViewStarted(int width, int height) {}
 
-    public void onCameraViewStopped() {}
+    public void onCameraViewStarted(int width, int height) {
+    }
+
+    public void onCameraViewStopped() {
+    }
 
     /**
      * 初始化上一个棋盘为空
@@ -293,7 +289,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
         lastBoard = new int[WIDTH + 1][HEIGHT + 1];
         curBoard = new int[WIDTH + 1][HEIGHT + 1];
-        for (int i = 1; i <= WIDTH; i ++ ) {
+        for (int i = 1; i <= WIDTH; i++) {
             Arrays.fill(lastBoard[i], BLANK);
             Arrays.fill(curBoard[i], BLANK);
         }
@@ -327,8 +323,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
      */
     private Pair<Integer, Integer> getMoveByDiff() {
         Pair<Integer, Integer> move;
-        for (int i = 1; i <= WIDTH; i ++ ) {
-            for (int j = 1; j <= HEIGHT; j ++ ) {
+        for (int i = 1; i <= WIDTH; i++) {
+            for (int j = 1; j <= HEIGHT; j++) {
                 if (lastBoard[i][j] == BLANK && curBoard[i][j] != BLANK) {
                     move = new Pair<>(i, j);
                     return move;
@@ -339,25 +335,28 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     }
 
     private void updateMetricBoard() {
-        for (int i = 1; i <= WIDTH; i ++ ) {
-            for (int j = 1; j <= HEIGHT; j ++ ) {
+        for (int i = 1; i <= WIDTH; i++) {
+            for (int j = 1; j <= HEIGHT; j++) {
                 Point cross = board.points[i][j];
                 if (cross.getGroup() == null) {
                     lastBoard[i][j] = BLANK;
-                }
-                else {
+                } else {
                     lastBoard[i][j] = cross.getGroup().getOwner().getIdentifier();
                 }
             }
         }
     }
 
+
+    /**
+     * 检测棋盘
+     */
     public void detectBoard() {
         int moveX, moveY;
         Bitmap bitmap = matToBitmap(orthogonalBoard);
         bitmapMatrix = splitImage(bitmap, WIDTH);
         savePNG_After(bitmap, "total");
-        for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex ++ ) {
+        for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex++) {
             int innerT = threadIndex;
             Runnable runnable = () -> {
                 for (int mTask = 0; mTask < SINGLE_THREAD_TASK; mTask++) {
@@ -366,9 +365,13 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                     int i = cnt / 19 + 1;
                     int j = cnt % 19 + 1;
                     String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
-                    if (result.equals("black")) curBoard[i][j] = BLACK;
-                    else if (result.equals("white")) curBoard[i][j] = WHITE;
-                    else curBoard[i][j] = BLANK;
+                    if (result.equals("black")) {
+                        curBoard[i][j] = BLACK;
+                    } else if (result.equals("white")) {
+                        curBoard[i][j] = WHITE;
+                    } else {
+                        curBoard[i][j] = BLANK;
+                    }
                 }
             };
             threadPool.execute(runnable);
@@ -376,8 +379,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         Pair<Integer, Integer> move = getMoveByDiff();
         if (move == null) {
             ToastUtil.show(this, "未落子");
-        }
-        else {
+        } else {
             moveX = move.first;
             moveY = move.second;
             ToastUtil.show(this, moveX + " " + moveY);
@@ -387,8 +389,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                 Log.d(TAG, "合法落子");
                 if (!init) {
                     previousBoard.play(previousX, previousY, board.getLastPlayer());
-                }
-                else {
+                } else {
                     init = false;
                 }
                 // 更新一下矩阵棋盘 更新为落完子后的棋盘局面 因为可能有提子
@@ -401,8 +402,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                 sendToEngine(getApplicationContext());
                 Log.d(Logger, board + "--------------\n" + "lastBoard:\n");
                 Log.d(Logger, previousBoard.toString());
-            }
-            else {
+            } else {
                 Log.w(TAG, "这里不可以落子");
                 curBoard[moveX][moveY] = BLANK;
             }
@@ -418,7 +418,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
@@ -437,13 +438,11 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                         if (identifier == Board.BLACK_STONE) {
                             genMove(getApplicationContext());
                         }
-                    }
-                    else if (code == 4001){
+                    } else if (code == 4001) {
                         msg.what = ResponseCode.CANNOT_PLAY.getCode();
                         handler.sendMessage(msg);
                         Log.d(Logger, "无法落子");
-                    }
-                    else {
+                    } else {
                         msg.what = ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode();
                         handler.sendMessage(msg);
                         Log.d(Logger, "传递给引擎失败");
@@ -464,7 +463,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
@@ -484,12 +484,10 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                         if (playPosition.equals("resign")) {
                             Log.d(Logger, "引擎认输");
                             msg.what = ResponseCode.ENGINE_RESIGN.getCode();
-                        }
-                        else if (playPosition.equals("pass")) {
+                        } else if (playPosition.equals("pass")) {
                             Log.d(Logger, "引擎停一手");
                             msg.what = ResponseCode.ENGINE_PASS.getCode();
-                        }
-                        else {
+                        } else {
                             msg.what = ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode();
                             Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
                             Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
@@ -505,26 +503,28 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                             Log.d(Logger, "begin pass");
                             //bluetoothService.sendData("0x3f", false);
                             Log.d(Logger, "end pass");
-                            runOnUiThread(() ->{
+                            runOnUiThread(() -> {
                                 mOpenCvCameraView.setVisibility(SurfaceView.INVISIBLE);
                                 mOpenCvCameraView.disableView();
                                 setContentView(R.layout.activity_battle_info);
                                 beginDrawing();
                             });
                         }
-                    }
-                    else {
+                    } else {
                         msg.what = ResponseCode.ENGINE_PLAY_FAILED.getCode();
                         Log.d(Logger, "引擎gen move 失败");
                     }
                     handler.sendMessage(msg);
-                } catch (JSONException  e) {
+                } catch (JSONException e) {
                     Log.d(Logger, e.toString());
                 }
             }
         });
     }
 
+    /**
+     * 画棋盘，展示棋局
+     */
     private void beginDrawing() {
         int identifier = lastMove.getGroup().getOwner().getIdentifier();
         Button btn_return_play = findViewById(R.id.btn_return_camera);
@@ -557,20 +557,15 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             super.handleMessage(msg);
             if (msg.what == ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getMsg());
-            }
-            else if (msg.what == ResponseCode.ENGINE_CONNECT_FAILED.getCode()) {
+            } else if (msg.what == ResponseCode.ENGINE_CONNECT_FAILED.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_FAILED.getMsg());
-            }
-            else if (msg.what == ResponseCode.CANNOT_PLAY.getCode()) {
+            } else if (msg.what == ResponseCode.CANNOT_PLAY.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.CANNOT_PLAY.getMsg());
-            }
-            else if (msg.what == ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode()) {
+            } else if (msg.what == ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getMsg());
-            }
-            else if (msg.what == ResponseCode.ENGINE_RESIGN.getCode()) {
+            } else if (msg.what == ResponseCode.ENGINE_RESIGN.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_RESIGN.getMsg());
-            }
-            else if (msg.what == ResponseCode.ENGINE_PASS.getCode()) {
+            } else if (msg.what == ResponseCode.ENGINE_PASS.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_PASS.getMsg());
             }
         }

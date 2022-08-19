@@ -54,6 +54,11 @@ public class ImageUtils {
         return bitmap;
     }
 
+    /**
+     * 保存图像信息
+     * @param bitmap
+     * @param fileName
+     */
     public static void savePNG_After(Bitmap bitmap, String fileName) {
         File file = new File(Environment.getExternalStorageDirectory() + "/recoder");
         if (!file.exists()) file.mkdirs();
@@ -70,6 +75,12 @@ public class ImageUtils {
         }
     }
 
+    /**
+     * 分割图片
+     * @param rawBitmap
+     * @param piece
+     * @return
+     */
     public static Bitmap[][] splitImage(Bitmap rawBitmap, int piece) {
         Bitmap[][] bitmapMatrix = new Bitmap[piece + 1][piece + 1];
         int unitHeight = rawBitmap.getHeight() / piece;
