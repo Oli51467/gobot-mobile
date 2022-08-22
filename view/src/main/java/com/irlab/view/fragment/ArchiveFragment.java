@@ -39,6 +39,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -88,7 +89,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = response.body().string();
+                String responseData = Objects.requireNonNull(response.body()).string();
                 addDataToMap(responseData, context);
             }
         });
@@ -186,7 +187,6 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
      * @param adapterView 适配器
      * @param view 视图
      * @param pos 选中的位置
-     * @param l
      */
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {

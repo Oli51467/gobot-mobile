@@ -6,22 +6,18 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.irlab.base.entity.CellData;
 import com.irlab.view.R;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>
-        implements View.OnClickListener, View.OnLongClickListener {
-
-    private static final int TYPE_EMPTY = 0;
-    public static final int TYPE_NORMAL = 1;
+public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> implements View.OnClickListener, View.OnLongClickListener {
 
     // 数据容器
-    private List<CellData> list = new ArrayList<>();
+    private List<CellData> list;
 
     private int mPosition = -1;
 
@@ -33,11 +29,11 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     private setLongClick onItemLongClickListener;
 
     // 内部类实现viewHolder 拿到cardView中的布局元素
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        private ImageView check;
-        private TextView playerBlack, playerWhite, desc, rule;
-        private View root;
+        private final ImageView check;
+        private final TextView playerBlack, playerWhite, desc, rule;
+        private final View root;
 
         public ViewHolder(View root) {
             super(root);
@@ -53,14 +49,6 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     @Override
     public int getItemCount() {
         return list.size();
-    }
-
-    @Override
-    public int getItemViewType(int position) {
-        if (list.size() <= 0) {
-            return TYPE_EMPTY;
-        }
-        return TYPE_NORMAL;
     }
 
     public int getmPosition() { return this.mPosition; }
@@ -86,6 +74,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         }
     }
 
+    @NonNull
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view;

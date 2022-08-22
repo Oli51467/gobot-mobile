@@ -1,7 +1,8 @@
 package com.irlab.view.models;
 
 import android.annotation.SuppressLint;
-import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
@@ -16,7 +17,6 @@ import onion.w4v3xrmknycexlsd.lib.sgfcharm.BuildConfig;
 
 // 棋盘
 public class Board implements Serializable {
-    public final static int EMPTY = 0;
     public final static int BLACK_STONE = 1;
     public final static int WHITE_STONE = 2;
 
@@ -180,21 +180,22 @@ public class Board implements Serializable {
         }
     }
 
+    @NonNull
     @Override
     public String toString() {
-        String board = "";
+        StringBuilder board = new StringBuilder();
         for (int i = 1; i <= width; i ++ ) {
             for (int j = 1; j <= height; j ++ ) {
                 Point cross = points[i][j];
                 if (cross.getGroup() == null) {
-                    board += "· ";
+                    board.append("· ");
                 } else {
-                    board += (cross.getGroup().getOwner().getIdentifier() == 1 ? '1' : '2') + " ";
+                    board.append(cross.getGroup().getOwner().getIdentifier() == 1 ? '1' : '2').append(" ");
                 }
             }
-            board += "\n";
+            board.append("\n");
         }
-        return board;
+        return board.toString();
     }
 
     public String generateSgf(String blackPlayer, String whitePlayer, String komi) {
@@ -208,7 +209,7 @@ public class Board implements Serializable {
     }
 
     private void writeHeader(StringBuilder sgf, String blackPlayer, String whitePlayer, String komi) {
-        SimpleDateFormat sdf =  new SimpleDateFormat("yyyy-MM-dd");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat sdf =  new SimpleDateFormat("yyyy-MM-dd");
         Calendar c = Calendar.getInstance();
         String date = sdf.format(new Date(c.getTimeInMillis()));
 
@@ -223,8 +224,6 @@ public class Board implements Serializable {
         writeProperty(sgf, "PW", whitePlayer);
         writeProperty(sgf, "PB", blackPlayer);
         writeProperty(sgf, "Z1", "" + recordPoints.size());
-        //writeProperty(sgf, "Z2", "" + numberOfUndoes);
-        //writeProperty(sgf, "Z3", "" + numberOfManualAdditions);
     }
 
     private void writeProperty(StringBuilder sgf, String property, String value) {

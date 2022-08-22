@@ -37,6 +37,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -64,7 +65,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_config);
-        getSupportActionBar().hide();
+        Objects.requireNonNull(getSupportActionBar()).hide();
         sharedPreferences = MyApplication.getInstance().preferences;
         initData();
     }
@@ -92,7 +93,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
             }
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = response.body().string();
+                String responseData = Objects.requireNonNull(response.body()).string();
                 addCellDataToList(responseData);
             }
         });
@@ -159,7 +160,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

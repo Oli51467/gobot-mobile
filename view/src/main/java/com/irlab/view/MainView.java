@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -23,6 +22,7 @@ import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.activity.InstructionActivity;
 import com.irlab.view.activity.PlayConfigActivity;
 import com.irlab.view.activity.SelectConfigActivity;
+import com.irlab.view.activity.TestSpeechActivity;
 import com.irlab.view.fragment.PlayFragment;
 import com.irlab.view.fragment.ArchiveFragment;
 import com.irlab.view.fragment.SettingsFragment;
@@ -66,7 +66,6 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         super.onCreate(savedInstanceState);
         // 要求窗口没有 title
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.setContentView(R.layout.activity_main_view);
         Objects.requireNonNull(getSupportActionBar()).hide();
         // 注入Arouter
@@ -134,12 +133,14 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     // 初始化fragment中的控件并设置监听事件
     public void initFragmentViewsAndEvents() {
         RelativeLayout openBluetooth = findViewById(R.id.layout_bluetooth);
+        RelativeLayout openSpeech = findViewById(R.id.layout_speech);
         Button logout = findViewById(R.id.btn_logout);
         Button play = findViewById(R.id.btn_play);
         Button playSettings = findViewById(R.id.btn_play_settings);
         Button instruction = findViewById(R.id.btn_instruction);
 
         openBluetooth.setOnClickListener(this);
+        openSpeech.setOnClickListener(this);
         logout.setOnClickListener(this);
         play.setOnClickListener(this);
         playSettings.setOnClickListener(this);
@@ -160,6 +161,11 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         }
         else if (vid == R.id.layout_bluetooth) {
             ARouter.getInstance().build("/base/bluetooth").navigation();
+        }
+        else if (vid == R.id.layout_speech) {
+            Intent intent = new Intent(MainView.this, TestSpeechActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
         }
         else if (vid == R.id.btn_logout) {
             // 退出登录时, 清空SharedPreferences中保存的用户信息, 下次登录时不再自动登录

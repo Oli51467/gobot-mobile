@@ -1,9 +1,9 @@
 package com.irlab.view.adapter;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -12,17 +12,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.irlab.base.entity.GameInfo;
 import com.irlab.view.R;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /*
 棋谱ListView的适配器
  */
 public class ArchiveAdapter extends RecyclerView.Adapter<ArchiveAdapter.ArchiveViewHolder> implements View.OnClickListener, View.OnLongClickListener {
-
-    private static final int TYPE_EMPTY = 0;
-    public static final int TYPE_NORMAL = 1;
 
     // 数据容器
     private List<GameInfo> list;
@@ -35,10 +30,10 @@ public class ArchiveAdapter extends RecyclerView.Adapter<ArchiveAdapter.ArchiveV
     }
 
     // 内部类实现viewHolder 拿到cardView中的布局元素
-    public class ArchiveViewHolder extends RecyclerView.ViewHolder {
-        private String code;
-        private TextView playerInfo, date, result;
-        private View root;
+    public static class ArchiveViewHolder extends RecyclerView.ViewHolder {
+        protected String code;
+        private final TextView playerInfo, date, result;
+        private final View root;
 
         public ArchiveViewHolder(View root) {
             super(root);
@@ -54,14 +49,6 @@ public class ArchiveAdapter extends RecyclerView.Adapter<ArchiveAdapter.ArchiveV
         return list.size();
     }
 
-    @Override
-    public int getItemViewType(int position) {
-        if (list.size() <= 0) {
-            return TYPE_EMPTY;
-        }
-        return TYPE_NORMAL;
-    }
-
     @NonNull
     @Override
     public ArchiveViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -74,6 +61,7 @@ public class ArchiveAdapter extends RecyclerView.Adapter<ArchiveAdapter.ArchiveV
         return viewHolder;
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull ArchiveViewHolder holder, int position) {
         // 双方信息

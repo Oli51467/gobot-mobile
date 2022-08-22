@@ -38,6 +38,11 @@ android {
             path file('src/main/jni/CMakeLists.txt')
         }
     }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['../iFLYTEK/libs']
+        }
+    }
 }
 
 dependencies {
@@ -68,4 +73,6 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project (':base')
     implementation project (':opencv')
+    implementation project (':iFLYTEK')
+    implementation files('../iFLYTEK/libs/Msc.jar')
 }

@@ -51,6 +51,28 @@
                 android:src="@drawable/icon_enter" />
         </RelativeLayout>
 
+        <RelativeLayout
+            android:id="@+id/layout_speech"
+            style="@style/relativeLayout_settings_style">
+
+            <ImageView
+                android:id="@+id/iv_speech"
+                style="@style/leftImageView_settings_style"
+                android:layout_width="200dp"
+                android:src="@drawable/icon_speech" />
+
+            <TextView
+                android:id="@+id/tv_speech"
+                style="@style/textview_settings_style"
+                android:layout_toEndOf="@+id/iv_speech"
+                android:text="语音测试" />
+
+            <ImageView
+                android:id="@+id/iv_enter_speech"
+                style="@style/rightImageView_settings_style"
+                android:src="@drawable/icon_enter" />
+        </RelativeLayout>
+
         <LinearLayout android:layout_width="fill_parent"
             android:layout_height="2px"
             android:background="@drawable/set_border"
