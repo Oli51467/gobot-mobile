@@ -84,7 +84,6 @@ public class ClsUtils {
             // throw new RuntimeException(e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return true;
@@ -143,7 +142,6 @@ public class ClsUtils {
             // throw new RuntimeException(e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

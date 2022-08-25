@@ -6,8 +6,6 @@ android {
     defaultConfig {
         minSdk 24
         targetSdk 32
-        versionCode 1
-        versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
@@ -41,6 +39,13 @@ android {
     sourceSets {
         main {
             jniLibs.srcDirs = ['../iFLYTEK/libs']
+        }
+    }
+    sourceSets {
+        main {
+            assets {
+                srcDirs 'src/main/assets', 'src/main/assets/image'
+            }
         }
     }
 }

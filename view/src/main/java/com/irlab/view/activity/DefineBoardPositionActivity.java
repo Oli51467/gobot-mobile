@@ -4,12 +4,17 @@ import static com.irlab.base.MyApplication.ENGINE_SERVER;
 import static com.irlab.base.MyApplication.JSON;
 import static com.irlab.base.MyApplication.initNet;
 
+import static com.irlab.base.MyApplication.squeezencnn;
 import static com.irlab.view.engine.EngineInterface.clearBoard;
 import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
+import static com.irlab.view.utils.ImageUtils.matToBitmap;
+import static com.irlab.view.utils.ImageUtils.splitBitmap;
+import static com.irlab.view.utils.ImageUtils.splitImage;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -43,6 +48,9 @@ import org.opencv.core.MatOfPoint;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -68,6 +76,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
 
     private String blackPlayer, whitePlayer, komi, rule, engine, userName;
 
+    public static ThreadPoolExecutor threadPool;
     // opencv与app交互的回调函数
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -94,6 +103,9 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         initViews();
         initDetector();
         getInfoFromActivity();
+
+        threadPool = new ThreadPoolExecutor(19, 19 + 2, 10, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(361));
     }
 
     @Override
@@ -156,6 +168,40 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
+        else if (vid == R.id.btnTestFinkMarker){
+
+            // TODO find marker测试，图片分割和识别
+            Mat boardMat = initialBoardDetector.getPerspectiveTransformImage();
+            int[][] curBoard = new int[20][20];
+
+            Bitmap bitmap = matToBitmap(boardMat);
+            Bitmap[][] bitmapMatrix = splitBitmap(bitmap, 19);
+            for (int threadIndex = 0; threadIndex < 19; threadIndex++) {
+                int innerT = threadIndex;
+                Runnable runnable = () -> {
+                    for (int mTask = 0; mTask < 19; mTask++) {
+                        // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
+                        int cnt = innerT * 19 + mTask;
+                        int i = cnt / 19 + 1;
+                        int j = cnt % 19 + 1;
+                        String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
+                        if (result.equals("black")) {
+                            curBoard[i][j] = 1;
+                        } else if (result.equals("white")) {
+                            curBoard[i][j] = 2;
+                        } else {
+                            curBoard[i][j] = 0;
+                        }
+                    }
+                };
+                threadPool.execute(runnable);
+            }
+
+            Message msg = new Message();
+            msg.obj = MyApplication.getContext();
+            msg.what = ResponseCode.FIND_MARKER.getCode();;
+            handler.sendMessage(msg);
+        }
     }
 
     // 这里获取到图像输出
@@ -194,6 +240,10 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         btnFixBoardPosition = findViewById(R.id.btnFixBoardPosition);
         btnFixBoardPosition.setOnClickListener(this);
         btnFixBoardPosition.setEnabled(false);
+
+        // 测试按钮
+        Button testReturn = findViewById(R.id.btnTestFinkMarker);
+        testReturn.setOnClickListener(this);
 
         // 设置返回按钮
         Button btnReturn = findViewById(R.id.btn_return);
@@ -264,6 +314,9 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
             }
             else if (msg.what == ResponseCode.ENGINE_CONNECT_FAILED.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_FAILED.getMsg());
+            }
+            else if (msg.what == ResponseCode.FIND_MARKER.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.FIND_MARKER.getMsg());
             }
         }
     };

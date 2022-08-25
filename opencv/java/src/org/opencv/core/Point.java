@@ -19,6 +19,14 @@ public class Point {
         set(vals);
     }
 
+    public double getX() {
+        return x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
     public void set(double[] vals) {
         if (vals != null) {
             x = vals.length > 0 ? vals[0] : 0;

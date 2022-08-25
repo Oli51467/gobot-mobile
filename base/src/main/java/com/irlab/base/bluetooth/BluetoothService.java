@@ -232,6 +232,12 @@ public class BluetoothService {
             @Override
             public void onReceiveDataSuccess(byte[] buffer) {
                 Log.w("onReceiveDataSuccess", "成功接收数据,长度" + buffer.length + "->" + bytes2HexString(buffer, buffer.length));
+
+                // 收到人下棋完成信号，来自于手动按绿色按钮
+                if (bytes2HexString(buffer, buffer.length).equals("41")){
+
+                }
+
                 BluetoothActivity.connect_status = true;
             }
 

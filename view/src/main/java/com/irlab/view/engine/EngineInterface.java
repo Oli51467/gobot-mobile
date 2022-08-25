@@ -57,8 +57,9 @@ public class EngineInterface {
         });
     }
 
-    /*
-    展示棋盘
+    /**
+     * 展示棋盘
+     * @param userName
      */
     public static void showBoardByEngine(String userName) {
         String json = JsonUtil.getJsonFormOfShowBoard(userName);
@@ -88,6 +89,15 @@ public class EngineInterface {
         });
     }
 
+    /**
+     * 保存棋谱
+     * @param context
+     * @param userName
+     * @param board
+     * @param blackPlayer
+     * @param whitePlayer
+     * @param komi
+     */
     public static void saveGameAsSgf(Context context, String userName, Board board, String blackPlayer, String whitePlayer, String komi) {
         String playInfo = "黑方:   " + blackPlayer + "     白方:   " + whitePlayer;
         String json = JsonUtil.getJsonFormOfGame(userName, playInfo, "白中盘胜", board.generateSgf(blackPlayer, whitePlayer, komi));

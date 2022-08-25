@@ -23,6 +23,7 @@ public class MyApplication extends Application {
     public static SqueezeNcnn squeezencnn;
     public static boolean initNet = false;
     private static MyApplication MyApp; // 提供自己的唯一实例
+    protected static Context context;
 
     public SharedPreferences preferences;
     public MyTask initNcnn;
@@ -30,6 +31,7 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        context = this.getApplicationContext();
         MyApp = this;
         ARouter.openLog();
         ARouter.openDebug();
@@ -51,6 +53,10 @@ public class MyApplication extends Application {
     public void onTerminate() {
         super.onTerminate();
         initNcnn.cancel(true);
+    }
+
+    public static Context getContext() {
+        return context;
     }
 
     @SuppressLint("StaticFieldLeak")

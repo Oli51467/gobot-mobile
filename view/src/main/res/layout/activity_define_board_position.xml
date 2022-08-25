@@ -15,6 +15,12 @@
         android:orientation="vertical">
 
         <Button
+            android:id="@+id/btnTestFinkMarker"
+            android:text="测试检测"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
             android:id="@+id/btnFixBoardPosition"
             android:text="确定位置"
             android:layout_width="wrap_content"

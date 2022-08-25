@@ -73,6 +73,51 @@
                 android:src="@drawable/icon_enter" />
         </RelativeLayout>
 
+        <RelativeLayout
+            android:id="@+id/layout_test_bluetooth"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            style="@style/relativeLayout_settings_style">
+
+            <EditText
+                android:id="@+id/editText1"
+                android:layout_width="238dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginStart="26dp"
+                android:layout_marginTop="21dp"
+                android:text="LA1Z"
+                android:hint="在此输入指令">
+                <requestFocus />
+            </EditText>
+
+            <Button
+                android:id="@+id/button1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/editText1"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="-51dp"
+                android:layout_marginEnd="17dp"
+                android:text="发送指令" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/layout_test_bluetooth_content"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            style="@style/relativeLayout_settings_style">
+
+            <TextView
+                android:id="@+id/layout_bluetooth_content"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:text="指令记录："
+                android:textSize="16sp" />
+
+        </RelativeLayout>
+
         <LinearLayout android:layout_width="fill_parent"
             android:layout_height="2px"
             android:background="@drawable/set_border"
@@ -88,5 +133,6 @@
         android:background="@drawable/bar_selector"
         android:text="退出登录"
         android:textColor="@color/red" />
+
 
 </LinearLayout>
