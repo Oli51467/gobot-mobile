@@ -2,19 +2,15 @@ package com.irlab.view.activity;
 
 import static com.irlab.base.MyApplication.ENGINE_SERVER;
 import static com.irlab.base.MyApplication.JSON;
-import static com.irlab.base.MyApplication.initNet;
 import static com.irlab.base.MyApplication.squeezencnn;
 
+import static com.irlab.base.MyApplication.threadPool;
 import static com.irlab.view.engine.EngineInterface.clearBoard;
 import static com.irlab.view.engine.EngineInterface.saveGameAsSgf;
 import static com.irlab.view.utils.BoardUtil.genPlayCmd;
 import static com.irlab.view.utils.BoardUtil.transformIndex;
-import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
-import static com.irlab.view.utils.ImageUtils.matRotateClockWise90;
 import static com.irlab.view.utils.ImageUtils.matToBitmap;
-import static com.irlab.view.utils.ImageUtils.savePNG_After;
 import static com.irlab.view.utils.ImageUtils.splitImage;
-import static com.irlab.view.utils.ImageUtils.transformOrthogonally;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -37,8 +33,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.irlab.base.MyApplication;
-// import com.irlab.base.bluetooth.BluetoothActivity;
-// import com.irlab.base.bluetooth.BluetoothService;
 import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
@@ -68,9 +62,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -85,7 +76,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     public static final int WIDTH = 19;
     public static final int HEIGHT = 19;
     public static final int THREAD_NUM = 19;
-    public static final int STONE_NUM = 361;
     public static final int SINGLE_THREAD_TASK = 19;
     public static final int BOARD_WIDTH = 1000;
     public static final int BOARD_HEIGHT = 1000;
@@ -96,7 +86,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     public static int previousX, previousY;
     public static boolean init = true;
-    public static ThreadPoolExecutor threadPool;
     public static Drawer drawer;
 
     private CameraBridgeViewBase mOpenCvCameraView;
@@ -124,7 +113,9 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     public Point lastMove;
 
     // 蓝牙服务
-    BluetoothService bluetoothService;
+    protected BluetoothService bluetoothService;
+
+    private Context mContext;
 
     // opencv与app交互的回调函数
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -145,9 +136,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_detect_board);
         Objects.requireNonNull(getSupportActionBar()).hide();
+        mContext = this;
         userName = MyApplication.getInstance().preferences.getString("userName", null);
-        threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 2, 10, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(STONE_NUM));
         getInfoFromActivity();
         initBoard();
         initViews();
@@ -556,11 +546,9 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-
                 String error = "走棋指令发送引擎，连接失败！";
                 Log.e(TAG, error);
-                Toast.makeText(MyApplication.getContext(), error, Toast.LENGTH_SHORT).show();
-
+                ToastUtil.show(mContext, error);
             }
 
             @Override
@@ -605,7 +593,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
      * @param context
      */
     private void genMove(Context context, String whichPlayer) {
-
         String json = JsonUtil.getJsonFormOfgenMove(userName, whichPlayer);
         Log.d(Logger, json);
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
@@ -614,7 +601,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 String error = "引擎自动走棋指令发送失败，连接失败！";
                 Log.e(TAG, error);
-                Toast.makeText(MyApplication.getContext(), error, Toast.LENGTH_SHORT).show();
+                ToastUtil.show(mContext, error);
             }
 
             @Override
