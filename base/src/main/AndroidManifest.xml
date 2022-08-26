@@ -35,12 +35,6 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Robotgo">
 
-        <activity
-            android:name=".bluetooth.BluetoothActivity"
-            android:exported="true">
-
-        </activity>
-
     </application>
 
 </manifest>

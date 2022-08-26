@@ -1,3 +1,0 @@
-ninja: Entering directory `D:\AndroidProject\go-robot\view\.cxx\Debug\2f1b6ib4\x86'
-[1/2] Building CXX object CMakeFiles/squeezencnn.dir/squeezencnn_jni.cpp.o
-[2/2] Linking CXX shared library D:\AndroidProject\go-robot\view\build\intermediates\cxx\Debug\2f1b6ib4\obj\x86\libsqueezencnn.so

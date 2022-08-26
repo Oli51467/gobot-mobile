@@ -13,12 +13,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.irlab.base.MyApplication;
-import com.irlab.base.bluetooth.BluetoothActivity;
-import com.irlab.base.bluetooth.BluetoothService;
 import com.irlab.view.R;
+import com.irlab.view.activity.BluetoothActivity;
+import com.irlab.view.bluetooth.BluetoothService;
 
 public class SettingsFragment extends Fragment {
 

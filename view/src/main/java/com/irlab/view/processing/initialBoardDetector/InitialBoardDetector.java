@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
 import static com.irlab.view.utils.AssetsUtil.getImageFromAssetsFile;
 import static com.irlab.view.utils.ImageUtils.imagePerspectiveTransform;
 import static com.irlab.view.utils.ImageUtils.matRotateClockWise90;
@@ -59,9 +60,10 @@ public class InitialBoardDetector {
 
     /**
      * 找到棋盘位置，并获取透视变换后的图片
+     *
      * @return
      */
-    public Boolean findMarker(){
+    public Boolean findMarker() {
         // 如果获取的图片为空，则直接返回
         if (image == null) {
             String error = "图片为空，无法发现角点";
@@ -93,10 +95,10 @@ public class InitialBoardDetector {
         List<MatOfPoint> contours = new ArrayList<>();
         Imgproc.findContours(testImg, contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
-        if(contours.size() == 4){
+        if (contours.size() == 4) {
             // 找到marker
             return true;
-        }else {
+        } else {
             // 未找到marker
             String error = "发现角点数量不为4，未识别标准棋盘，请调整后再次识别";
             Log.e(TAG, error);
@@ -109,9 +111,10 @@ public class InitialBoardDetector {
 
     /**
      * 找到棋盘位置，并获取透视变换后的图片
+     *
      * @return
      */
-    public Mat getPerspectiveTransformImage(){
+    public Mat getPerspectiveTransformImage() {
         // 如果获取的图片为空，则直接返回
         if (image == null) {
             String error = "帧图片为空，未获取图像信息";
@@ -153,7 +156,7 @@ public class InitialBoardDetector {
         List<MatOfPoint> contours = new ArrayList<>();
         Imgproc.findContours(testImg, contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
-        if(contours.size() != 4){
+        if (contours.size() != 4) {
             // 图像获取不正确
             return null;
         }
@@ -168,21 +171,21 @@ public class InitialBoardDetector {
         List<Point> mc = new ArrayList<>(contours.size());
         for (int i = 0; i < contours.size(); i++) {
             //add 1e-5 to avoid division by zero
-            mc.add(new Point((int)Math.round(mu.get(i).m10 / (mu.get(i).m00 + 1e-5)), (int)Math.round(mu.get(i).m01 / (mu.get(i).m00 + 1e-5))));
+            mc.add(new Point((int) Math.round(mu.get(i).m10 / (mu.get(i).m00 + 1e-5)), (int) Math.round(mu.get(i).m01 / (mu.get(i).m00 + 1e-5))));
         }
 
         // 对获取的四个点进行重新排序
-        Collections.sort(mc, (a, b)->{
+        Collections.sort(mc, (a, b) -> {
             return (int) (a.getX() - b.getX());
         });
 
         // 进行图像透视变换和切割识别
         Mat cornerPoints = new Mat(4, 1, CvType.CV_32FC2);
         cornerPoints.put(0, 0,
-                mc.get(1).x-10, mc.get(1).y-10,
-                mc.get(2).x+10, mc.get(2).y-10,
-                mc.get(3).x+30, mc.get(3).y+30,
-                mc.get(0).x-30, mc.get(0).y+30);
+                mc.get(1).x - 10, mc.get(1).y - 10,
+                mc.get(2).x + 10, mc.get(2).y - 10,
+                mc.get(3).x + 30, mc.get(3).y + 30,
+                mc.get(0).x - 30, mc.get(0).y + 30);
 
         Mat transformResult = imagePerspectiveTransform(originMatImage, cornerPoints);
 
@@ -197,6 +200,7 @@ public class InitialBoardDetector {
 
     /**
      * 图像识别处理方法
+     *
      * @return
      */
     public boolean process() {
@@ -236,6 +240,7 @@ public class InitialBoardDetector {
 
     /**
      * 检测边缘
+     *
      * @return
      */
     private Mat detectBorders() {
@@ -254,7 +259,7 @@ public class InitialBoardDetector {
         // 边缘提取 在一幅图像里得到轮廓区域的参数 检测函数: Imgproc.findContours(image, contours, hierarchy, mode, method)
         Imgproc.findContours(imageWithBordersInEvidence, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
         // 删除可能是噪音的非常小的轮廓
-        for (int counterIdx = 0; counterIdx < contours.size(); counterIdx ++ ) {
+        for (int counterIdx = 0; counterIdx < contours.size(); counterIdx++) {
             double contourArea = Imgproc.contourArea(contours.get(counterIdx));
             if (contourArea < 1000) {
                 contours.remove(counterIdx);

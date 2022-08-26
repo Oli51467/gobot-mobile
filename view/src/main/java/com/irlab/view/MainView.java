@@ -19,6 +19,7 @@ import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.irlab.base.MyApplication;
 import com.irlab.base.utils.ToastUtil;
+import com.irlab.view.activity.BluetoothActivity;
 import com.irlab.view.activity.InstructionActivity;
 import com.irlab.view.activity.PlayConfigActivity;
 import com.irlab.view.activity.SelectConfigActivity;
@@ -160,7 +161,9 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
             setTabSelection(1);
         }
         else if (vid == R.id.layout_bluetooth) {
-            ARouter.getInstance().build("/base/bluetooth").navigation();
+            Intent intent = new Intent(MainView.this, BluetoothActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
         }
         else if (vid == R.id.layout_speech) {
             Intent intent = new Intent(MainView.this, TestSpeechActivity.class);

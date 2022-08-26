@@ -24,7 +24,6 @@ import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
-import com.irlab.view.utils.Drawer;
 import com.irlab.view.processing.boardDetector.BoardDetector;
 import com.irlab.view.processing.initialBoardDetector.InitialBoardDetector;
 import com.irlab.view.utils.JsonUtil;
@@ -72,8 +71,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
             if (status == LoaderCallbackInterface.SUCCESS) {
                 Log.i(TAG, "OpenCV loaded successfully");
                 mOpenCvCameraView.enableView();
-            }
-            else {
+            } else {
                 super.onManagerConnected(status);
             }
         }
@@ -95,7 +93,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         initViews();
         initDetector();
         getInfoFromActivity();
-
     }
 
     @Override
@@ -117,8 +114,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         if (!OpenCVLoader.initDebug()) {
             Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
-        }
-        else {
+        } else {
             Log.d(TAG, "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
@@ -130,8 +126,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         if (!OpenCVLoader.initDebug()) {
             Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
-        }
-        else {
+        } else {
             Log.d(TAG, "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
@@ -149,9 +144,9 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
             Message msg = new Message();
             msg.obj = MyApplication.getContext();
 
-            if (initialBoardDetector.findMarker()){
+            if (initialBoardDetector.findMarker()) {
                 // 如果找到四个角点，则继续进入下一步
-                msg.what = ResponseCode.FIND_MARKER.getCode();;
+                msg.what = ResponseCode.FIND_MARKER.getCode();
                 handler.sendMessage(msg);
 
                 Intent intent = new Intent(DefineBoardPositionActivity.this, DetectBoardActivity.class);
@@ -161,13 +156,12 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
                 intent.putExtra("rule", rule);
                 intent.putExtra("engine", engine);
                 startActivity(intent);
-
-            }else {
+            }
+            else {
                 // 未找到棋盘
                 msg.what = ResponseCode.NOT_FIND_MARKER.getCode();
                 handler.sendMessage(msg);
             }
-
         }
         else if (vid == R.id.btn_return) {
             Intent intent = new Intent(this, SelectConfigActivity.class);

@@ -17,4 +17,4 @@ local.properties
 /.idea/deploymentTargetDropDown.xml
 gradlew.bat
 gradlew
-/view/.cxx/*.log
+/view/.cxx/Debug

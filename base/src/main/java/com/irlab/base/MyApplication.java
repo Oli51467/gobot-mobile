@@ -9,6 +9,10 @@ import android.util.Log;
 
 import com.alibaba.android.arouter.launcher.ARouter;
 
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import okhttp3.MediaType;
 
 public class MyApplication extends Application {
@@ -20,8 +24,11 @@ public class MyApplication extends Application {
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     public static final String TAG = MyApplication.class.getName();
     public static final String appid = "a716e470";
+    public static final int THREAD_NUM = 19;
+    public static final int STONE_NUM = 361;
     public static SqueezeNcnn squeezencnn;
     public static boolean initNet = false;
+    public static ThreadPoolExecutor threadPool;
     private static MyApplication MyApp; // 提供自己的唯一实例
     protected static Context context;
 
@@ -38,6 +45,9 @@ public class MyApplication extends Application {
         ARouter.init(MyApplication.this);
 
         preferences = getSharedPreferences("config", Context.MODE_PRIVATE);
+        // 初始化线程池 可复用
+        threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 2, 10, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(STONE_NUM));
         // 初始化Ncnn
         initNcnn = new MyTask();
         initNcnn.execute(squeezencnn);
