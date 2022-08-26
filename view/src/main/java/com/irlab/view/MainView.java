@@ -1,6 +1,7 @@
 package com.irlab.view;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -52,6 +53,8 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     private TextView settingsText = null;
     private TextView archiveText = null;
 
+    int last = 0;
+
     @Override
     public boolean navigateUpTo(Intent upIntent) {
         return super.navigateUpTo(upIntent);
@@ -88,6 +91,21 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         super.onStart();
         // 这里初始化Fragment的组件必须在onStart()中进行, 若在onCreate中初始化, 子fragment有可能未初始化完成, 导致找不到对应组件
         initFragmentViewsAndEvents();
+    }
+
+    // TODO: 选择照片时切出应用再切回有主页面Fragment显示错误的bug
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragment);
+        if (fragment instanceof SettingsFragment) last = 0;
+        else if (fragment instanceof ArchiveFragment) last = 1;
+        else last = 2;
     }
 
     /**

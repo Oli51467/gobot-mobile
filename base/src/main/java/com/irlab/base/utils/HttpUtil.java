@@ -1,6 +1,10 @@
 package com.irlab.base.utils;
 
+import java.util.Map;
+
 import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -49,6 +53,23 @@ public class HttpUtil {
                 .url(address)
                 .put(requestBody)
                 .build();
+        client.newCall(request).enqueue(callback);
+    }
+
+    public static void request(String url, Map<String, String> params, final Callback callback) {
+        HttpUrl.Builder httpBuilder = HttpUrl.parse(url).newBuilder();
+
+        if (params != null) {
+            for (Map.Entry<String, String> param : params.entrySet()) {
+                httpBuilder.addQueryParameter(param.getKey(), param.getValue());
+            }
+        }
+
+        Request request = new Request.Builder()
+                .url(httpBuilder.build())
+                .method("POST", new FormBody.Builder().build())
+                .build();
+        OkHttpClient client = new OkHttpClient();
         client.newCall(request).enqueue(callback);
     }
 }
