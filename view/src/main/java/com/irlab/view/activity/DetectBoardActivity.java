@@ -37,12 +37,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.irlab.base.MyApplication;
-import com.irlab.base.bluetooth.BluetoothActivity;
-import com.irlab.base.bluetooth.BluetoothService;
+// import com.irlab.base.bluetooth.BluetoothActivity;
+// import com.irlab.base.bluetooth.BluetoothService;
 import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
+import com.irlab.view.bluetooth.BluetoothService;
 import com.irlab.view.models.Board;
 import com.irlab.view.models.Player;
 import com.irlab.view.models.Point;
