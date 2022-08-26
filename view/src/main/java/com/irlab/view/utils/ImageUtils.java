@@ -140,7 +140,7 @@ public class ImageUtils {
             for (int j = 0; j < piece; j ++ ) {
                 unitBitmap = Bitmap.createBitmap(rawBitmap, j * unitWidth, i * unitHeight, unitWidth, unitHeight);
                 bitmapMatrix[i + 1][j + 1] = unitBitmap;
-                savePNG_After(unitBitmap, i + "==" + j);
+                // savePNG_After(unitBitmap, i + "==" + j);
             }
         }
         return bitmapMatrix;

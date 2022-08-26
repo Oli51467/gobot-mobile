@@ -13,7 +13,7 @@ public class BoardUtil {
      */
     public static String getPositionByIndex(int x, int y) {
         String position = "";
-        int cnt = 0;
+        int cnt = 1;
         for (char c = 'A'; c <= 'T'; c ++ ) {
             if (c == 'I') continue;
             if (cnt == y) {
@@ -22,7 +22,7 @@ public class BoardUtil {
             }
             cnt ++;
         }
-        position += 19 - x;
+        position += 20 - x;
         return position;
     }
 

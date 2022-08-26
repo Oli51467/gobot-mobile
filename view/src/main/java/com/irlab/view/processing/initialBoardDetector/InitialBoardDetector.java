@@ -72,26 +72,41 @@ public class InitialBoardDetector {
             return null;
         }
         Mat testImg = image.clone();
+        Mat testImg_RGB = image.clone();
 
         // 高斯模糊处理
         Imgproc.GaussianBlur(testImg, testImg, new Size(25, 25), 0);
 
+        Imgproc.GaussianBlur(testImg_RGB, testImg_RGB, new Size(25, 25), 0);
+        Imgproc.cvtColor(testImg_RGB, testImg_RGB, Imgproc.COLOR_RGB2BGR);
+        Scalar lower_RGB = new Scalar(49, 39, 48);
+        Scalar upper_RGB = new Scalar(112, 105, 216);
+        Core.inRange(testImg_RGB, lower_RGB, upper_RGB, testImg_RGB);
+        //
+        Bitmap bitmap12 = Bitmap.createBitmap(testImg.cols(), testImg.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(testImg_RGB, bitmap12);
+
         // 转为HSV格式
         Imgproc.cvtColor(testImg, testImg, Imgproc.COLOR_RGB2HSV);
-
+        // Imgproc.cvtColor(testImg, testImg, Imgproc.COLOR_GRAY2BGR);
         // 颜色过滤，保留红色
-        Scalar lower = new Scalar(160, 160, 160);
-        Scalar upper = new Scalar(180, 255, 255);
+        Scalar lower = new Scalar(0, 117, 164);
+        Scalar upper = new Scalar(179, 181, 214);
         Core.inRange(testImg, lower, upper, testImg);
+
+        Bitmap bitmap1 = Bitmap.createBitmap(testImg.cols(), testImg.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(testImg, bitmap1);
+        Core.bitwise_and(testImg, testImg_RGB, testImg);
 
         Mat structImage = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
 
         // 溶解和膨胀
-        Imgproc.erode(testImg, testImg, structImage, new Point(-1, -1), 3);
-        Imgproc.dilate(testImg, testImg, structImage, new Point(-1, -1), 3);
+        Imgproc.erode(testImg, testImg, structImage, new Point(-1, -1), 2);
+        Imgproc.dilate(testImg, testImg, structImage, new Point(-1, -1), 2);
 
-        // Bitmap bitmap = Bitmap.createBitmap(testImg.cols(), testImg.rows(), Bitmap.Config.ARGB_8888);
-        // Utils.matToBitmap(testImg, bitmap);
+        Bitmap bitmap = Bitmap.createBitmap(testImg.cols(), testImg.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(testImg, bitmap);
+
         List<MatOfPoint> contours = new ArrayList<>();
         Imgproc.findContours(testImg, contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
@@ -135,21 +150,42 @@ public class InitialBoardDetector {
 
         Mat testImg = image.clone();
         Mat originMatImage = testImg.clone();
+
+        Mat testImg_RGB = image.clone();
+
         // 高斯模糊处理
         Imgproc.GaussianBlur(testImg, testImg, new Size(25, 25), 0);
 
+        Imgproc.GaussianBlur(testImg_RGB, testImg_RGB, new Size(25, 25), 0);
+        Imgproc.cvtColor(testImg_RGB, testImg_RGB, Imgproc.COLOR_RGB2BGR);
+        Scalar lower_RGB = new Scalar(49, 39, 48);
+        Scalar upper_RGB = new Scalar(112, 105, 216);
+        Core.inRange(testImg_RGB, lower_RGB, upper_RGB, testImg_RGB);
+        //
+        Bitmap bitmap12 = Bitmap.createBitmap(testImg.cols(), testImg.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(testImg_RGB, bitmap12);
+
         // 转为HSV格式
         Imgproc.cvtColor(testImg, testImg, Imgproc.COLOR_RGB2HSV);
-
+        // Imgproc.cvtColor(testImg, testImg, Imgproc.COLOR_GRAY2BGR);
         // 颜色过滤，保留红色
-        Scalar lower = new Scalar(160, 160, 160);
-        Scalar upper = new Scalar(180, 255, 255);
+        Scalar lower = new Scalar(0, 117, 164);
+        Scalar upper = new Scalar(179, 181, 214);
         Core.inRange(testImg, lower, upper, testImg);
+
+        Bitmap bitmap1 = Bitmap.createBitmap(testImg.cols(), testImg.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(testImg, bitmap1);
+        Core.bitwise_and(testImg, testImg_RGB, testImg);
 
         Mat structImage = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
 
-        Imgproc.erode(testImg, testImg, structImage, new Point(-1, -1), 3);
-        Imgproc.dilate(testImg, testImg, structImage, new Point(-1, -1), 3);
+        // 溶解和膨胀
+        Imgproc.erode(testImg, testImg, structImage, new Point(-1, -1), 2);
+        Imgproc.dilate(testImg, testImg, structImage, new Point(-1, -1), 2);
+
+        Bitmap bitmap = Bitmap.createBitmap(testImg.cols(), testImg.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(testImg, bitmap);
+
 
         // Bitmap bitmap = Bitmap.createBitmap(testImg.cols(), testImg.rows(), Bitmap.Config.ARGB_8888);
         // Utils.matToBitmap(testImg, bitmap);
