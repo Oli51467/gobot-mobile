@@ -2,19 +2,11 @@ package com.irlab.view.activity;
 
 import static com.irlab.base.MyApplication.ENGINE_SERVER;
 import static com.irlab.base.MyApplication.JSON;
-import static com.irlab.base.MyApplication.initNet;
-
-import static com.irlab.base.MyApplication.squeezencnn;
 import static com.irlab.view.engine.EngineInterface.clearBoard;
-import static com.irlab.view.utils.ImageUtils.convertToMatOfPoint;
-import static com.irlab.view.utils.ImageUtils.matToBitmap;
-import static com.irlab.view.utils.ImageUtils.splitBitmap;
-import static com.irlab.view.utils.ImageUtils.splitImage;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -48,9 +40,6 @@ import org.opencv.core.MatOfPoint;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -76,7 +65,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
 
     private String blackPlayer, whitePlayer, komi, rule, engine, userName;
 
-    public static ThreadPoolExecutor threadPool;
     // opencv与app交互的回调函数
     private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -97,15 +85,17 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_define_board_position);
         Objects.requireNonNull(getSupportActionBar()).hide();
+
+        // TODO 后续需要改一下，让连接引擎的唯一主键不能重复，username可能会重复
+        // 获取 username 作为连接引擎的唯一主键
         userName = MyApplication.getInstance().preferences.getString("userName", null);
         initEngine(getApplicationContext());
+
         clearBoard(userName);
         initViews();
         initDetector();
         getInfoFromActivity();
 
-        threadPool = new ThreadPoolExecutor(19, 19 + 2, 10, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(361));
     }
 
     @Override
@@ -158,7 +148,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
 
             Message msg = new Message();
             msg.obj = MyApplication.getContext();
-
 
             if (initialBoardDetector.findMarker()){
                 // 如果找到四个角点，则继续进入下一步

@@ -3,6 +3,7 @@ package com.irlab.view.processing.initialBoardDetector;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.irlab.base.MyApplication;
 import com.irlab.view.utils.Drawer;
@@ -63,6 +64,9 @@ public class InitialBoardDetector {
     public Boolean findMarker(){
         // 如果获取的图片为空，则直接返回
         if (image == null) {
+            String error = "图片为空，无法发现角点";
+            Log.e(TAG, error);
+            Toast.makeText(MyApplication.getContext(), error, Toast.LENGTH_SHORT).show();
             return null;
         }
         Mat testImg = image.clone();
@@ -94,6 +98,9 @@ public class InitialBoardDetector {
             return true;
         }else {
             // 未找到marker
+            String error = "发现角点数量不为4，未识别标准棋盘，请调整后再次识别";
+            Log.e(TAG, error);
+            Toast.makeText(MyApplication.getContext(), error, Toast.LENGTH_SHORT).show();
             return false;
         }
 
@@ -107,15 +114,23 @@ public class InitialBoardDetector {
     public Mat getPerspectiveTransformImage(){
         // 如果获取的图片为空，则直接返回
         if (image == null) {
+            String error = "帧图片为空，未获取图像信息";
+            Log.e(TAG, error);
+            Toast.makeText(MyApplication.getContext(), error, Toast.LENGTH_SHORT).show();
+
             return null;
         }
         Context context = MyApplication.getContext();
 
+        // 测试图像
+        /*
         String imagePath = "image/qipan.jpeg";
         Bitmap testBitImg = getImageFromAssetsFile(context, imagePath);
         Mat testImg = new Mat();
         Utils.bitmapToMat(testBitImg, testImg);
+        */
 
+        Mat testImg = image.clone();
         Mat originMatImage = testImg.clone();
         // 高斯模糊处理
         Imgproc.GaussianBlur(testImg, testImg, new Size(25, 25), 0);

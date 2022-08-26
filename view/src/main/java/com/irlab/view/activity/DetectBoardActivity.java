@@ -31,6 +31,7 @@ import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -155,7 +156,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     @Override
     protected void onStart() {
         super.onStart();
-        bluetoothService =  BluetoothActivity.bluetoothService;
+        bluetoothService = BluetoothActivity.bluetoothService;
     }
 
     @Override
@@ -169,7 +170,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     @Override
     protected void onRestart() {
         super.onRestart();
-        bluetoothService =  BluetoothActivity.bluetoothService;
+        bluetoothService = BluetoothActivity.bluetoothService;
         if (!OpenCVLoader.initDebug()) {
             Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
@@ -196,81 +197,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         if (mOpenCvCameraView != null) mOpenCvCameraView.disableView();
         clearBoard(userName);
     }
-
-
-    /**
-     * 识别棋盘并走棋
-     * @return
-     */
-    public boolean identifyChessboardAndGenMove() {
-
-        // 处理图像，并做图像透视变换
-        orthogonalBoard =  initialBoardDetector.getPerspectiveTransformImage();
-
-        if (orthogonalBoard == null){
-            // 如果未获取到棋盘，直接返回
-            return false;
-        }
-
-        int moveX, moveY;
-        Bitmap bitmap = matToBitmap(orthogonalBoard);
-        bitmapMatrix = splitImage(bitmap, WIDTH);
-        for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex++) {
-            int innerT = threadIndex;
-            Runnable runnable = () -> {
-                for (int mTask = 0; mTask < SINGLE_THREAD_TASK; mTask++) {
-                    // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
-                    int cnt = innerT * 19 + mTask;
-                    int i = cnt / 19 + 1;
-                    int j = cnt % 19 + 1;
-                    String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
-                    if (result.equals("black")) {
-                        curBoard[i][j] = BLACK;
-                    } else if (result.equals("white")) {
-                        curBoard[i][j] = WHITE;
-                    } else {
-                        curBoard[i][j] = BLANK;
-                    }
-                }
-            };
-            threadPool.execute(runnable);
-        }
-        Pair<Integer, Integer> move = getMoveByDiff();
-        if (move == null) {
-            ToastUtil.show(this, "未落子");
-            return false;
-        } else {
-            moveX = move.first;
-            moveY = move.second;
-            ToastUtil.show(this, moveX + " " + moveY);
-            Player player = board.getPlayer();
-            // 可以落子
-            if (board.play(moveX, moveY, player)) {
-                Log.d(TAG, "合法落子");
-                if (!init) {
-                    previousBoard.play(previousX, previousY, board.getLastPlayer());
-                } else {
-                    init = false;
-                }
-                // 更新一下矩阵棋盘 更新为落完子后的棋盘局面 因为可能有提子
-                updateMetricBoard();
-                board.nextPlayer();
-                previousX = moveX;
-                previousY = moveY;
-                // 将落子传到引擎 引擎走棋 更新
-                lastMove = board.getPoint(previousX, previousY);
-                sendToEngine(getApplicationContext());
-                Log.d(Logger, board + "--------------\n" + "lastBoard:\n");
-                Log.d(Logger, previousBoard.toString());
-                return true;
-            } else {
-                Log.w(TAG, "这里不可以落子");
-                curBoard[moveX][moveY] = BLANK;
-                return false;
-            }
-        }
-    }
-
 
 
     public void onClick(View v) {
@@ -325,7 +251,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                 Log.d(Logger, e.toString());
             }
 
-            while(true) {
+            while (true) {
                 // 是否检测到新的走棋
                 if (identifyChessboardAndGenMove()) {
                     break;
@@ -339,11 +265,93 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         }
     }
 
+
+    /**
+     * 识别棋盘并走棋
+     *
+     * @return
+     */
+    public boolean identifyChessboardAndGenMove() {
+
+        // 处理图像，并做图像透视变换
+        orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage();
+
+        if (orthogonalBoard == null) {
+            // 如果未获取到棋盘，直接返回
+            String error = "未获取到棋盘信息";
+            Log.e(TAG, error);
+            Toast.makeText(MyApplication.getContext(), error, Toast.LENGTH_SHORT).show();
+
+            return false;
+        }
+
+        int moveX, moveY;
+        Bitmap bitmap = matToBitmap(orthogonalBoard);
+        bitmapMatrix = splitImage(bitmap, WIDTH);
+        for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex++) {
+            int innerT = threadIndex;
+            Runnable runnable = () -> {
+                for (int mTask = 0; mTask < SINGLE_THREAD_TASK; mTask++) {
+                    // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
+                    int cnt = innerT * 19 + mTask;
+                    int i = cnt / 19 + 1;
+                    int j = cnt % 19 + 1;
+                    String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
+                    if (result.equals("black")) {
+                        curBoard[i][j] = BLACK;
+                    } else if (result.equals("white")) {
+                        curBoard[i][j] = WHITE;
+                    } else {
+                        curBoard[i][j] = BLANK;
+                    }
+                }
+            };
+            threadPool.execute(runnable);
+        }
+        Pair<Integer, Integer> move = getMoveByDiff();
+        if (move == null) {
+            ToastUtil.show(this, "未落子");
+            return false;
+        } else {
+            moveX = move.first;
+            moveY = move.second;
+            ToastUtil.show(this, moveX + " " + moveY);
+            Player player = board.getPlayer();
+            // 可以落子
+            if (board.play(moveX, moveY, player)) {
+                Log.d(TAG, "合法落子");
+                if (!init) {
+                    previousBoard.play(previousX, previousY, board.getLastPlayer());
+                } else {
+                    init = false;
+                }
+                // 更新一下矩阵棋盘 更新为落完子后的棋盘局面 因为可能有提子
+                updateMetricBoard();
+                board.nextPlayer();
+                previousX = moveX;
+                previousY = moveY;
+                // 将落子传到引擎 引擎走棋 更新
+                lastMove = board.getPoint(previousX, previousY);
+
+                // TODO 当前这里发送给引擎是通过共享变量 lastMove传递的
+                sendToEngine(getApplicationContext());
+                Log.d(Logger, board + "--------------\n" + "lastBoard:\n");
+                Log.d(Logger, previousBoard.toString());
+                return true;
+            } else {
+                Log.e(TAG, "这里不可以落子");
+                curBoard[moveX][moveY] = BLANK;
+                return false;
+            }
+        }
+    }
+
+
     /**
      * 开启摄像头并检测棋盘
      * TODO 完善此方法
      */
-    public static void switchCameraAndDetectboard(){
+    public static void switchCameraAndDetectboard() {
 
     }
 
@@ -446,6 +454,9 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         return null;
     }
 
+    /**
+     * 更新矩阵棋盘
+     */
     private void updateMetricBoard() {
         for (int i = 1; i <= WIDTH; i++) {
             for (int j = 1; j <= HEIGHT; j++) {
@@ -462,6 +473,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     /**
      * 检测棋盘
+     * 备注：这是之前的方法，目前先不用
      */
     public boolean detectBoard() {
         int moveX, moveY;
@@ -526,15 +538,28 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     /**
      * 将落子信息发送给引擎，如果发送成功，则继续由引擎产生下一步
+     *
      * @param context
      */
     public void sendToEngine(Context context) {
-        String json = JsonUtil.getJsonFormOfPlayIndex(userName, genPlayCmd(lastMove));
-        Log.d(Logger, genPlayCmd(lastMove));
+
+        String playCmd = genPlayCmd(lastMove);
+        String json = JsonUtil.getJsonFormOfPlayIndex(userName, playCmd);
+        Log.d(Logger, playCmd);
+
+        // 将指令发送给围棋引擎
+        Log.i(TAG, playCmd);
+        Toast.makeText(MyApplication.getContext(), playCmd, Toast.LENGTH_SHORT).show();
+
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
+                String error = "走棋指令发送引擎，连接失败！";
+                Log.e(TAG, error);
+                Toast.makeText(MyApplication.getContext(), error, Toast.LENGTH_SHORT).show();
+
             }
 
             @Override
@@ -553,7 +578,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                         int identifier = lastMove.getGroup().getOwner().getIdentifier();
                         if (identifier == Board.BLACK_STONE) {
                             genMove(getApplicationContext(), "W");
-                        }else if (identifier == Board.WHITE_STONE){
+                        } else if (identifier == Board.WHITE_STONE) {
                             genMove(getApplicationContext(), "B");
                         }
                     } else if (code == 4001) {
@@ -575,6 +600,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     /**
      * 引擎产生下一步
+     *
      * @param context
      */
     private void genMove(Context context, String whichPlayer) {
@@ -585,6 +611,9 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                String error = "引擎自动走棋指令发送失败，连接失败！";
+                Log.e(TAG, error);
+                Toast.makeText(MyApplication.getContext(), error, Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -622,10 +651,11 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                             lastMove = board.getPoint(previousX, previousY);
 
                             // TODO: 将引擎落子位置传给下位机
-                            Log.d(Logger, "将引擎落子传递给下位机， data: " + "L" + playPosition + "Z");
-                            if (bluetoothService != null){
+                            if (bluetoothService != null) {
+                                Log.d(Logger, "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
                                 bluetoothService.sendData("L" + playPosition + "Z", false);
-                            }else {
+                            } else {
+                                Log.d(Logger, "落子位置发给下位机失败！");
                                 Message tempMsg = new Message();
                                 tempMsg.obj = context;
                                 tempMsg.what = ResponseCode.BLUETOOTH_SERVICE_FAILED.getCode();
