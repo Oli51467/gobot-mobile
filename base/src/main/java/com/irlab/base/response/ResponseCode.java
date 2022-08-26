@@ -4,7 +4,8 @@ public enum ResponseCode {
     SUCCESS(200, "成功"),
 
     SERVER_FAILED(400, "服务器异常"),
-    FIND_MARKER(1000, "找到标志位"),
+    FIND_MARKER(1000, "已确定棋盘位置"),
+    NOT_FIND_MARKER(1001, "未确定棋盘位置，请调整后重试"),
 
     SAVE_SGF_SUCCESSFULLY(20001, "保存棋谱成功"),
     ENGINE_CONNECT_SUCCESSFULLY(20002, "引擎连接成功"),

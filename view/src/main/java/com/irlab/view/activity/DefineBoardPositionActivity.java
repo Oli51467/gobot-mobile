@@ -155,53 +155,37 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.btnFixBoardPosition) {
-            Intent intent = new Intent(DefineBoardPositionActivity.this, DetectBoardActivity.class);
-            intent.putExtra("blackPlayer", blackPlayer);
-            intent.putExtra("whitePlayer", whitePlayer);
-            intent.putExtra("komi", komi);
-            intent.putExtra("rule", rule);
-            intent.putExtra("engine", engine);
-            startActivity(intent);
+
+            Message msg = new Message();
+            msg.obj = MyApplication.getContext();
+
+
+            if (initialBoardDetector.findMarker()){
+                // 如果找到四个角点，则继续进入下一步
+                msg.what = ResponseCode.FIND_MARKER.getCode();;
+                handler.sendMessage(msg);
+
+                Intent intent = new Intent(DefineBoardPositionActivity.this, DetectBoardActivity.class);
+                intent.putExtra("blackPlayer", blackPlayer);
+                intent.putExtra("whitePlayer", whitePlayer);
+                intent.putExtra("komi", komi);
+                intent.putExtra("rule", rule);
+                intent.putExtra("engine", engine);
+                startActivity(intent);
+
+            }else {
+                // 未找到棋盘
+                msg.what = ResponseCode.NOT_FIND_MARKER.getCode();
+                handler.sendMessage(msg);
+            }
+
         }
         else if (vid == R.id.btn_return) {
             Intent intent = new Intent(this, SelectConfigActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
-        else if (vid == R.id.btnTestFinkMarker){
 
-            // TODO find marker测试，图片分割和识别
-            Mat boardMat = initialBoardDetector.getPerspectiveTransformImage();
-            int[][] curBoard = new int[20][20];
-
-            Bitmap bitmap = matToBitmap(boardMat);
-            Bitmap[][] bitmapMatrix = splitBitmap(bitmap, 19);
-            for (int threadIndex = 0; threadIndex < 19; threadIndex++) {
-                int innerT = threadIndex;
-                Runnable runnable = () -> {
-                    for (int mTask = 0; mTask < 19; mTask++) {
-                        // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
-                        int cnt = innerT * 19 + mTask;
-                        int i = cnt / 19 + 1;
-                        int j = cnt % 19 + 1;
-                        String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
-                        if (result.equals("black")) {
-                            curBoard[i][j] = 1;
-                        } else if (result.equals("white")) {
-                            curBoard[i][j] = 2;
-                        } else {
-                            curBoard[i][j] = 0;
-                        }
-                    }
-                };
-                threadPool.execute(runnable);
-            }
-
-            Message msg = new Message();
-            msg.obj = MyApplication.getContext();
-            msg.what = ResponseCode.FIND_MARKER.getCode();;
-            handler.sendMessage(msg);
-        }
     }
 
     // 这里获取到图像输出
@@ -212,17 +196,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         initialBoardDetector.setImage(inputImage.clone());
         initialBoardDetector.setPreviewImage(inputImage);
 
-        if (initialBoardDetector.process()) {
-            // 拿到轮廓检测后的棋盘 Mat && MatOfPoint
-            Mat boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
-            boardContour = convertToMatOfPoint(boardPositionInImage);
-            Drawer.drawBoardContour(inputImage, boardContour);
-            if (initNet) runOnUiThread(() -> btnFixBoardPosition.setEnabled(true));
-        }
-        // 在图像上画出轮廓
-        else if (boardContour != null) {
-            Drawer.drawBoardContour(inputImage, boardContour);
-        }
         // 关闭摄像头 显示友好界面
         return inputImage;
     }
@@ -239,7 +212,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
         // 设置确定位置按钮
         btnFixBoardPosition = findViewById(R.id.btnFixBoardPosition);
         btnFixBoardPosition.setOnClickListener(this);
-        btnFixBoardPosition.setEnabled(false);
+        btnFixBoardPosition.setEnabled(true);
 
         // 测试按钮
         Button testReturn = findViewById(R.id.btnTestFinkMarker);
@@ -317,6 +290,9 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
             }
             else if (msg.what == ResponseCode.FIND_MARKER.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.FIND_MARKER.getMsg());
+            }
+            else if (msg.what == ResponseCode.NOT_FIND_MARKER.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.NOT_FIND_MARKER.getMsg());
             }
         }
     };

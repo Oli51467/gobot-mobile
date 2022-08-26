@@ -56,9 +56,52 @@ public class InitialBoardDetector {
         this.previewImage = previewImage;
     }
 
+    /**
+     * 找到棋盘位置，并获取透视变换后的图片
+     * @return
+     */
+    public Boolean findMarker(){
+        // 如果获取的图片为空，则直接返回
+        if (image == null) {
+            return null;
+        }
+        Mat testImg = image.clone();
+
+        // 高斯模糊处理
+        Imgproc.GaussianBlur(testImg, testImg, new Size(25, 25), 0);
+
+        // 转为HSV格式
+        Imgproc.cvtColor(testImg, testImg, Imgproc.COLOR_RGB2HSV);
+
+        // 颜色过滤，保留红色
+        Scalar lower = new Scalar(160, 160, 160);
+        Scalar upper = new Scalar(180, 255, 255);
+        Core.inRange(testImg, lower, upper, testImg);
+
+        Mat structImage = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
+
+        // 溶解和膨胀
+        Imgproc.erode(testImg, testImg, structImage, new Point(-1, -1), 3);
+        Imgproc.dilate(testImg, testImg, structImage, new Point(-1, -1), 3);
+
+        // Bitmap bitmap = Bitmap.createBitmap(testImg.cols(), testImg.rows(), Bitmap.Config.ARGB_8888);
+        // Utils.matToBitmap(testImg, bitmap);
+        List<MatOfPoint> contours = new ArrayList<>();
+        Imgproc.findContours(testImg, contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        if(contours.size() == 4){
+            // 找到marker
+            return true;
+        }else {
+            // 未找到marker
+            return false;
+        }
+
+    }
+
 
     /**
-     * 找到图片标志位
+     * 找到棋盘位置，并获取透视变换后的图片
      * @return
      */
     public Mat getPerspectiveTransformImage(){

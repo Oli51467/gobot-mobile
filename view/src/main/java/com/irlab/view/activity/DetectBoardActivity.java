@@ -203,6 +203,15 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
      * @return
      */
     public boolean identifyChessboardAndGenMove() {
+
+        // 处理图像，并做图像透视变换
+        orthogonalBoard =  initialBoardDetector.getPerspectiveTransformImage();
+
+        if (orthogonalBoard == null){
+            // 如果未获取到棋盘，直接返回
+            return false;
+        }
+
         int moveX, moveY;
         Bitmap bitmap = matToBitmap(orthogonalBoard);
         bitmapMatrix = splitImage(bitmap, WIDTH);
@@ -267,9 +276,9 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.btnFixBoardPosition) {
-            // TODO: 将点击事件改为收到落子信号
-            // 改为识别棋盘并走棋
-            detectBoard();
+            // 手动捕获棋盘
+            // detectBoard();
+            identifyChessboardAndGenMove();
 
         } else if (vid == R.id.btn_saveSGF) {
             SmileDialog dialog = new SmileDialogBuilder(this, SmileDialogType.WARNING)
@@ -315,9 +324,14 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             } catch (InterruptedException e) {
                 Log.d(Logger, e.toString());
             }
+
             while(true) {
-                if (detectBoard()) break;
+                // 是否检测到新的走棋
+                if (identifyChessboardAndGenMove()) {
+                    break;
+                }
             }
+
         } else if (vid == R.id.btn_exit) {
             clearBoard(userName);
             Intent intent = new Intent(this, SelectConfigActivity.class);
@@ -351,6 +365,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         initialBoardDetector.setImage(inputImage.clone());
         initialBoardDetector.setPreviewImage(inputImage);
 
+        /*
         if (initialBoardDetector.process()) {
             // 拿到轮廓检测后的棋盘 Mat && MatOfPoint
             Mat boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
@@ -365,6 +380,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         else if (boardContour != null) {
             Drawer.drawBoardContour(inputImage, boardContour);
         }
+         */
         // 关闭摄像头 显示友好界面
         return inputImage;
     }
@@ -400,7 +416,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
         btnFixBoardPosition = findViewById(R.id.btnFixBoardPosition);
         btnFixBoardPosition.setOnClickListener(this);
-        btnFixBoardPosition.setEnabled(false);
+        btnFixBoardPosition.setEnabled(true);
 
         Button btnSaveSGF = findViewById(R.id.btn_saveSGF);
         btnSaveSGF.setOnClickListener(this);
@@ -451,7 +467,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         int moveX, moveY;
         Bitmap bitmap = matToBitmap(orthogonalBoard);
         bitmapMatrix = splitImage(bitmap, WIDTH);
-        savePNG_After(bitmap, "total");
+        // savePNG_After(bitmap, "total");
         for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex++) {
             int innerT = threadIndex;
             Runnable runnable = () -> {
@@ -536,7 +552,9 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                         Log.d(Logger, "发送给引擎成功");
                         int identifier = lastMove.getGroup().getOwner().getIdentifier();
                         if (identifier == Board.BLACK_STONE) {
-                            genMove(getApplicationContext());
+                            genMove(getApplicationContext(), "W");
+                        }else if (identifier == Board.WHITE_STONE){
+                            genMove(getApplicationContext(), "B");
                         }
                     } else if (code == 4001) {
                         msg.what = ResponseCode.CANNOT_PLAY.getCode();
@@ -559,8 +577,9 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
      * 引擎产生下一步
      * @param context
      */
-    private void genMove(Context context) {
-        String json = JsonUtil.getJsonFormOfgenMove(userName, "W");
+    private void genMove(Context context, String whichPlayer) {
+
+        String json = JsonUtil.getJsonFormOfgenMove(userName, whichPlayer);
         Log.d(Logger, json);
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
@@ -613,6 +632,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                                 handler.sendMessage(tempMsg);
                             }
 
+                            // 跳转到展示对战信息页面
                             runOnUiThread(() -> {
                                 mOpenCvCameraView.setVisibility(SurfaceView.INVISIBLE);
                                 mOpenCvCameraView.disableView();
