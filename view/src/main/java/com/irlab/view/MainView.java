@@ -1,5 +1,7 @@
 package com.irlab.view;
 
+import static com.irlab.view.activity.BluetoothActivity.bluetoothService;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -84,6 +86,7 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         initFragment();
         // 设置默认的显示界面
         setTabSelection(2);
+        if (bluetoothService != null) bluetoothService.scanBluetooth();
     }
 
     @Override
@@ -91,14 +94,16 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         super.onStart();
         // 这里初始化Fragment的组件必须在onStart()中进行, 若在onCreate中初始化, 子fragment有可能未初始化完成, 导致找不到对应组件
         initFragmentViewsAndEvents();
+        if (bluetoothService != null) bluetoothService.scanBluetooth();
     }
 
-    // TODO: 选择照片时切出应用再切回有主页面Fragment显示错误的bug
     @Override
     protected void onResume() {
         super.onResume();
+        if (bluetoothService != null) bluetoothService.scanBluetooth();
     }
 
+    // TODO: 选择照片时切出应用再切回有主页面Fragment显示错误的bug
     @Override
     protected void onPause() {
         super.onPause();

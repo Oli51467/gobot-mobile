@@ -39,7 +39,7 @@ public class ImageUtils {
      * @param piece 分割的参数
      * @return 分割后的Bitmap数组
      */
-    public static Bitmap[][] splitBitmap(Bitmap rawBitmap, int piece) {
+    public static Bitmap[][] splitImage(Bitmap rawBitmap, int piece) {
 
         Bitmap[][] bitmapMatrix = new Bitmap[piece + 1][piece + 1];
         int unitHeight = rawBitmap.getHeight() / piece;

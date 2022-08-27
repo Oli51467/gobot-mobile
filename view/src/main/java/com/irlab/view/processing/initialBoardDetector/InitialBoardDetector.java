@@ -17,20 +17,14 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.irlab.view.utils.AssetsUtil.getImageFromAssetsFile;
 import static com.irlab.view.utils.ImageUtils.imagePerspectiveTransform;
-import static com.irlab.view.utils.ImageUtils.matRotateClockWise90;
-import static com.irlab.view.utils.ImageUtils.splitBitmap;
-import static com.irlab.view.utils.ImageUtils.splitImage;
 
 public class InitialBoardDetector {
 

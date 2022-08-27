@@ -1,5 +1,6 @@
 package com.irlab.view.bluetooth;
 
+import static android.content.Context.MODE_PRIVATE;
 import static com.irlab.view.utils.BluetoothUtil.bytes2HexString;
 import static com.irlab.view.utils.BluetoothUtil.hexString2Bytes;
 
@@ -57,6 +58,8 @@ public class BluetoothService {
 
     private final ActivityResultLauncher<Intent> openBluetoothLauncher;
 
+    public String lastConnectedDeviceAddress;
+
     public BluetoothService(Context context, DeviceAdapter deviceAdapter, Handler handler, ActivityResultLauncher<Intent> launcher, LinearLayout layLoading, AppCompatActivity appCompatActivity) {
         this.mContext = context;
         this.deviceAdapter = deviceAdapter;
@@ -64,6 +67,7 @@ public class BluetoothService {
         this.openBluetoothLauncher = launcher;
         this.layLoading = layLoading;
         this.appCompatActivity = appCompatActivity;
+        lastConnectedDeviceAddress = mContext.getSharedPreferences("device", MODE_PRIVATE).getString("address", "");
     }
 
     @SuppressLint("MissingPermission")
@@ -75,17 +79,19 @@ public class BluetoothService {
             }
             layLoading.setVisibility(View.VISIBLE);
             BluetoothDevice bluetoothDevice = deviceAdapter.getItem(position);
-            // 获取已经绑定的设备
-            Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
-            // 先将已经绑定的设备解绑
-            for (BluetoothDevice bondedDevice : bondedDevices) {
-                if (bondedDevice != bluetoothDevice){
-                    createOrRemoveBond(2, bondedDevice);
-                }
-            }
-            connectDevice(bluetoothDevice);
+            connectDevice(bluetoothDevice, true);
             Log.e(Logger, getCurConnState() + "");
         });
+    }
+
+    @SuppressLint("MissingPermission")
+    public void disBondAllDevices() {
+        // 获取已经绑定的设备
+        Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
+        // 将已经绑定的设备解绑
+        for (BluetoothDevice bondedDevice : bondedDevices) {
+            createOrRemoveBond(2, bondedDevice);
+        }
     }
 
     // 初始化蓝牙
@@ -111,6 +117,9 @@ public class BluetoothService {
         intentFilter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);  // 绑定状态变化
         intentFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);  // 开始扫描
         intentFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED); // 扫描结束
+        // 监视蓝牙设备与APP连接的状态
+        intentFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        intentFilter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         // 蓝牙广播接收器
         bluetoothReceiver = new BluetoothReceiver();    // 实例化广播接收器
         mContext.registerReceiver(bluetoothReceiver, intentFilter);  // 注册广播接收器
@@ -138,6 +147,12 @@ public class BluetoothService {
         }
     }
 
+    @SuppressLint("MissingPermission")
+    public void addAllPairedDevices() {
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        deviceAdapter.addBondedDevice(pairedDevices);
+    }
+
     /**
      * 创建或者取消匹配
      *
@@ -153,7 +168,6 @@ public class BluetoothService {
             } else if (type == 2) {
                 method = BluetoothDevice.class.getMethod("removeBond");
                 method.invoke(device);
-                deviceAdapter.removeDevice(device); // 清除列表中已经取消了配对的设备
             }
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             Log.e(Logger, e.toString());
@@ -182,12 +196,15 @@ public class BluetoothService {
      * 连接设备
      */
     @SuppressLint("MissingPermission")
-    public void connectDevice(BluetoothDevice btDevice) {
+    public void connectDevice(BluetoothDevice btDevice, boolean isClick) {
         if (btDevice.getBondState() == BluetoothDevice.BOND_NONE) {
             createOrRemoveBond(1, btDevice);    // 建立匹配
+            SharedPreferences.Editor editor = mContext.getSharedPreferences("device", MODE_PRIVATE).edit();
+            editor.putString("address", btDevice.getAddress());
+            editor.apply();
             // 开始连接
             startConnectDevice(btDevice, MY_BLUETOOTH_UUID);
-        } else {
+        } else if (btDevice.getBondState() == BluetoothDevice.BOND_BONDED && isClick) {
             SmileDialog dialog = new SmileDialogBuilder(appCompatActivity, SmileDialogType.WARNING)
                     .hideTitle(true)
                     .setContentText("确定取消配对吗")
@@ -215,14 +232,30 @@ public class BluetoothService {
             // 扫描到设备
             if (action.equals(BluetoothDevice.ACTION_FOUND)) {
                 Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
-                deviceAdapter.getBondedDevice(pairedDevices);
+                deviceAdapter.addBondedDevice(pairedDevices);
                 //获取周围蓝牙设备
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 deviceAdapter.addDevice(device);
+                // 自动连接上一次连接的设备
+                if (device.getAddress().equals(lastConnectedDeviceAddress)) {
+                    // TODO: 下列操作只能做系统签名后才能实现，目的是连接时关闭请求弹窗
+                    /*device.setPairingConfirmation(true);    //确认配对
+                    abortBroadcast();   //拦截掉广播  */
+                    connectDevice(device, false);
+                }
             }
             // 设备绑定状态发生改变
             else if (action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)) {
                 deviceAdapter.notifyDataSetChanged();   // 刷新适配器
+            }
+            // 正在断开连接
+            else if (action.equals(BluetoothDevice.ACTION_ACL_DISCONNECTED)) {
+                deviceAdapter.notifyDataSetChanged();
+                layLoading.setVisibility(View.GONE);  // 隐藏加载布局
+            }
+            // 正在连接设备
+            else if (action.equals(BluetoothDevice.ACTION_ACL_CONNECTED)) {
+                layLoading.setVisibility(View.GONE);  // 隐藏加载布局
             }
             // 开始扫描
             else if (action.equals(BluetoothAdapter.ACTION_DISCOVERY_STARTED)) {
@@ -268,7 +301,7 @@ public class BluetoothService {
                 message.what = CONNECTED_SUCCESS_STATUE;
                 handler.sendMessage(message);
                 //数据库存储蓝牙设备信息
-                SharedPreferences.Editor editor = mContext.getSharedPreferences("data", Context.MODE_PRIVATE).edit();
+                SharedPreferences.Editor editor = mContext.getSharedPreferences("data", MODE_PRIVATE).edit();
                 editor.putString("last_connected_address", bluetoothDevice.getAddress());
                 editor.apply();
             }
@@ -310,7 +343,7 @@ public class BluetoothService {
             public void onReceiveDataSuccess(byte[] buffer) {
                 Log.w(Logger, "成功接收数据,长度" + buffer.length + "->" + bytes2HexString(buffer, buffer.length));
                 // 收到人下棋完成信号，来自于手动按绿色按钮
-                if (bytes2HexString(buffer, buffer.length).equals("41")){
+                if (bytes2HexString(buffer, buffer.length).equals("41")) {
 
                 }
                 BluetoothActivity.connect_status = true;

@@ -76,7 +76,7 @@ public class DeviceAdapter extends BaseQuickAdapter<BluetoothDevice, BaseViewHol
      * 获取已绑定设备
      */
     @SuppressLint("MissingPermission")
-    public void getBondedDevice(Set<BluetoothDevice> bondedDevices) {
+    public void addBondedDevice(Set<BluetoothDevice> bondedDevices) {
         if (bondedDevices.size() > 0) { //  如果获取的结果大于0，则开始逐个解析
             for (BluetoothDevice device : bondedDevices) {
                 if (!mList.contains(device) && device.getName() != null) {  // 防止重复添加

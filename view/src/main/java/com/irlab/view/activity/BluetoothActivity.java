@@ -71,18 +71,27 @@ public class BluetoothActivity extends AppCompatActivity implements View.OnClick
         bluetoothService.initBroadcastReceiver();
         bluetoothService.initClick();
         requestPermission();
+        bluetoothService.disBondAllDevices();
     }
 
     @Override
     protected void onResume(){
         super.onResume();
+        layConnectingLoading.setVisibility(View.GONE);
+        bluetoothService.addAllPairedDevices();
     }
 
     @Override
     protected void onRestart(){
         super.onRestart();
-        bluetoothService.getConnectedThread().cancel();
-        bluetoothService.getConnectThread().cancel();
+        if (bluetoothService.getConnectedThread() != null) {
+            bluetoothService.getConnectedThread().cancel();
+        }
+        if (bluetoothService.getConnectThread() != null) {
+            bluetoothService.getConnectThread().cancel();
+        }
+        layConnectingLoading.setVisibility(View.GONE);  // 隐藏加载布局
+        bluetoothService.addAllPairedDevices();
     }
 
     @Override
