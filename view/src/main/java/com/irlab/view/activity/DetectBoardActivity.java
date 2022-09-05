@@ -265,7 +265,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     public boolean identifyChessboardAndGenMove() {
 
         // 处理图像，并做图像透视变换
-        orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage();
+        // orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage();
+        orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage2();
 
         if (orthogonalBoard == null) {
             // 如果未获取到棋盘，直接返回
@@ -614,6 +615,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                     Message msg = new Message();
                     msg.obj = context;
                     if (code == 1000) {
+                        ToastUtil.show(MyApplication.getContext(), "引擎gen move 成功");
                         Log.d(Logger, "引擎gen move 成功");
                         JSONObject callBackData = jsonObject.getJSONObject("data");
                         Log.d(Logger, "引擎落子坐标:" + callBackData);
@@ -640,6 +642,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
                             // TODO: 将引擎落子位置传给下位机
                             if (bluetoothService != null) {
+                                ToastUtil.show(MyApplication.getContext(), "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
                                 Log.d(Logger, "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
                                 bluetoothService.sendData("L" + playPosition + "Z", false);
                             } else {

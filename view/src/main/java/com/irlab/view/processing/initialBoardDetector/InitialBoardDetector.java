@@ -25,6 +25,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.irlab.view.utils.ImageUtils.imagePerspectiveTransform;
+import static com.irlab.view.utils.ImageUtils.matRotateClockWise90;
+import static com.irlab.view.utils.ImageUtils.rotateRight;
 
 public class InitialBoardDetector {
 
@@ -58,6 +60,11 @@ public class InitialBoardDetector {
      * @return
      */
     public Boolean findMarker() {
+        // TODO 暂时都先返回 True
+        if (true){
+            return true;
+        }
+
         // 如果获取的图片为空，则直接返回
         if (image == null) {
             String error = "图片为空，无法发现角点";
@@ -67,6 +74,9 @@ public class InitialBoardDetector {
         }
         Mat testImg = image.clone();
         Mat testImg_RGB = image.clone();
+
+        Bitmap originBitmap = Bitmap.createBitmap(testImg_RGB.cols(), testImg_RGB.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(testImg_RGB, originBitmap);
 
         // 高斯模糊处理
         Imgproc.GaussianBlur(testImg, testImg, new Size(25, 25), 0);
@@ -227,6 +237,52 @@ public class InitialBoardDetector {
         return transformResult;
     }
 
+    /**
+     * TODO 临时演示用，之后要删掉
+     *
+     * @return
+     */
+    public Mat getPerspectiveTransformImage2() {
+        // 如果获取的图片为空，则直接返回
+        if (image == null) {
+            String error = "帧图片为空，未获取图像信息";
+            Log.e(TAG, error);
+            Toast.makeText(MyApplication.getContext(), error, Toast.LENGTH_SHORT).show();
+
+            return null;
+        }
+
+        Mat originMatImage = image.clone();
+
+        Bitmap originBitmap = Bitmap.createBitmap(originMatImage.width(), originMatImage.height(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(originMatImage, originBitmap);
+
+        // 四个顶点
+        List<Point> mc = new ArrayList<>(4);
+        // 左上-右上-右下-左下
+        mc.add(new Point(378.0, 58.0));
+        mc.add(new Point(1100.0, 82.0));
+        mc.add(new Point(1292.0, 826.0));
+        mc.add(new Point(152.0, 832.0));
+
+
+        // 进行图像透视变换和切割识别
+        Mat cornerPoints = new Mat(4, 1, CvType.CV_32FC2);
+        cornerPoints.put(0, 0,
+                mc.get(0).x, mc.get(0).y,
+                mc.get(1).x, mc.get(1).y,
+                mc.get(2).x, mc.get(2).y,
+                mc.get(3).x, mc.get(3).y);
+
+        // TODO 删除旋转
+        // Mat transformResult = rotateRight(imagePerspectiveTransform(originMatImage, cornerPoints));
+        Mat transformResult = imagePerspectiveTransform(originMatImage, cornerPoints);
+
+        Bitmap resultBitmap = Bitmap.createBitmap(transformResult.width(), transformResult.height(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(transformResult, resultBitmap);
+
+        return transformResult;
+    }
 
     /**
      * 图像识别处理方法
