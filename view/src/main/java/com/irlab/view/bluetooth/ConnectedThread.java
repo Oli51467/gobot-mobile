@@ -12,7 +12,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
-
 /**
  * 管理连接
  * 1、发送数据
@@ -159,7 +158,7 @@ public class ConnectedThread extends Thread {
             mmSocket = null;
 
             Log.w(TAG, "ConnectedThread:cancel-->成功断开连接");
-            BluetoothActivity.connect_status=false;
+            BluetoothActivity.connect_status = false;
             BluetoothActivity.bluetoothService.setCurBluetoothDevice(null);
             return true;
 

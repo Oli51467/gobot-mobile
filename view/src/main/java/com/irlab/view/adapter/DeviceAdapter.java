@@ -1,75 +1,82 @@
 package com.irlab.view.adapter;
 
 import android.annotation.SuppressLint;
-import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
-import android.widget.ImageView;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.TextView;
 
-import androidx.annotation.NonNull;
-
-import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import com.irlab.view.R;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class DeviceAdapter extends BaseQuickAdapter<BluetoothDevice, BaseViewHolder> {
+public class DeviceAdapter extends BaseAdapter {
 
-    private final List<BluetoothDevice> mList;
+    private Context context;
+    private List<BluetoothDevice> list;
 
-    public DeviceAdapter(int layoutResId, @NonNull List<BluetoothDevice> data) {
-        super(layoutResId, data);
-        mList = data;
-    }
-
-    @SuppressLint("MissingPermission")
-    @Override
-    protected void convert(@NonNull BaseViewHolder helper, BluetoothDevice item) {
-
-        if (item.getName() == null) {
-            helper.setText(R.id.tv_name, "UnKnown");
-        } else {
-            helper.setText(R.id.tv_name, item.getName());
-            if (!mList.contains(item)) mList.add(item);
-        }
-
-        ImageView imageView = helper.getView(R.id.iv_device_type);
-        getDeviceType(item.getBluetoothClass().getMajorDeviceClass(), imageView);
-
-        //蓝牙设备绑定状态判断
-        switch (item.getBondState()) {
-            case 12:
-                helper.setText(R.id.tv_bond_state, "已配对");
-                break;
-            case 11:
-                helper.setText(R.id.tv_bond_state, "正在配对...");
-                break;
-            case 10:
-                helper.setText(R.id.tv_bond_state, "未配对");
-                break;
-        }
+    public DeviceAdapter(Context context) {
+        this.context = context;
+        list = new ArrayList<>();
     }
 
     @Override
-    public BluetoothDevice getItem(int i) {
-        if (mList == null) {
+    public int getCount() {
+        return list == null ? 0 : list.size();
+    }
+
+    @Override
+    public Object getItem(int i) {
+        if (list == null) {
             return null;
         }
-        return mList.get(i);
+        return list.get(i);
     }
 
-    @SuppressLint({"MissingPermission", "NotifyDataSetChanged"})
-    public void addDevice(BluetoothDevice bluetoothDevice) {
-        if (mList == null) {
-            return;
+    @Override
+    public long getItemId(int i) {
+        return i;
+    }
+
+    @SuppressLint({"MissingPermission"})
+    @Override
+    public View getView(int i, View view, ViewGroup viewGroup) {
+        DeviceViewHolder viewHolder;
+        if (view == null) {
+            view = LayoutInflater.from(context).inflate(R.layout.layout_lv_devices_item, null);
+            viewHolder = new DeviceViewHolder();
+            viewHolder.tvDeviceName = view.findViewById(R.id.tv_name);
+            viewHolder.tvDeviceState = view.findViewById(R.id.tv_bond_state);
+            view.setTag(viewHolder);
+        } else {
+            viewHolder = (DeviceViewHolder) view.getTag();
         }
-        if (!mList.contains(bluetoothDevice)) {
-            if (bluetoothDevice.getName() != null) {
-                mList.add(bluetoothDevice);
-            }
+
+        if (list.get(i).getName() == null) {
+            viewHolder.tvDeviceName.setText("NULL");
+        } else {
+            viewHolder.tvDeviceName.setText(list.get(i).getName());
         }
-        notifyDataSetChanged();   //刷新
+
+        if (list.get(i).getBondState() == 12) {
+            viewHolder.tvDeviceState.setText("已配对");
+        } else if (list.get(i).getBondState() == 11) {
+            viewHolder.tvDeviceState.setText("正在配对");
+        } else if (list.get(i).getBondState() == 10) {
+            viewHolder.tvDeviceState.setText("未配对");
+        }
+        return view;
+    }
+
+    public void removeDevice(BluetoothDevice device) {
+        if (list != null) {
+            list.remove(device);
+        }
     }
 
     /**
@@ -79,82 +86,41 @@ public class DeviceAdapter extends BaseQuickAdapter<BluetoothDevice, BaseViewHol
     public void addBondedDevice(Set<BluetoothDevice> bondedDevices) {
         if (bondedDevices.size() > 0) { //  如果获取的结果大于0，则开始逐个解析
             for (BluetoothDevice device : bondedDevices) {
-                if (!mList.contains(device) && device.getName() != null) {  // 防止重复添加
-                    mList.add(device);
+                if (!list.contains(device) && device.getName() != null) {  // 防止重复添加
+                    list.add(device);
                 }
             }
         }
     }
 
-    public void removeDevice(BluetoothDevice device) {
-        mList.remove(device);
+
+    public void addAllDevice(List<BluetoothDevice> bluetoothDevices) {
+        if (list != null) {
+            list.clear();
+            list.addAll(bluetoothDevices);
+        }
+        notifyDataSetChanged();
     }
 
-    @SuppressLint("NotifyDataSetChanged")
+    public void addDevice(BluetoothDevice bluetoothDevice) {
+        if (list == null) {
+            return;
+        }
+        if (!list.contains(bluetoothDevice)) {
+            list.add(bluetoothDevice);
+        }
+        notifyDataSetChanged();   //刷新
+    }
+
     public void clear() {
-        if (mList != null) {
-            mList.clear();
+        if (list != null) {
+            list.clear();
         }
         notifyDataSetChanged(); //刷新
     }
 
-    /**
-     * 根据类型设置图标
-     *
-     * @param type      类型码
-     * @param imageView 图标
-     */
-    private void getDeviceType(int type, ImageView imageView) {
-        switch (type) {
-            case BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES://耳机
-            case BluetoothClass.Device.AUDIO_VIDEO_WEARABLE_HEADSET://穿戴式耳机
-            case BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE://蓝牙耳机
-            case BluetoothClass.Device.Major.AUDIO_VIDEO://音频设备
-                imageView.setImageResource(R.mipmap.icon_headset);
-                break;
-            case BluetoothClass.Device.Major.COMPUTER://电脑
-                imageView.setImageResource(R.mipmap.icon_computer);
-                break;
-            case BluetoothClass.Device.Major.PHONE://手机
-                imageView.setImageResource(R.mipmap.icon_phone);
-                break;
-            case BluetoothClass.Device.Major.HEALTH://健康类设备
-                imageView.setImageResource(R.mipmap.icon_health);
-                break;
-            case BluetoothClass.Device.AUDIO_VIDEO_CAMCORDER://照相机录像机
-            case BluetoothClass.Device.AUDIO_VIDEO_VCR://录像机
-                imageView.setImageResource(R.mipmap.icon_vcr);
-                break;
-            case BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO://车载设备
-                imageView.setImageResource(R.mipmap.icon_car);
-                break;
-            case BluetoothClass.Device.AUDIO_VIDEO_LOUDSPEAKER://扬声器
-                imageView.setImageResource(R.mipmap.icon_loudspeaker);
-                break;
-            case BluetoothClass.Device.AUDIO_VIDEO_MICROPHONE://麦克风
-                imageView.setImageResource(R.mipmap.icon_microphone);
-                break;
-            case BluetoothClass.Device.AUDIO_VIDEO_PORTABLE_AUDIO://打印机
-                imageView.setImageResource(R.mipmap.icon_printer);
-                break;
-            case BluetoothClass.Device.AUDIO_VIDEO_SET_TOP_BOX://音频视频机顶盒
-                imageView.setImageResource(R.mipmap.icon_top_box);
-                break;
-            case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_CONFERENCING://音频视频视频会议
-                imageView.setImageResource(R.mipmap.icon_meeting);
-                break;
-            case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_DISPLAY_AND_LOUDSPEAKER://显示器和扬声器
-                imageView.setImageResource(R.mipmap.icon_tv);
-                break;
-            case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_GAMING_TOY://游戏
-                imageView.setImageResource(R.mipmap.icon_game);
-                break;
-            case BluetoothClass.Device.AUDIO_VIDEO_VIDEO_MONITOR://可穿戴设备
-                imageView.setImageResource(R.mipmap.icon_wearable_devices);
-                break;
-            default://其它
-                imageView.setImageResource(R.mipmap.icon_bluetooth);
-                break;
-        }
+    static class DeviceViewHolder {
+        TextView tvDeviceName;
+        TextView tvDeviceState;
     }
 }
