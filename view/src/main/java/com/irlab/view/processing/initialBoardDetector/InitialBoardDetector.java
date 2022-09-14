@@ -3,6 +3,7 @@ package com.irlab.view.processing.initialBoardDetector;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
+import android.util.Pair;
 import android.widget.Toast;
 
 import com.irlab.base.MyApplication;
@@ -242,17 +243,16 @@ public class InitialBoardDetector {
      *
      * @return
      */
-    public Mat getPerspectiveTransformImage2() {
+    public Mat getPerspectiveTransformImage2(Mat originBoard, List<Pair<Double, Double>> corners) {
         // 如果获取的图片为空，则直接返回
-        if (image == null) {
+        if (originBoard == null) {
             String error = "帧图片为空，未获取图像信息";
             Log.e(TAG, error);
             Toast.makeText(MyApplication.getContext(), error, Toast.LENGTH_SHORT).show();
-
             return null;
         }
 
-        Mat originMatImage = image.clone();
+        Mat originMatImage = originBoard.clone();
 
         Bitmap originBitmap = Bitmap.createBitmap(originMatImage.width(), originMatImage.height(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(originMatImage, originBitmap);
@@ -260,11 +260,14 @@ public class InitialBoardDetector {
         // 四个顶点
         List<Point> mc = new ArrayList<>(4);
         // 左上-右上-右下-左下
-        mc.add(new Point(378.0, 58.0));
+        /*mc.add(new Point(378.0, 58.0));
         mc.add(new Point(1100.0, 82.0));
         mc.add(new Point(1292.0, 826.0));
-        mc.add(new Point(152.0, 832.0));
-
+        mc.add(new Point(152.0, 832.0));*/
+        mc.add(new Point(corners.get(0).first, corners.get(0).second));
+        mc.add(new Point(corners.get(2).first, corners.get(2).second));
+        mc.add(new Point(corners.get(3).first, corners.get(3).second));
+        mc.add(new Point(corners.get(1).first, corners.get(1).second));
 
         // 进行图像透视变换和切割识别
         Mat cornerPoints = new Mat(4, 1, CvType.CV_32FC2);

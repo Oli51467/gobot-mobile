@@ -69,7 +69,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
 
     private ProcessCameraProvider cameraProvider;
 
-    private ExecutorService mExecutorService; // 声明一个线程池对象
+    public static ExecutorService mExecutorService; // 声明一个线程池对象
 
     private Python py;
 
@@ -234,7 +234,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                     }
             );
 
-            // TODO: 如果找到四个角点，则继续进入下一步
+            // TODO: 如果找到四个角点，则继续进入下一步 -> corners.size() == 4
             if (1==1) {
                 msg.what = ResponseCode.FIND_MARKER.getCode();
                 handler.sendMessage(msg);

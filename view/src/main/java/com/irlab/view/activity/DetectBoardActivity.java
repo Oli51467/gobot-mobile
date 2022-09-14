@@ -7,10 +7,12 @@ import static com.irlab.base.MyApplication.squeezencnn;
 import static com.irlab.base.MyApplication.threadPool;
 import static com.irlab.view.activity.DefineBoardPositionActivity.corners;
 import static com.irlab.view.activity.DefineBoardPositionActivity.imageCapture;
+import static com.irlab.view.activity.DefineBoardPositionActivity.mExecutorService;
 import static com.irlab.view.engine.EngineInterface.clearBoard;
 import static com.irlab.view.engine.EngineInterface.saveGameAsSgf;
 import static com.irlab.view.utils.BoardUtil.genPlayCmd;
 import static com.irlab.view.utils.BoardUtil.transformIndex;
+import static com.irlab.view.utils.ImageUtils.JPEGImageToBitmap;
 import static com.irlab.view.utils.ImageUtils.matToBitmap;
 import static com.irlab.view.utils.ImageUtils.splitImage;
 
@@ -19,6 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -33,6 +36,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
@@ -57,6 +62,8 @@ import com.rosefinches.smiledialog.enums.SmileDialogType;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
 import java.io.IOException;
@@ -115,6 +122,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_battle_info);
         Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
+        OpenCVLoader.initDebug();
         initArgs();
         initBoard();
         beginDrawing();
@@ -137,11 +145,22 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         clearBoard(userName);
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.capture) {  // 手动捕获
+            Mat originBoard = new Mat();
             // TODO: 捕获棋盘 -> 识别棋子 -> 关闭摄像头 -> 显示棋盘
-            // identifyChessboardAndGenMove();
+            imageCapture.takePicture(mExecutorService, new ImageCapture.OnImageCapturedCallback() {
+                @Override
+                public void onCaptureSuccess(@NonNull ImageProxy imageProxy) {
+                    super.onCaptureSuccess(imageProxy);
+                    Image image = imageProxy.getImage();
+                    Bitmap bitmap = JPEGImageToBitmap(image);
+                    Utils.bitmapToMat(bitmap, originBoard);
+                    identifyChessboardAndGenMove(originBoard);
+                }
+            });
             // 暂时跳过图像处理，直接展示棋盘 四角坐标存在mCorners中
             runOnUiThread(() -> {
                 cameraProvider.unbindAll();
@@ -221,11 +240,12 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     /**
      * 识别棋盘并走棋
      */
-    public boolean identifyChessboardAndGenMove() {
+    public boolean identifyChessboardAndGenMove(Mat originBoard) {
 
         // TODO: 根据角标点处理图像，并做图像透视变换
         // orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage();
-        orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage2();
+        initialBoardDetector = new InitialBoardDetector(false);
+        orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage2(originBoard, mCorners);
 
         if (orthogonalBoard == null) {
             // 如果未获取到棋盘，直接返回

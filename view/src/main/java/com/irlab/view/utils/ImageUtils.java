@@ -326,4 +326,12 @@ public class ImageUtils {
         buffer.clear();
         return bytes;
     }
+
+    public static Bitmap JPEGImageToBitmap(Image image) {
+        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+        byte[] bytes = new byte[buffer.capacity()];
+        buffer.get(bytes);
+        Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
+        return bitmapImage;
+    }
 }
