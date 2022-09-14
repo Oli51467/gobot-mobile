@@ -25,7 +25,9 @@ import android.widget.Toast;
 
 import com.irlab.base.MyApplication;
 import com.irlab.base.entity.CellData;
+import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.HttpUtil;
+import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.adapter.RecyclerViewAdapter;
@@ -121,8 +123,6 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         mAdapter.notifyDataSetChanged();
     }
 
-
-
     private void checkCameraPermission() {
         List<String> neededPermissions = new ArrayList<>();
         if (ContextCompat.checkSelfPermission(SelectConfigActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -133,7 +133,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         }
 
         if (!neededPermissions.isEmpty()) {
-            ActivityCompat.requestPermissions(SelectConfigActivity.this, neededPermissions.toArray(new String[neededPermissions.size()]), PERMISSION_REQUEST_CODE);
+            ActivityCompat.requestPermissions(SelectConfigActivity.this, neededPermissions.toArray(new String[0]), PERMISSION_REQUEST_CODE);
         } else {
             startDetectBoardAcitivity();
         }
@@ -166,7 +166,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startDetectBoardAcitivity();
             } else {
-                Toast.makeText(SelectConfigActivity.this, getResources().getString(R.string.toast_camera_permission), Toast.LENGTH_SHORT).show();
+                ToastUtil.show(this, getResources().getString(R.string.toast_camera_permission));
             }
         }
     }
@@ -187,7 +187,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
                 list.add(cellData);
             }
             Message msg = new Message();
-            msg.what = 1;
+            msg.what = ResponseCode.LOAD_CONFIG_SUCCESSFULLY.getCode();
             handler.sendMessage(msg);
         } catch (JSONException e) {
             Log.d(TAG, e.toString());
@@ -199,7 +199,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         @Override
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
-            if (msg.what == 1) {
+            if (msg.what == ResponseCode.LOAD_CONFIG_SUCCESSFULLY.getCode()) {
                 // 初始化适配器 将数据填充进去
                 mAdapter = new RecyclerViewAdapter(list);
                 initViews();

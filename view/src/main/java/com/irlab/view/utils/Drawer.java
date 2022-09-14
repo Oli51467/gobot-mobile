@@ -87,7 +87,7 @@ public class Drawer {
         // 创建画布
         Canvas canvas = new Canvas(bitmap);
         canvas.drawBitmap(bitmap, new Matrix(), blackPaint);     //在画布上画一个和bitmap一模一样的图
-        //画横线
+        // 画横线
         float distanceBetweenLines = 50;
         float endOfLines = 950;
         for (int i = 0; i < 19; i ++ ) {
@@ -107,6 +107,7 @@ public class Drawer {
                 }
             }
         }
+        if (lastMove == null) return bitmap;
         // 画棋子
         for (int i = 1; i <= DIMENSION; i ++ ) {
             for (int j = 1; j <= DIMENSION; j ++ ) {
@@ -171,15 +172,15 @@ public class Drawer {
         paint.setColor(Color.WHITE);
         paint.setTextSize(70);
         canvas.drawText("落子信息", 50, 100, paint);
-        if (!position.equals("")) {
+        if (position != null) {
             if (player == Board.BLACK_STONE) {
                 canvas.drawCircle(100, 175, 40, blackPaint);
             }
             else {
                 canvas.drawCircle(100, 175, 40, whitePaint);
             }
+            canvas.drawText(position, 200, 200, paint);
         }
-        canvas.drawText(position, 200, 200, paint);
         return bitmap;
     }
 

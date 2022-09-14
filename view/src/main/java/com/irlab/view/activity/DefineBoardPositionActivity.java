@@ -1,151 +1,241 @@
 package com.irlab.view.activity;
 
-import static com.irlab.base.MyApplication.ENGINE_SERVER;
-import static com.irlab.base.MyApplication.JSON;
+import com.chaquo.python.Kwarg;
+import com.chaquo.python.PyObject;
+import com.chaquo.python.android.AndroidPlatform;
+import com.chaquo.python.Python;
+
 import static com.irlab.view.engine.EngineInterface.clearBoard;
+import static com.irlab.view.engine.EngineInterface.initEngine;
+import static com.irlab.view.utils.ImageUtils.JPEGImageToByteArray;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.util.Pair;
+import android.view.Surface;
 import android.view.View;
-import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.AspectRatio;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.ImageProxy;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
-import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
-import com.irlab.view.processing.boardDetector.BoardDetector;
-import com.irlab.view.processing.initialBoardDetector.InitialBoardDetector;
-import com.irlab.view.utils.JsonUtil;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+public class DefineBoardPositionActivity extends AppCompatActivity implements View.OnClickListener {
 
-public class DefineBoardPositionActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
-
-    public static final String TAG = "DefineContour";
     public static final String Logger = "djnxyxy";
-
-    public static boolean init = true;
-
-    private CameraBridgeViewBase mOpenCvCameraView;
-
-    private Button btnFixBoardPosition;
-
-    private MatOfPoint boardContour;
-
-    private InitialBoardDetector initialBoardDetector;
-
-    public BoardDetector boardDetector;
+    private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
+    private final int REQUEST_CODE_PERMISSIONS = 101;
+    public static final ImageCapture imageCapture = new ImageCapture.Builder()
+            .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+            .setTargetRotation(Surface.ROTATION_0)
+            .build();
 
     private String blackPlayer, whitePlayer, komi, rule, engine, userName;
 
-    // opencv与app交互的回调函数
-    private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            if (status == LoaderCallbackInterface.SUCCESS) {
-                Log.i(TAG, "OpenCV loaded successfully");
-                mOpenCvCameraView.enableView();
-            } else {
-                super.onManagerConnected(status);
-            }
-        }
-    };
+    private PreviewView previewView;
+
+    private ProcessCameraProvider cameraProvider;
+
+    private ExecutorService mExecutorService; // 声明一个线程池对象
+
+    private Python py;
+
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+
+    public static List<Pair<Double, Double>> corners = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_define_board_position);
-        Objects.requireNonNull(getSupportActionBar()).hide();
-
-        // TODO 后续需要改一下，让连接引擎的唯一主键不能重复，username可能会重复
-        // 获取 username 作为连接引擎的唯一主键
-        userName = MyApplication.getInstance().preferences.getString("userName", null);
-        initEngine(getApplicationContext());
-
+        initWindow();
+        initEngine(getApplicationContext(), userName);
         clearBoard(userName);
         initViews();
-        initDetector();
         getInfoFromActivity();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (mOpenCvCameraView != null) {
-            mOpenCvCameraView.disableView();
-        }
-    }
-
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        if (!OpenCVLoader.initDebug()) {
-            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
+        initPython();
+        if (requestPermissions()) {
+            startCamera();
         } else {
-            Log.d(TAG, "OpenCV library found inside package. Using it!");
-            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
         }
+    }
+
+    private void initWindow() {
+        Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);   // 透明状态栏
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);   // 透明导航栏
+        userName = MyApplication.getInstance().preferences.getString("userName", null); // 获取 username 作为连接引擎的唯一主键
+    }
+
+    private void initViews() {
+        previewView = findViewById(R.id.previewView);
+        // 设置确定位置按钮
+        Button btnFixBoardPosition = findViewById(R.id.btnFixBoardPosition);
+        btnFixBoardPosition.setOnClickListener(this);
+        // 设置返回按钮
+        Button btnReturn = findViewById(R.id.btn_return);
+        btnReturn.setOnClickListener(this);
+        mExecutorService = Executors.newSingleThreadExecutor(); // 创建一个单线程线程池
+    }
+
+    // 初始化Python环境
+    void initPython() {
+        if (!Python.isStarted()) {
+            Python.start(new AndroidPlatform(this));
+        }
+        py = Python.getInstance();
+    }
+
+    private void getInfoFromActivity() {
+        Intent i = getIntent();
+        blackPlayer = i.getStringExtra("blackPlayer");
+        whitePlayer = i.getStringExtra("whitePlayer");
+        komi = i.getStringExtra("komi");
+        rule = i.getStringExtra("rule");
+        engine = i.getStringExtra("engine");
+    }
+
+    private boolean requestPermissions() {
+        for (String permission : REQUIRED_PERMISSIONS) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        if (!OpenCVLoader.initDebug()) {
-            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
-        } else {
-            Log.d(TAG, "OpenCV library found inside package. Using it!");
-            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_PERMISSIONS) {
+            if (requestPermissions()) {
+                startCamera();
+            } else {
+                ToastUtil.show(this, "Permissions not granted by the user");
+                finish();
+            }
         }
     }
 
-    public void onDestroy() {
-        super.onDestroy();
-        if (mOpenCvCameraView != null) mOpenCvCameraView.disableView();
+    @SuppressLint("RestrictedApi")
+    public void startCamera() {
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        // 检查CameraProvider的可用性
+        cameraProviderFuture.addListener(() -> {
+            try {
+                // 创建CameraProvider
+                cameraProvider = cameraProviderFuture.get();
+                // 选择相机并绑定生命周期和用例
+                bindPreview(cameraProvider);
+            } catch (ExecutionException | InterruptedException e) {
+                Log.e(Logger, e.getMessage());
+            }
+        }, ContextCompat.getMainExecutor(this));
     }
 
+    @SuppressLint({"RestrictedApi", "UnsafeOptInUsageError"})
+    void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
+        cameraProvider.unbindAll();
+        // 绑定Preview
+        Preview preview = new Preview.Builder().build();
+        // 指定所需的相机 LensFacing 选项
+        CameraSelector cameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build();
+        /*将预览流渲染到目标 View 上
+        PERFORMANCE 是默认模式。PreviewView 会使用 SurfaceView 显示视频串流，但在某些情况下会回退为使用 TextureView。
+        SurfaceView 具有专用的绘图界面，该对象更有可能通过内部硬件合成器实现硬件叠加层，尤其是当预览视频上面没有其他界面元素（如按钮）时。
+        通过使用硬件叠加层进行渲染，视频帧会避开 GPU 路径，从而能降低平台功耗并缩短延迟时间。*/
+        //previewView.setImplementationMode(PreviewView.ImplementationMode.PERFORMANCE);
+        // 缩放类型
+        previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
+        // 将所选相机和任意用例绑定到生命周期
+        cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture);
+        // 将 Preview 连接到 PreviewView
+        preview.setSurfaceProvider(previewView.getSurfaceProvider());
+    }
+
+    @SuppressLint("UnsafeOptInUsageError")
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.btnFixBoardPosition) {
-
             Message msg = new Message();
-            msg.obj = MyApplication.getContext();
+            msg.obj = this;
+            imageCapture.takePicture(mExecutorService, new ImageCapture.OnImageCapturedCallback() {
+                        @Override
+                        public void onCaptureSuccess(@NonNull ImageProxy imageProxy) {
+                            Image image = imageProxy.getImage();    // ImageProxy 转 Bitmap
+                            assert image != null;
+                            byte[] byteArray = JPEGImageToByteArray(image);   // 注意这里Image的格式是JPEG 不是YUV
+                            // 将图像交给python处理
+                            PyObject obj = py.getModule("CCTProcess").callAttr("main", new Kwarg("byte_array", byteArray));
+                            // 获得返回数据 -> 四个角
+                            double[][] result = obj.toJava(double[][].class);
+                            corners.clear();
+                            // ======= 打印测试 =======
+                            for (double[] doubles : result) {
+                                for (int j = 0; j < doubles.length; j++) {
+                                    if (j > 0) {
+                                        Pair<Double, Double> pair = new Pair<>(doubles[j], doubles[j + 1]);
+                                        corners.add(pair);
+                                        break;
+                                    } else {
+                                        Log.d(Logger, doubles[j] + "\n");
+                                    }
+                                }
+                            }
+                            Collections.sort(corners, Comparator.comparing(o -> o.first));
+                            for (Pair<Double, Double> corner : corners) {
+                                Log.d(Logger, corner.first + "---" + corner.second);
+                            }
+                            // ======= 打印测试结束 =======
+                            imageProxy.close();
+                        }
 
-            if (initialBoardDetector.findMarker()) {
-                // 如果找到四个角点，则继续进入下一步
+                        @Override
+                        public void onError(@NonNull ImageCaptureException exception) {
+                            super.onError(exception);
+                            Log.e(Logger, exception.getMessage());
+                        }
+                    }
+            );
+
+            // TODO: 如果找到四个角点，则继续进入下一步
+            if (1==1) {
                 msg.what = ResponseCode.FIND_MARKER.getCode();
                 handler.sendMessage(msg);
 
@@ -155,6 +245,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
                 intent.putExtra("komi", komi);
                 intent.putExtra("rule", rule);
                 intent.putExtra("engine", engine);
+                //intent.putExtra("corners", (Parcelable) corners);
                 startActivity(intent);
             }
             else {
@@ -168,93 +259,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Ca
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
-
-    }
-
-    // 这里获取到图像输出
-    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Mat inputImage = inputFrame.rgba();
-
-        // 将输出图像的副本传入到棋盘检测
-        initialBoardDetector.setImage(inputImage.clone());
-        initialBoardDetector.setPreviewImage(inputImage);
-
-        // 关闭摄像头 显示友好界面
-        return inputImage;
-    }
-    public void onCameraViewStarted(int width, int height) {}
-
-    public void onCameraViewStopped() {}
-
-    private void initViews() {
-        // 设置一些CameraView的基本状态信息
-        mOpenCvCameraView = findViewById(R.id.camera_surface_view);
-        mOpenCvCameraView.setCvCameraViewListener(this);
-        mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
-
-        // 设置确定位置按钮
-        btnFixBoardPosition = findViewById(R.id.btnFixBoardPosition);
-        btnFixBoardPosition.setOnClickListener(this);
-        btnFixBoardPosition.setEnabled(true);
-
-        // 测试按钮
-        Button testReturn = findViewById(R.id.btnTestFinkMarker);
-        testReturn.setOnClickListener(this);
-
-        // 设置返回按钮
-        Button btnReturn = findViewById(R.id.btn_return);
-        btnReturn.setOnClickListener(this);
-    }
-
-    /**
-     * 初始化棋盘检测
-     */
-    private void initDetector() {
-        initialBoardDetector = new InitialBoardDetector(true);
-        boardDetector = new BoardDetector();
-    }
-
-    /**
-     * 初始化围棋引擎
-     */
-    private void initEngine(Context context) {
-        String json = JsonUtil.getJsonFormOfInitEngine(userName);
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
-        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/init", requestBody, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = Objects.requireNonNull(response.body()).string();
-                try {
-                    JSONObject jsonObject = new JSONObject(responseData);
-                    int code = jsonObject.getInt("code");
-                    Message msg = new Message();
-                    msg.obj = context;
-                    if (code == 1000) {
-                        msg.what = ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getCode();
-                    }
-                    else {
-                        msg.what = ResponseCode.ENGINE_CONNECT_FAILED.getCode();
-                    }
-                    // 目前是发送toast通知的形式来展示是否已经连接引擎
-                    // TODO: 后期应该改为状态展示的方式，在页面上展示引擎连接状态，比如一个绿灯
-                    handler.sendMessage(msg);
-                } catch (JSONException e) {
-                    Log.d(TAG, e.toString());
-                }
-            }
-        });
-    }
-
-    private void getInfoFromActivity() {
-        Intent i = getIntent();
-        blackPlayer = i.getStringExtra("blackPlayer");
-        whitePlayer = i.getStringExtra("whitePlayer");
-        komi = i.getStringExtra("komi");
-        rule = i.getStringExtra("rule");
-        engine = i.getStringExtra("engine");
     }
 
     @SuppressLint("HandlerLeak")

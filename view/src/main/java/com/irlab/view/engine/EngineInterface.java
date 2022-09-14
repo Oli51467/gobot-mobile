@@ -58,6 +58,40 @@ public class EngineInterface {
     }
 
     /**
+     * 初始化围棋引擎
+     */
+    public static void initEngine(Context context, String userName) {
+        String json = JsonUtil.getJsonFormOfInitEngine(userName);
+        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/init", requestBody, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {}
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseData = Objects.requireNonNull(response.body()).string();
+                try {
+                    JSONObject jsonObject = new JSONObject(responseData);
+                    int code = jsonObject.getInt("code");
+                    Message msg = new Message();
+                    msg.obj = context;
+                    if (code == 1000) {
+                        msg.what = ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getCode();
+                    }
+                    else {
+                        msg.what = ResponseCode.ENGINE_CONNECT_FAILED.getCode();
+                    }
+                    // 目前是发送toast通知的形式来展示是否已经连接引擎
+                    // TODO: 后期应该改为状态展示的方式，在页面上展示引擎连接状态，比如一个绿灯
+                    handler.sendMessage(msg);
+                } catch (JSONException e) {
+                    Log.d(Logger, e.toString());
+                }
+            }
+        });
+    }
+
+    /**
      * 展示棋盘
      * @param userName
      */

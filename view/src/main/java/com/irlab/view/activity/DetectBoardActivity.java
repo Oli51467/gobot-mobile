@@ -5,6 +5,8 @@ import static com.irlab.base.MyApplication.JSON;
 import static com.irlab.base.MyApplication.squeezencnn;
 
 import static com.irlab.base.MyApplication.threadPool;
+import static com.irlab.view.activity.DefineBoardPositionActivity.corners;
+import static com.irlab.view.activity.DefineBoardPositionActivity.imageCapture;
 import static com.irlab.view.engine.EngineInterface.clearBoard;
 import static com.irlab.view.engine.EngineInterface.saveGameAsSgf;
 import static com.irlab.view.utils.BoardUtil.genPlayCmd;
@@ -23,7 +25,6 @@ import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
-import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -31,7 +32,13 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
+import androidx.core.content.ContextCompat;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.HttpUtil;
@@ -42,7 +49,6 @@ import com.irlab.view.models.Board;
 import com.irlab.view.models.Player;
 import com.irlab.view.models.Point;
 import com.irlab.view.utils.Drawer;
-import com.irlab.view.processing.boardDetector.BoardDetector;
 import com.irlab.view.processing.initialBoardDetector.InitialBoardDetector;
 import com.irlab.view.utils.JsonUtil;
 import com.rosefinches.smiledialog.SmileDialog;
@@ -51,54 +57,34 @@ import com.rosefinches.smiledialog.enums.SmileDialogType;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class DetectBoardActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
+public class DetectBoardActivity extends AppCompatActivity implements View.OnClickListener {
 
-    public static final int BLANK = 0;
-    public static final int BLACK = 1;
-    public static final int WHITE = 2;
-    public static final int WIDTH = 19;
-    public static final int HEIGHT = 19;
-    public static final int THREAD_NUM = 19;
-    public static final int SINGLE_THREAD_TASK = 19;
-    public static final int BOARD_WIDTH = 1000;
-    public static final int BOARD_HEIGHT = 1000;
-    public static final int INFO_WIDTH = 880;
-    public static final int INFO_HEIGHT = 350;
-    public static final String TAG = "Detector";
-    public static final String Logger = "djnxyxy";
+    public static final int BLANK = 0, BLACK = 1, WHITE = 2, WIDTH = 19, HEIGHT = 19, THREAD_NUM = 19, SINGLE_THREAD_TASK = 19;
+    public static final int BOARD_WIDTH = 1000, BOARD_HEIGHT = 1000, INFO_WIDTH = 880, INFO_HEIGHT = 350;
+    private final Context mContext = this;
+    public static final String TAG = "Detector", Logger = "djnxyxy";
 
     public static int previousX, previousY;
     public static boolean init = true;
     public static Drawer drawer;
 
-    private CameraBridgeViewBase mOpenCvCameraView;
-
-    private Button btnFixBoardPosition;
-
     private Mat orthogonalBoard = null;
 
-    private MatOfPoint boardContour;
-
     private InitialBoardDetector initialBoardDetector;
-
-    public BoardDetector boardDetector;
 
     private String userName, playPosition, blackPlayer, whitePlayer, komi, rule, engine;
 
@@ -115,33 +101,23 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     // 蓝牙服务
     protected BluetoothService bluetoothService;
 
-    private Context mContext;
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
 
-    // opencv与app交互的回调函数
-    private final BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            if (status == LoaderCallbackInterface.SUCCESS) {
-                Log.i(TAG, "OpenCV loaded successfully");
-                mOpenCvCameraView.enableView();
-            } else {
-                super.onManagerConnected(status);
-            }
-        }
-    };
+    private PreviewView previewView;
+
+    private ProcessCameraProvider cameraProvider;
+
+    private List<Pair<Double, Double>> mCorners;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setContentView(R.layout.activity_detect_board);
-        Objects.requireNonNull(getSupportActionBar()).hide();
-        mContext = this;
-        userName = MyApplication.getInstance().preferences.getString("userName", null);
-        getInfoFromActivity();
+        setContentView(R.layout.activity_battle_info);
+        Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
+        initArgs();
         initBoard();
-        initViews();
-        initDetector();
+        beginDrawing();
     }
 
     @Override
@@ -151,52 +127,27 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-        if (mOpenCvCameraView != null) {
-            mOpenCvCameraView.disableView();
-        }
-    }
-
-    @Override
     protected void onRestart() {
         super.onRestart();
         bluetoothService = BluetoothActivity.bluetoothService;
-        if (!OpenCVLoader.initDebug()) {
-            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
-        } else {
-            Log.d(TAG, "OpenCV library found inside package. Using it!");
-            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-        }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (!OpenCVLoader.initDebug()) {
-            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
-        } else {
-            Log.d(TAG, "OpenCV library found inside package. Using it!");
-            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-        }
     }
 
     public void onDestroy() {
         super.onDestroy();
-        if (mOpenCvCameraView != null) mOpenCvCameraView.disableView();
         clearBoard(userName);
     }
 
-
     public void onClick(View v) {
         int vid = v.getId();
-        if (vid == R.id.btnFixBoardPosition) {
-            // 手动捕获棋盘
-            // detectBoard();
-            identifyChessboardAndGenMove();
-
+        if (vid == R.id.capture) {  // 手动捕获
+            // TODO: 捕获棋盘 -> 识别棋子 -> 关闭摄像头 -> 显示棋盘
+            // identifyChessboardAndGenMove();
+            // 暂时跳过图像处理，直接展示棋盘 四角坐标存在mCorners中
+            runOnUiThread(() -> {
+                cameraProvider.unbindAll();
+                setContentView(R.layout.activity_battle_info);
+                beginDrawing();
+            });
         } else if (vid == R.id.btn_saveSGF) {
             SmileDialog dialog = new SmileDialogBuilder(this, SmileDialogType.WARNING)
                     .hideTitle(true)
@@ -220,35 +171,9 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
-        // 开启摄像头 模拟落子信号
+        // 切换UI -> 开启摄像头 -> 拍照识别 -> 切换UI
         else if (vid == R.id.btn_return_camera) {
-            CountDownLatch ctl = new CountDownLatch(1);
-            runOnUiThread(() -> {
-                setContentView(R.layout.activity_detect_board);
-                if (!OpenCVLoader.initDebug()) {
-                    Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
-                    OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
-                } else {
-                    Log.d(TAG, "OpenCV library found inside package. Using it!");
-                    mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-                }
-                initViews();
-                ctl.countDown();
-            });
-            // TODO: 这种自动化检测方法待商榷
-            try {
-                ctl.await();
-            } catch (InterruptedException e) {
-                Log.d(Logger, e.toString());
-            }
-
-            while (true) {
-                // 是否检测到新的走棋
-                if (identifyChessboardAndGenMove()) {
-                    break;
-                }
-            }
-
+            switchCameraAndDetectBoard();
         } else if (vid == R.id.btn_exit) {
             clearBoard(userName);
             Intent intent = new Intent(this, SelectConfigActivity.class);
@@ -256,15 +181,49 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         }
     }
 
+    @SuppressLint("RestrictedApi")
+    public void startCamera() {
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        cameraProviderFuture.addListener(() -> {
+            try {
+                // 创建CameraProvider
+                cameraProvider = cameraProviderFuture.get();
+                // 选择相机并绑定生命周期和用例
+                bindPreview(cameraProvider);
+            } catch (ExecutionException | InterruptedException e) {
+                Log.e(Logger, e.getMessage());
+            }
+        }, ContextCompat.getMainExecutor(this));
+    }
+
+    @SuppressLint({"RestrictedApi", "UnsafeOptInUsageError"})
+    void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
+        cameraProvider.unbindAll();
+        // 绑定Preview
+        Preview preview = new Preview.Builder().build();
+        // 指定所需的相机 LensFacing 选项
+        CameraSelector cameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build();
+        /*将预览流渲染到目标 View 上
+        PERFORMANCE 是默认模式。PreviewView 会使用 SurfaceView 显示视频串流，但在某些情况下会回退为使用 TextureView。
+        SurfaceView 具有专用的绘图界面，该对象更有可能通过内部硬件合成器实现硬件叠加层，尤其是当预览视频上面没有其他界面元素（如按钮）时。
+        通过使用硬件叠加层进行渲染，视频帧会避开 GPU 路径，从而能降低平台功耗并缩短延迟时间。*/
+        // previewView.setImplementationMode(PreviewView.ImplementationMode.PERFORMANCE);
+        // 缩放类型
+        previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
+        // 将所选相机和任意用例绑定到生命周期
+        cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture);
+        // 将 Preview 连接到 PreviewView
+        preview.setSurfaceProvider(previewView.getSurfaceProvider());
+    }
 
     /**
      * 识别棋盘并走棋
-     *
-     * @return
      */
     public boolean identifyChessboardAndGenMove() {
 
-        // 处理图像，并做图像透视变换
+        // TODO: 根据角标点处理图像，并做图像透视变换
         // orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage();
         orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage2();
 
@@ -272,8 +231,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
             // 如果未获取到棋盘，直接返回
             String error = "未获取到棋盘信息";
             Log.e(TAG, error);
-            Toast.makeText(MyApplication.getContext(), error, Toast.LENGTH_SHORT).show();
-
+            ToastUtil.show(this, error);
             return false;
         }
 
@@ -343,52 +301,40 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
      * 开启摄像头并检测棋盘
      * TODO 完善此方法
      */
-    public static void switchCameraAndDetectboard() {
+    public void switchCameraAndDetectBoard() {
+        CountDownLatch ctl = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            setContentView(R.layout.activity_detect_board);
+            // 重新打开摄像头
+            initViews();
+            startCamera();
+            ctl.countDown();
+        });
+        try {
+            ctl.await();
+        } catch (InterruptedException e) {
+            Log.d(Logger, e.toString());
+        }
 
+        // TODO: 棋盘、棋子识别
+        // 自动检测
+        /*while (true) {
+             // 是否检测到新的走棋
+               if (identifyChessboardAndGenMove()) {
+                   break;
+                }
+            }*/
     }
 
-
-    private void getInfoFromActivity() {
+    private void initArgs() {
         Intent intent = getIntent();
         blackPlayer = intent.getStringExtra("blackPlayer");
         whitePlayer = intent.getStringExtra("whitePlayer");
         komi = intent.getStringExtra("komi");
         rule = intent.getStringExtra("rule");
         engine = intent.getStringExtra("engine");
-    }
-
-    // 这里获取到图像输出
-    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Mat inputImage = inputFrame.rgba();
-
-        // 将输出图像的副本传入到棋盘检测
-        initialBoardDetector.setImage(inputImage.clone());
-        initialBoardDetector.setPreviewImage(inputImage);
-
-        /*
-        if (initialBoardDetector.process()) {
-            // 拿到轮廓检测后的棋盘 Mat && MatOfPoint
-            Mat boardPositionInImage = initialBoardDetector.getPositionOfBoardInImage();
-            boardContour = convertToMatOfPoint(boardPositionInImage);
-            orthogonalBoard = matRotateClockWise90(transformOrthogonally(inputImage, boardPositionInImage));
-            if (boardContour != null) Drawer.drawBoardContour(inputImage, boardContour);
-            if (initNet) {
-                runOnUiThread(() -> btnFixBoardPosition.setEnabled(true));
-            }
-        }
-        // 在图像上画出轮廓
-        else if (boardContour != null) {
-            Drawer.drawBoardContour(inputImage, boardContour);
-        }
-         */
-        // 关闭摄像头 显示友好界面
-        return inputImage;
-    }
-
-    public void onCameraViewStarted(int width, int height) {
-    }
-
-    public void onCameraViewStopped() {
+        userName = MyApplication.getInstance().preferences.getString("userName", null);
+        mCorners = corners;
     }
 
     /**
@@ -408,26 +354,15 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
     }
 
     private void initViews() {
-        // 设置一些CameraView的基本状态信息
-        mOpenCvCameraView = findViewById(R.id.camera_surface_view);
-        mOpenCvCameraView.setCvCameraViewListener(this);
-        mOpenCvCameraView.enableView();
-        mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
-
-        btnFixBoardPosition = findViewById(R.id.btnFixBoardPosition);
-        btnFixBoardPosition.setOnClickListener(this);
-        btnFixBoardPosition.setEnabled(true);
+        previewView = findViewById(R.id.previewView);
+        Button capture = findViewById(R.id.capture);
+        capture.setOnClickListener(this);
 
         Button btnSaveSGF = findViewById(R.id.btn_saveSGF);
         btnSaveSGF.setOnClickListener(this);
 
         Button btnReturn = findViewById(R.id.btn_return);
         btnReturn.setOnClickListener(this);
-    }
-
-    private void initDetector() {
-        initialBoardDetector = new InitialBoardDetector(true);
-        boardDetector = new BoardDetector();
     }
 
     /**
@@ -462,76 +397,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
         }
     }
 
-
-    /**
-     * 检测棋盘
-     * 备注：这是之前的方法，目前先不用
-     */
-    public boolean detectBoard() {
-        int moveX, moveY;
-        Bitmap bitmap = matToBitmap(orthogonalBoard);
-        bitmapMatrix = splitImage(bitmap, WIDTH);
-        // savePNG_After(bitmap, "total");
-        for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex++) {
-            int innerT = threadIndex;
-            Runnable runnable = () -> {
-                for (int mTask = 0; mTask < SINGLE_THREAD_TASK; mTask++) {
-                    // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
-                    int cnt = innerT * 19 + mTask;
-                    int i = cnt / 19 + 1;
-                    int j = cnt % 19 + 1;
-                    String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
-                    if (result.equals("black")) {
-                        curBoard[i][j] = BLACK;
-                    } else if (result.equals("white")) {
-                        curBoard[i][j] = WHITE;
-                    } else {
-                        curBoard[i][j] = BLANK;
-                    }
-                }
-            };
-            threadPool.execute(runnable);
-        }
-        Pair<Integer, Integer> move = getMoveByDiff();
-        if (move == null) {
-            ToastUtil.show(this, "未落子");
-            return false;
-        } else {
-            moveX = move.first;
-            moveY = move.second;
-            ToastUtil.show(this, moveX + " " + moveY);
-            Player player = board.getPlayer();
-            // 可以落子
-            if (board.play(moveX, moveY, player)) {
-                Log.d(TAG, "合法落子");
-                if (!init) {
-                    previousBoard.play(previousX, previousY, board.getLastPlayer());
-                } else {
-                    init = false;
-                }
-                // 更新一下矩阵棋盘 更新为落完子后的棋盘局面 因为可能有提子
-                updateMetricBoard();
-                board.nextPlayer();
-                previousX = moveX;
-                previousY = moveY;
-                // 将落子传到引擎 引擎走棋 更新
-                lastMove = board.getPoint(previousX, previousY);
-                sendToEngine(getApplicationContext());
-                Log.d(Logger, board + "--------------\n" + "lastBoard:\n");
-                Log.d(Logger, previousBoard.toString());
-                return true;
-            } else {
-                Log.w(TAG, "这里不可以落子");
-                curBoard[moveX][moveY] = BLANK;
-                return false;
-            }
-        }
-    }
-
     /**
      * 将落子信息发送给引擎，如果发送成功，则继续由引擎产生下一步
-     *
-     * @param context
      */
     public void sendToEngine(Context context) {
 
@@ -590,8 +457,6 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
 
     /**
      * 引擎产生下一步
-     *
-     * @param context
      */
     private void genMove(Context context, String whichPlayer) {
         String json = JsonUtil.getJsonFormOfgenMove(userName, whichPlayer);
@@ -653,10 +518,8 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
                                 handler.sendMessage(tempMsg);
                             }
 
-                            // 跳转到展示对战信息页面
+                            // TODO: 关闭摄像头 跳转到展示对战信息页面
                             runOnUiThread(() -> {
-                                mOpenCvCameraView.setVisibility(SurfaceView.INVISIBLE);
-                                mOpenCvCameraView.disableView();
                                 setContentView(R.layout.activity_battle_info);
                                 beginDrawing();
                             });
@@ -677,7 +540,7 @@ public class DetectBoardActivity extends AppCompatActivity implements CameraBrid
      * 画棋盘，展示棋局
      */
     private void beginDrawing() {
-        int identifier = lastMove.getGroup().getOwner().getIdentifier();
+        int identifier = lastMove == null ? 0 : lastMove.getGroup().getOwner().getIdentifier();
         Button btn_return_play = findViewById(R.id.btn_return_camera);
         btn_return_play.setOnClickListener(this);
 

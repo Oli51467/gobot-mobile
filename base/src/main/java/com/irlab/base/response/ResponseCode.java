@@ -15,6 +15,7 @@ public enum ResponseCode {
     SHOW_BOARD_SUCCESSFULLY(20006, "展示棋盘"),
     ENGINE_RESIGN(20007, "引擎认输"),
     ENGINE_PASS(20008, "引擎停一手"),
+    LOAD_CONFIG_SUCCESSFULLY(20009, "加载配置数据成功"),
 
     ENGINE_CONNECT_FAILED(40001, "引擎连接失败"),
     PLAY_PASS_TO_ENGINE_FAILED(40002, "落子传递引擎失败"),
