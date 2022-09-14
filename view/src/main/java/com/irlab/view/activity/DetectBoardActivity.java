@@ -24,6 +24,7 @@ import android.graphics.Color;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
@@ -37,6 +38,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -159,11 +161,18 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     Bitmap bitmap = JPEGImageToBitmap(image);
                     Utils.bitmapToMat(bitmap, originBoard);
                     identifyChessboardAndGenMove(originBoard);
+                    Log.d(Logger, "capture success");
+                }
+
+                @Override
+                public void onError(@NonNull ImageCaptureException exception) {
+                    super.onError(exception);
+                    Log.e(Logger, exception.getMessage());
                 }
             });
             // 暂时跳过图像处理，直接展示棋盘 四角坐标存在mCorners中
             runOnUiThread(() -> {
-                cameraProvider.unbindAll();
+                //cameraProvider.unbindAll();
                 setContentView(R.layout.activity_battle_info);
                 beginDrawing();
             });
@@ -280,12 +289,14 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         }
         Pair<Integer, Integer> move = getMoveByDiff();
         if (move == null) {
-            ToastUtil.show(this, "未落子");
+            Log.d(Logger, "未落子");
+            //ToastUtil.show(mContext, "未落子");
             return false;
         } else {
             moveX = move.first;
             moveY = move.second;
-            ToastUtil.show(this, moveX + " " + moveY);
+            Log.d(Logger, moveX + " " + moveY);
+            //ToastUtil.show(mContext, moveX + " " + moveY);
             Player player = board.getPlayer();
             // 可以落子
             if (board.play(moveX, moveY, player)) {
@@ -424,11 +435,10 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
         String playCmd = genPlayCmd(lastMove);
         String json = JsonUtil.getJsonFormOfPlayIndex(userName, playCmd);
-        Log.d(Logger, playCmd);
 
         // 将指令发送给围棋引擎
-        Log.i(TAG, playCmd);
-        Toast.makeText(MyApplication.getContext(), playCmd, Toast.LENGTH_SHORT).show();
+        Log.i(Logger, playCmd);
+        //Toast.makeText(MyApplication.getContext(), playCmd, Toast.LENGTH_SHORT).show();
 
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
@@ -436,7 +446,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 String error = "走棋指令发送引擎，连接失败！";
                 Log.e(TAG, error);
-                ToastUtil.show(mContext, error);
+                Log.e(Logger, error);
             }
 
             @Override
@@ -486,8 +496,8 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 String error = "引擎自动走棋指令发送失败，连接失败！";
-                Log.e(TAG, error);
-                ToastUtil.show(mContext, error);
+                Log.e(Logger, error);
+                //ToastUtil.show(mContext, error);
             }
 
             @Override
@@ -500,7 +510,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     Message msg = new Message();
                     msg.obj = context;
                     if (code == 1000) {
-                        ToastUtil.show(MyApplication.getContext(), "引擎gen move 成功");
+                        //ToastUtil.show(MyApplication.getContext(), "引擎gen move 成功");
                         Log.d(Logger, "引擎gen move 成功");
                         JSONObject callBackData = jsonObject.getJSONObject("data");
                         Log.d(Logger, "引擎落子坐标:" + callBackData);
@@ -527,7 +537,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
                             // TODO: 将引擎落子位置传给下位机
                             if (bluetoothService != null) {
-                                ToastUtil.show(MyApplication.getContext(), "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
+                                //ToastUtil.show(MyApplication.getContext(), "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
                                 Log.d(Logger, "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
                                 bluetoothService.sendData("L" + playPosition + "Z", false);
                             } else {

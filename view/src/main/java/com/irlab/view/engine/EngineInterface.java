@@ -72,11 +72,13 @@ public class EngineInterface {
                 String responseData = Objects.requireNonNull(response.body()).string();
                 try {
                     JSONObject jsonObject = new JSONObject(responseData);
+                    Log.d(Logger, String.valueOf(jsonObject));
                     int code = jsonObject.getInt("code");
                     Message msg = new Message();
                     msg.obj = context;
                     if (code == 1000) {
                         msg.what = ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getCode();
+                        Log.d(Logger, "初始化成功");
                     }
                     else {
                         msg.what = ResponseCode.ENGINE_CONNECT_FAILED.getCode();
