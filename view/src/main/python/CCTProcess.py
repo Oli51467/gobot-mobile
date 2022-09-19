@@ -11,7 +11,7 @@ def main(byte_array):
     img = cv2.imdecode(img, -1)  # 从指定的内存缓存中读取数据, 并把数据转换(解码)成图像格式, 主要用于从网络传输数据中恢复出图像。
 
     code_table = []  # 存放解码结果的list
-    n, r, color = 12, 0.85, 'white'
+    n, r, color = 12, 0.85, 'black'
 
     '''
     image.shape[0], 图片垂直尺寸

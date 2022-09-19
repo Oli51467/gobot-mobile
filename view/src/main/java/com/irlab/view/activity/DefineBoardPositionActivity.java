@@ -7,18 +7,21 @@ import com.chaquo.python.Python;
 
 import static com.irlab.view.engine.EngineInterface.clearBoard;
 import static com.irlab.view.engine.EngineInterface.initEngine;
+import static com.irlab.view.utils.ImageUtils.JPEGImageToBitmap;
 import static com.irlab.view.utils.ImageUtils.JPEGImageToByteArray;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
+import android.util.Size;
 import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
@@ -42,6 +45,7 @@ import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
+import com.irlab.view.utils.ImageUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,6 +63,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
     private final int REQUEST_CODE_PERMISSIONS = 101;
     public static final ImageCapture imageCapture = new ImageCapture.Builder()
             .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+            // .setTargetResolution(new Size(1920, 1080))
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .setTargetRotation(Surface.ROTATION_0)
             .build();
@@ -201,6 +206,10 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                             Image image = imageProxy.getImage();    // ImageProxy 转 Bitmap
                             assert image != null;
                             byte[] byteArray = JPEGImageToByteArray(image);   // 注意这里Image的格式是JPEG 不是YUV
+
+                            // 保存图片到相册
+                            ImageUtils.saveImageToGallery(MyApplication.getContext(), JPEGImageToBitmap(image));
+
                             // 将图像交给python处理
                             PyObject obj = py.getModule("CCTProcess").callAttr("main", new Kwarg("byte_array", byteArray));
                             // 获得返回数据 -> 四个角
@@ -224,6 +233,27 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                             }
                             // ======= 打印测试结束 =======
                             imageProxy.close();
+
+                            // TODO: 如果找到四个角点，则继续进入下一步 -> corners.size() == 4
+                            if (corners.size() == 4) {
+                                msg.what = ResponseCode.FIND_MARKER.getCode();
+                                handler.sendMessage(msg);
+
+                                Intent intent = new Intent(DefineBoardPositionActivity.this, DetectBoardActivity.class);
+                                intent.putExtra("blackPlayer", blackPlayer);
+                                intent.putExtra("whitePlayer", whitePlayer);
+                                intent.putExtra("komi", komi);
+                                intent.putExtra("rule", rule);
+                                intent.putExtra("engine", engine);
+                                //intent.putExtra("corners", (Parcelable) corners);
+                                startActivity(intent);
+                            }
+                            else {
+                                // 未找到棋盘
+                                msg.what = ResponseCode.NOT_FIND_MARKER.getCode();
+                                handler.sendMessage(msg);
+                            }
+
                         }
 
                         @Override
@@ -234,25 +264,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                     }
             );
 
-            // TODO: 如果找到四个角点，则继续进入下一步 -> corners.size() == 4
-            if (1==1) {
-                msg.what = ResponseCode.FIND_MARKER.getCode();
-                handler.sendMessage(msg);
 
-                Intent intent = new Intent(DefineBoardPositionActivity.this, DetectBoardActivity.class);
-                intent.putExtra("blackPlayer", blackPlayer);
-                intent.putExtra("whitePlayer", whitePlayer);
-                intent.putExtra("komi", komi);
-                intent.putExtra("rule", rule);
-                intent.putExtra("engine", engine);
-                //intent.putExtra("corners", (Parcelable) corners);
-                startActivity(intent);
-            }
-            else {
-                // 未找到棋盘
-                msg.what = ResponseCode.NOT_FIND_MARKER.getCode();
-                handler.sendMessage(msg);
-            }
         }
         else if (vid == R.id.btn_return) {
             Intent intent = new Intent(this, SelectConfigActivity.class);

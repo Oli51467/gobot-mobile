@@ -26,6 +26,7 @@ android {
             pip{
                 install "opencv-python"
                 install "numpy"
+                install "matplotlib"
             }
         }
     }
@@ -56,6 +57,12 @@ android {
             assets {
                 srcDirs 'src/main/assets', 'src/main/assets/image'
             }
+        }
+    }
+
+    sourceSets {
+        main {
+            python.srcDir "src/main/python"
         }
     }
 }

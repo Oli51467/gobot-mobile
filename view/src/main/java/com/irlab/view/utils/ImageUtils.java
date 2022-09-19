@@ -3,18 +3,22 @@ package com.irlab.view.utils;
 import static org.opencv.core.Core.flip;
 
 import android.annotation.SuppressLint;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.icu.text.SimpleDateFormat;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.text.format.DateUtils;
 import android.util.Log;
 
 import org.opencv.android.Utils;
@@ -30,7 +34,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.Date;
 
 public class ImageUtils {
 
@@ -65,8 +71,8 @@ public class ImageUtils {
      * @return 透视变化后的图像
      */
     public static Mat imagePerspectiveTransform(Mat originImage, Mat cornerPoints){
-        int x = 4600;
-        int y = 4900;
+        int x = 1920;
+        int y = 1920;
 
         Mat resultImage = new Mat(y, x, originImage.type());
         Mat resultCorners = new Mat(4, 1, CvType.CV_32FC2);
@@ -334,4 +340,46 @@ public class ImageUtils {
         Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
         return bitmapImage;
     }
+
+    /**
+     * android 11及以上保存图片到相册
+     * @param context
+     * @param image
+     */
+    public static void saveImageToGallery(Context context, Bitmap image){
+        Long mImageTime = System.currentTimeMillis();
+        String imageDate = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(mImageTime));
+        String SCREENSHOT_FILE_NAME_TEMPLATE = "winetalk_%s.png";//图片名称，以"winetalk"+时间戳命名
+        String mImageFileName = String.format(SCREENSHOT_FILE_NAME_TEMPLATE, imageDate);
+
+        final ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES
+                + File.separator + "winetalk"); //Environment.DIRECTORY_SCREENSHOTS:截图,图库中显示的文件夹名。"dh"
+        values.put(MediaStore.MediaColumns.DISPLAY_NAME, mImageFileName);
+        values.put(MediaStore.MediaColumns.MIME_TYPE, "image/png");
+        values.put(MediaStore.MediaColumns.DATE_ADDED, mImageTime / 1000);
+        values.put(MediaStore.MediaColumns.DATE_MODIFIED, mImageTime / 1000);
+        values.put(MediaStore.MediaColumns.DATE_EXPIRES, (mImageTime + DateUtils.DAY_IN_MILLIS) / 1000);
+        values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+
+        ContentResolver resolver = context.getContentResolver();
+        final Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        try {
+            // First, write the actual data for our screenshot
+            try (OutputStream out = resolver.openOutputStream(uri)) {
+                if (!image.compress(Bitmap.CompressFormat.PNG, 100, out)) {
+                    throw new IOException("Failed to compress");
+                }
+            }
+            // Everything went well above, publish it!
+            values.clear();
+            values.put(MediaStore.MediaColumns.IS_PENDING, 0);
+            values.putNull(MediaStore.MediaColumns.DATE_EXPIRES);
+            resolver.update(uri, values, null, null);
+        }catch (IOException e){
+
+        }
+    }
+
+
 }

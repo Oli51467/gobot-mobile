@@ -260,14 +260,14 @@ public class InitialBoardDetector {
         // 四个顶点
         List<Point> mc = new ArrayList<>(4);
         // 左上-右上-右下-左下
-        mc.add(new Point(378.0, 58.0));
-        mc.add(new Point(1100.0, 82.0));
-        mc.add(new Point(1292.0, 826.0));
-        mc.add(new Point(152.0, 832.0));
-        /*mc.add(new Point(corners.get(0).first, corners.get(0).second));
+        // mc.add(new Point(378.0, 58.0));
+        // mc.add(new Point(1100.0, 82.0));
+        // mc.add(new Point(1292.0, 826.0));
+        // mc.add(new Point(152.0, 832.0));
+        mc.add(new Point(corners.get(1).first, corners.get(1).second));
         mc.add(new Point(corners.get(2).first, corners.get(2).second));
         mc.add(new Point(corners.get(3).first, corners.get(3).second));
-        mc.add(new Point(corners.get(1).first, corners.get(1).second));*/
+        mc.add(new Point(corners.get(0).first, corners.get(0).second));
 
         // 进行图像透视变换和切割识别
         Mat cornerPoints = new Mat(4, 1, CvType.CV_32FC2);

@@ -296,6 +296,11 @@ public class BluetoothService {
             @Override
             public void onReceiveDataSuccess(byte[] buffer) {
                 Log.w("onReceiveDataSuccess", "成功接收数据,长度" + buffer.length + "->" + bytes2HexString(buffer, buffer.length));
+                // 落子成功
+                if (buffer[0]==76){
+                    sendData("WZ", false);
+                }
+
                 BluetoothActivity.connect_status = true;
             }
 

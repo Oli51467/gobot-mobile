@@ -74,6 +74,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -161,7 +162,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     Bitmap bitmap = JPEGImageToBitmap(image);
                     Utils.bitmapToMat(bitmap, originBoard);
                     identifyChessboardAndGenMove(originBoard);
-                    Log.d(Logger, "capture success");
+                    Log.d(Logger, "图像捕获成功");
                 }
 
                 @Override
@@ -287,6 +288,19 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             };
             threadPool.execute(runnable);
         }
+
+        //执行shutdown
+        if (!threadPool.isShutdown()) {
+            threadPool.shutdown();
+            System.out.println("start shutdown ...");
+            //等待执行结束
+            try {
+                threadPool.awaitTermination(1, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         Pair<Integer, Integer> move = getMoveByDiff();
         if (move == null) {
             Log.d(Logger, "未落子");
