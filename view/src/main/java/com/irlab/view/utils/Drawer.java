@@ -107,7 +107,6 @@ public class Drawer {
                 }
             }
         }
-        if (lastMove == null) return bitmap;
         // 画棋子
         for (int i = 1; i <= DIMENSION; i ++ ) {
             for (int j = 1; j <= DIMENSION; j ++ ) {
@@ -117,8 +116,10 @@ public class Drawer {
                     canvas.drawCircle(centerX, centerY, STAR_RADIUS, blackPaint);
                 }
                 if (board.getPoint(i, j).getGroup() != null) {
-                    if (i == lastMove.getX() && j == lastMove.getY()) {
-                        canvas.drawCircle(centerX, centerY, LAST_MOVE_RADIUS, bluePaint);
+                    if (lastMove != null) {
+                        if (i == lastMove.getX() && j == lastMove.getY()) {
+                            canvas.drawCircle(centerX, centerY, LAST_MOVE_RADIUS, bluePaint);
+                        }
                     }
                     if (board.getPoint(i, j).getGroup().getOwner().getIdentifier() == Board.BLACK_STONE) {
                         canvas.drawCircle(centerX, centerY, STONE_RADIUS, blackPaint);

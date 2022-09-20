@@ -12,6 +12,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.icu.text.SimpleDateFormat;
 import android.media.Image;
 import android.net.Uri;
@@ -44,8 +45,9 @@ public class ImageUtils {
 
     /**
      * 分割位图
+     *
      * @param rawBitmap 原始Bitmap
-     * @param piece 分割的参数
+     * @param piece     分割的参数
      * @return 分割后的Bitmap数组
      */
     public static Bitmap[][] splitImage(Bitmap rawBitmap, int piece) {
@@ -54,11 +56,11 @@ public class ImageUtils {
         int unitHeight = rawBitmap.getHeight() / piece;
         int unitWidth = rawBitmap.getWidth() / piece;
         Bitmap unitBitmap;
-        for (int i = 0; i < piece; i ++ ) {
-            for (int j = 0; j < piece; j ++ ) {
+        for (int i = 0; i < piece; i++) {
+            for (int j = 0; j < piece; j++) {
                 unitBitmap = Bitmap.createBitmap(rawBitmap, j * unitWidth, i * unitHeight, unitWidth, unitHeight);
                 bitmapMatrix[i + 1][j + 1] = unitBitmap;
-                // savePNG_After(unitBitmap, i + "==" + j);
+                save_bitmap(unitBitmap, i + "-" + j);
             }
         }
         return bitmapMatrix;
@@ -66,18 +68,19 @@ public class ImageUtils {
 
     /**
      * 基于角坐标的围棋透视变换
-     * @param originImage 原始图像
+     *
+     * @param originImage  原始图像
      * @param cornerPoints 角点
      * @return 透视变化后的图像
      */
-    public static Mat imagePerspectiveTransform(Mat originImage, Mat cornerPoints){
+    public static Mat imagePerspectiveTransform(Mat originImage, Mat cornerPoints) {
         int x = 1920;
         int y = 1920;
 
         Mat resultImage = new Mat(y, x, originImage.type());
         Mat resultCorners = new Mat(4, 1, CvType.CV_32FC2);
         // 添加四个点，左下-左上-右上-右下
-        resultCorners.put(0,0,  0, 0, x, 0, x, y, 0, y);
+        resultCorners.put(0, 0, 0, 0, x, 0, x, y, 0, y);
 
         Mat transformationMatrix = Imgproc.getPerspectiveTransform(cornerPoints, resultCorners);
         Imgproc.warpPerspective(originImage, resultImage, transformationMatrix, resultImage.size());
@@ -87,7 +90,8 @@ public class ImageUtils {
 
     /**
      * 正交变换
-     * @param originalImage 原始图像
+     *
+     * @param originalImage        原始图像
      * @param boardPositionInImage 图像中的棋盘位置
      * @return 正交变化后的图像
      */
@@ -126,10 +130,11 @@ public class ImageUtils {
 
     /**
      * 保存图像信息
-     * @param bitmap 要保存的Bitmap
+     *
+     * @param bitmap   要保存的Bitmap
      * @param fileName 文件名
      */
-    public static void savePNG_After(Bitmap bitmap, String fileName) {
+    public static void save_bitmap(Bitmap bitmap, String fileName) {
         File file = new File(Environment.getExternalStorageDirectory() + "/recoder");
         if (!file.exists()) file.mkdirs();
         file = new File(file + File.separator, fileName + ".png");
@@ -139,18 +144,9 @@ public class ImageUtils {
                 out.flush();
                 out.close();
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static Mat matRotateClockWise90(Mat src)
-    {
-        // 矩阵转置
-        //transpose(src, src);
-        flip(src, src, 1);
-        return src;
     }
 
     /**
@@ -289,40 +285,16 @@ public class ImageUtils {
         return dst;
     }
 
-    /**
-     * 图像整体向左旋转90度
-     *
-     * @param src Mat
-     * @return 旋转后的Mat
-     */
-    public static Mat rotateLeft(Mat src) {
+    public static Mat rotate(Mat src, int flipCode) {
         Mat tmp = new Mat();
         // 此函数是转置、（即将图像逆时针旋转90度，然后再关于x轴对称）
         Core.transpose(src, tmp);
         Mat result = new Mat();
-        // flipCode = 0 绕x轴旋转180， 也就是关于x轴对称
-        // flipCode = 1 绕y轴旋转180， 也就是关于y轴对称
-        // flipCode = -1 此函数关于原点对称
-        Core.flip(tmp, result, 0);
-        return result;
-    }
-
-    /**
-     * 图像整体向右旋转90度
-     *
-     * @param src Mat
-     * @return 旋转后的Mat
-     */
-    public static Mat rotateRight(Mat src) {
-        Mat tmp = new Mat();
-        // 此函数是转置、（即将图像逆时针旋转90度，然后再关于x轴对称）
-        Core.transpose(src, tmp);
-        Mat result = new Mat();
-        // flipCode = 0 绕x轴旋转180， 也就是关于x轴对称
-        // flipCode = 1 绕y轴旋转180， 也就是关于y轴对称
-        // flipCode = -1 此函数关于原点对称
-        Core.flip(tmp, result, 1);
-        return result;
+        /*flipCode = 0 绕x轴旋转180,也就是关于x轴对称
+        flipCode = 1 绕y轴旋转180,也就是关于y轴对称
+        flipCode = -1 关于原点对称*/
+        Core.flip(tmp, result, flipCode);
+        return rotate(result, 270.0);
     }
 
     public static byte[] JPEGImageToByteArray(Image image) {
@@ -341,45 +313,9 @@ public class ImageUtils {
         return bitmapImage;
     }
 
-    /**
-     * android 11及以上保存图片到相册
-     * @param context
-     * @param image
-     */
-    public static void saveImageToGallery(Context context, Bitmap image){
-        Long mImageTime = System.currentTimeMillis();
-        String imageDate = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(mImageTime));
-        String SCREENSHOT_FILE_NAME_TEMPLATE = "winetalk_%s.png";//图片名称，以"winetalk"+时间戳命名
-        String mImageFileName = String.format(SCREENSHOT_FILE_NAME_TEMPLATE, imageDate);
-
-        final ContentValues values = new ContentValues();
-        values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES
-                + File.separator + "winetalk"); //Environment.DIRECTORY_SCREENSHOTS:截图,图库中显示的文件夹名。"dh"
-        values.put(MediaStore.MediaColumns.DISPLAY_NAME, mImageFileName);
-        values.put(MediaStore.MediaColumns.MIME_TYPE, "image/png");
-        values.put(MediaStore.MediaColumns.DATE_ADDED, mImageTime / 1000);
-        values.put(MediaStore.MediaColumns.DATE_MODIFIED, mImageTime / 1000);
-        values.put(MediaStore.MediaColumns.DATE_EXPIRES, (mImageTime + DateUtils.DAY_IN_MILLIS) / 1000);
-        values.put(MediaStore.MediaColumns.IS_PENDING, 1);
-
-        ContentResolver resolver = context.getContentResolver();
-        final Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-        try {
-            // First, write the actual data for our screenshot
-            try (OutputStream out = resolver.openOutputStream(uri)) {
-                if (!image.compress(Bitmap.CompressFormat.PNG, 100, out)) {
-                    throw new IOException("Failed to compress");
-                }
-            }
-            // Everything went well above, publish it!
-            values.clear();
-            values.put(MediaStore.MediaColumns.IS_PENDING, 0);
-            values.putNull(MediaStore.MediaColumns.DATE_EXPIRES);
-            resolver.update(uri, values, null, null);
-        }catch (IOException e){
-
-        }
+    public static Bitmap adjustPhotoRotation(Bitmap bm, final int orientationDegree) {
+        Matrix m = new Matrix();
+        m.setRotate(orientationDegree, (float) bm.getWidth() / 2, (float) bm.getHeight() / 2);
+        return Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), m, true);
     }
-
-
 }

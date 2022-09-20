@@ -25,7 +25,6 @@
         <activity
             android:name=".activity.DetectBoardActivity"
             android:exported="false"
-            android:launchMode="singleInstance"
             android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".activity.SelectConfigActivity"

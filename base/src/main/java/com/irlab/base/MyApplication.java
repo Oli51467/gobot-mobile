@@ -80,6 +80,7 @@ public class MyApplication extends Application {
             if (!ret_init) {
                 Log.e(TAG, "squeezencnn Init failed");
             } else {
+                Log.i("djnxyxy", "squeezeNcnn init successful");
                 initNet = true;
             }
             return ret_init;
