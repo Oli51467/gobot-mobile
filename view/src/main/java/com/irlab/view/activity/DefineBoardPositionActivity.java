@@ -27,7 +27,6 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.camera.core.AspectRatio;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
@@ -45,8 +44,6 @@ import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -83,7 +80,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_define_board_position);
         initWindow();
-        initEngine(getApplicationContext(), userName);
+        //initEngine(getApplicationContext(), userName);
         clearBoard(userName);
         initViews();
         getInfoFromActivity();
@@ -207,7 +204,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                             // 获得返回数据 -> 四个角
                             double[][] result = obj.toJava(double[][].class);
                             corners.clear();
-                            // ======= 打印测试 =======
                             for (double[] doubles : result) {
                                 for (int j = 0; j < doubles.length; j++) {
                                     if (j > 0) {
@@ -219,7 +215,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                                     }
                                 }
                             }
-                            //Collections.sort(corners, Comparator.comparing(o -> o.first));
+                            // ======= 打印测试 =======
                             for (Pair<Double, Double> corner : corners) {
                                 Log.d(Logger, corner.first + "---" + corner.second);
                             }

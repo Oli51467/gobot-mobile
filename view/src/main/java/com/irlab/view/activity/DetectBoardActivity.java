@@ -14,15 +14,12 @@ import static com.irlab.view.utils.BoardUtil.getPositionByIndex;
 import static com.irlab.view.utils.BoardUtil.transformIndex;
 import static com.irlab.view.utils.ImageUtils.JPEGImageToBitmap;
 import static com.irlab.view.utils.ImageUtils.adjustPhotoRotation;
-import static com.irlab.view.utils.ImageUtils.matToBitmap;
-import static com.irlab.view.utils.ImageUtils.save_bitmap;
 import static com.irlab.view.utils.ImageUtils.splitImage;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
@@ -58,9 +55,6 @@ import com.irlab.view.models.Point;
 import com.irlab.view.utils.Drawer;
 import com.irlab.view.process.InitialBoardDetector;
 import com.irlab.view.utils.JsonUtil;
-import com.rosefinches.smiledialog.SmileDialog;
-import com.rosefinches.smiledialog.SmileDialogBuilder;
-import com.rosefinches.smiledialog.enums.SmileDialogType;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -83,10 +77,11 @@ import okhttp3.Response;
 
 public class DetectBoardActivity extends AppCompatActivity implements View.OnClickListener {
 
-    public static final int BLANK = 0, BLACK = 1, WHITE = 2, WIDTH = 19, HEIGHT = 19, THREAD_NUM = 19, SINGLE_THREAD_TASK = 19;
+    public static final int BLANK = 0, BLACK = 1, WHITE = 2, WIDTH = 20, HEIGHT = 20, THREAD_NUM = 19, SINGLE_THREAD_TASK = 19;
     public static final int BOARD_WIDTH = 1000, BOARD_HEIGHT = 1000, INFO_WIDTH = 880, INFO_HEIGHT = 350;
     private static final List<Pair<Integer, Integer>> playSets = new ArrayList<>();
-    public static final String Logger = "djn";
+    public static final String Logger = "djnxyxy";
+    private final Context mContext = this;
 
     public static int previousX, previousY;
     public static boolean init = true;
@@ -103,8 +98,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public Board previousBoard;
 
     public Point lastMove;
-
-    private Context mContext = this;
 
     // 蓝牙服务
     protected BluetoothService bluetoothService;
@@ -159,10 +152,8 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     assert image != null;
                     Bitmap bitmap = adjustPhotoRotation(JPEGImageToBitmap(image), 0);
                     Utils.bitmapToMat(bitmap, originBoard);
-                    runOnUiThread(() -> {
-                        ToastUtil.show(mContext, "请稍后...");
-                    });
-                    // tempFun(); 把下一行identifyChessboardAndGenMove注释掉后，手动模拟走棋 演示用
+                    runOnUiThread(() -> ToastUtil.show(mContext, "请稍后..."));
+                    // tempFun(); 演示用
                     identifyChessboardAndGenMove(originBoard);
                     Log.d(Logger, "图像捕获成功");
                     imageProxy.close();
@@ -253,7 +244,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
      */
     public boolean identifyChessboardAndGenMove(Mat originBoard) {
         InitialBoardDetector initialBoardDetector = new InitialBoardDetector(corners);
-        Mat orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage(originBoard);
+        Bitmap orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage(originBoard);
 
         if (orthogonalBoard == null) {
             // 如果未获取到棋盘，直接返回
@@ -261,9 +252,8 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             Log.e(Logger, error);
             return false;
         }
-        Bitmap bitmap = matToBitmap(orthogonalBoard);
         int moveX, moveY;
-        bitmapMatrix = splitImage(bitmap, WIDTH);
+        bitmapMatrix = splitImage(orthogonalBoard, WIDTH);
         for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex++) {
             int innerT = threadIndex;
             Runnable runnable = () -> {
