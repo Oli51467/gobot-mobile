@@ -177,7 +177,7 @@ public class Drawer {
             if (player == Board.BLACK_STONE) {
                 canvas.drawCircle(100, 175, 40, blackPaint);
             }
-            else {
+            else if (player == Board.WHITE_STONE){
                 canvas.drawCircle(100, 175, 40, whitePaint);
             }
             canvas.drawText(position, 200, 200, paint);

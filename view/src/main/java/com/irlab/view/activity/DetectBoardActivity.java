@@ -23,6 +23,7 @@ import android.graphics.Bitmap;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
@@ -68,7 +69,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -88,6 +88,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public static Drawer drawer;
 
     private String userName, playPosition, blackPlayer, whitePlayer, komi, rule, engine;
+    private ImageView playView;
 
     private Bitmap[][] bitmapMatrix;
 
@@ -275,21 +276,13 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             threadPool.execute(runnable);
         }
 
-        //执行shutdown
-        if (!threadPool.isShutdown()) {
-            threadPool.shutdown();
-            Log.d(Logger, "start shutdown...");
-            //等待执行结束
-            try {
-                threadPool.awaitTermination(1, TimeUnit.MINUTES);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
         Pair<Integer, Integer> move = getMoveByDiff();
         if (move == null) {
             Log.d(Logger, "未落子");
+            playPosition = "未检测到落子";
+            Bitmap bitmap4PlayInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
+            Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, 0, playPosition);
+            playView.setImageBitmap(playInfo);
             return false;
         } else {
             moveX = move.first;
@@ -367,7 +360,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         Pair<Integer, Integer> move;
         for (int i = 1; i <= WIDTH; i++) {
             for (int j = 1; j <= HEIGHT; j++) {
-                if (lastBoard[i][j] == BLANK && curBoard[i][j] != BLANK) {
+                if (lastBoard[i][j] == BLANK && curBoard[i][j] != BLANK && curBoard[i][j] == board.getPlayer().getIdentifier()) {
                     move = new Pair<>(i, j);
                     return move;
                 }
@@ -540,7 +533,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
         ImageView playerInfoView = findViewById(R.id.iv_player_info);
         ImageView boardView = findViewById(R.id.iv_board);
-        ImageView playView = findViewById(R.id.iv_play_info);
+        playView = findViewById(R.id.iv_play_info);
 
         boardView.setImageBitmap(showBoard);
         playerInfoView.setImageBitmap(playerInfo);
@@ -548,7 +541,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     }
 
     @SuppressLint("HandlerLeak")
-    private final Handler handler = new Handler() {
+    private final Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
