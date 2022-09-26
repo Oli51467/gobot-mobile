@@ -41,16 +41,10 @@ public class InitialBoardDetector {
         // 四个顶点
         List<Point> mc = new ArrayList<>(4);
         // 左上-右上-右下-左下
+        mc.add(new Point(corners.get(0).first, corners.get(0).second));
         mc.add(new Point(corners.get(1).first, corners.get(1).second));
         mc.add(new Point(corners.get(2).first, corners.get(2).second));
         mc.add(new Point(corners.get(3).first, corners.get(3).second));
-        mc.add(new Point(corners.get(0).first, corners.get(0).second));
-        mc.sort(new Comparator<Point>() {
-            @Override
-            public int compare(Point o1, Point o2) {
-                return Double.compare(o1.getX(), o2.getX());
-            }
-        });
 
         // 进行图像透视变换和切割识别
         Mat cornerPoints = new Mat(4, 1, CvType.CV_32FC2);
@@ -59,7 +53,10 @@ public class InitialBoardDetector {
                 mc.get(1).x, mc.get(1).y,
                 mc.get(2).x, mc.get(2).y,
                 mc.get(3).x, mc.get(3).y);
-        Mat transformResult = rotate(imagePerspectiveTransform(originMatImage, cornerPoints), -1);
+
+        // TODO:根据实际相机摆放位置调整是否需要调用 rotate() 旋转
+        Mat transformResult = imagePerspectiveTransform(originMatImage, cornerPoints);
+
         Bitmap resultBitmap = Bitmap.createBitmap(transformResult.width(), transformResult.height(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(transformResult, resultBitmap);
         return resultBitmap;

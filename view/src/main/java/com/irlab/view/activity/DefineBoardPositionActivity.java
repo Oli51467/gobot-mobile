@@ -27,6 +27,7 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.AspectRatio;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
@@ -44,6 +45,8 @@ import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -56,9 +59,10 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
     private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
     private final int REQUEST_CODE_PERMISSIONS = 101;
     public static final ImageCapture imageCapture = new ImageCapture.Builder()
-            .setTargetResolution(new Size(1920, 1280))
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+            // .setTargetResolution(new Size(1024, 1024))
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             .setTargetRotation(Surface.ROTATION_0)
+            .setTargetAspectRatio(AspectRatio.RATIO_16_9)
             .build();
 
     private String blackPlayer, whitePlayer, komi, rule, engine, userName;
@@ -205,41 +209,61 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                             double[][] result = obj.toJava(double[][].class);
                             corners.clear();
                             for (double[] doubles : result) {
-                                for (int j = 0; j < doubles.length; j++) {
-                                    if (j > 0) {
-                                        Pair<Double, Double> pair = new Pair<>(doubles[j], doubles[j + 1]);
-                                        corners.add(pair);
-                                        break;
-                                    } else {
-                                        Log.d(Logger, doubles[j] + "\n");
-                                    }
-                                }
+                                Pair<Double, Double> pair = new Pair<>(doubles[1], doubles[2]);
+                                corners.add(pair);
                             }
-                            // ======= 打印测试 =======
-                            for (Pair<Double, Double> corner : corners) {
-                                Log.d(Logger, corner.first + "---" + corner.second);
-                            }
-                            // ======= 打印测试结束 =======
+
                             imageProxy.close();
 
-                            // 如果找到四个角点，则继续进入下一步
-                            if (corners.size() == 4) {
-                                msg.what = ResponseCode.FIND_MARKER.getCode();
-                                handler.sendMessage(msg);
-
-                                Intent intent = new Intent(DefineBoardPositionActivity.this, DetectBoardActivity.class);
-                                intent.putExtra("blackPlayer", blackPlayer);
-                                intent.putExtra("whitePlayer", whitePlayer);
-                                intent.putExtra("komi", komi);
-                                intent.putExtra("rule", rule);
-                                intent.putExtra("engine", engine);
-                                startActivity(intent);
-                            }
-                            else {
+                            if (corners.size() != 4) {
                                 // 未找到棋盘
                                 msg.what = ResponseCode.NOT_FIND_MARKER.getCode();
                                 handler.sendMessage(msg);
+                                return;
+
                             }
+
+                            // 整理角排序，最终是 左上-右上-右下-左下 这样的环形排列
+                            // 1. 先按照 y 排序
+                            Collections.sort(corners, new Comparator<Pair<Double, Double>>() {
+                                @Override
+                                public int compare(Pair<Double, Double> obj1, Pair<Double, Double> obj2) {
+                                    return (int) (obj1.second - obj2.second);
+                                }
+                            });
+
+                            // 2. 分别截取前2 和 后2，
+                            List<Pair<Double, Double>> startTwo = corners.subList(0, 2);
+                            List<Pair<Double, Double>> endTwo = corners.subList(2, 4);
+
+                            // 3. 对前两个整理排序
+                            Collections.sort(startTwo, new Comparator<Pair<Double, Double>>() {
+                                @Override
+                                public int compare(Pair<Double, Double> obj1, Pair<Double, Double> obj2) {
+                                    return (int) (obj1.first - obj2.first);
+                                }
+                            });
+
+                            // 对后两个整理排序
+                            Collections.sort(endTwo, new Comparator<Pair<Double, Double>>() {
+                                @Override
+                                public int compare(Pair<Double, Double> obj1, Pair<Double, Double> obj2) {
+                                    return (int) (obj2.first - obj1.first);
+                                }
+                            });
+
+                            // 触发toast通知
+                            msg.what = ResponseCode.FIND_MARKER.getCode();
+                            handler.sendMessage(msg);
+
+                            Intent intent = new Intent(DefineBoardPositionActivity.this, DetectBoardActivity.class);
+                            intent.putExtra("blackPlayer", blackPlayer);
+                            intent.putExtra("whitePlayer", whitePlayer);
+                            intent.putExtra("komi", komi);
+                            intent.putExtra("rule", rule);
+                            intent.putExtra("engine", engine);
+                            startActivity(intent);
+
                         }
 
                         @Override
@@ -249,8 +273,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                         }
                     }
             );
-        }
-        else if (vid == R.id.btn_return) {
+        } else if (vid == R.id.btn_return) {
             Intent intent = new Intent(this, SelectConfigActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
@@ -264,17 +287,13 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
             super.handleMessage(msg);
             if (msg.what == ResponseCode.SERVER_FAILED.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.SERVER_FAILED.getMsg());
-            }
-            else if (msg.what == ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getCode()) {
+            } else if (msg.what == ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getMsg());
-            }
-            else if (msg.what == ResponseCode.ENGINE_CONNECT_FAILED.getCode()) {
+            } else if (msg.what == ResponseCode.ENGINE_CONNECT_FAILED.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_FAILED.getMsg());
-            }
-            else if (msg.what == ResponseCode.FIND_MARKER.getCode()) {
+            } else if (msg.what == ResponseCode.FIND_MARKER.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.FIND_MARKER.getMsg());
-            }
-            else if (msg.what == ResponseCode.NOT_FIND_MARKER.getCode()) {
+            } else if (msg.what == ResponseCode.NOT_FIND_MARKER.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.NOT_FIND_MARKER.getMsg());
             }
         }
