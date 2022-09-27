@@ -294,7 +294,7 @@ public class ImageUtils {
         flipCode = 1 绕y轴旋转180,也就是关于y轴对称
         flipCode = -1 关于原点对称*/
         Core.flip(tmp, result, flipCode);
-        return rotate(result, 270.0);
+        return result;
     }
 
     public static byte[] JPEGImageToByteArray(Image image) {

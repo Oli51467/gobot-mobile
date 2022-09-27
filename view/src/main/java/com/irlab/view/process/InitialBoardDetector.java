@@ -15,6 +15,7 @@ import java.util.List;
 
 import static com.irlab.view.utils.ImageUtils.imagePerspectiveTransform;
 import static com.irlab.view.utils.ImageUtils.rotate;
+import static com.irlab.view.utils.ImageUtils.save_bitmap;
 
 public class InitialBoardDetector {
 
@@ -55,10 +56,11 @@ public class InitialBoardDetector {
                 mc.get(3).x, mc.get(3).y);
 
         // TODO:根据实际相机摆放位置调整是否需要调用 rotate() 旋转
-        Mat transformResult = imagePerspectiveTransform(originMatImage, cornerPoints);
+        Mat transformResult = rotate(imagePerspectiveTransform(originMatImage, cornerPoints), 0);
 
         Bitmap resultBitmap = Bitmap.createBitmap(transformResult.width(), transformResult.height(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(transformResult, resultBitmap);
+        save_bitmap(resultBitmap, "board");
         return resultBitmap;
     }
 }

@@ -45,8 +45,6 @@ import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -212,45 +210,26 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                                 Pair<Double, Double> pair = new Pair<>(doubles[1], doubles[2]);
                                 corners.add(pair);
                             }
-
                             imageProxy.close();
-
                             if (corners.size() != 4) {
                                 // 未找到棋盘
                                 msg.what = ResponseCode.NOT_FIND_MARKER.getCode();
                                 handler.sendMessage(msg);
                                 return;
-
                             }
-
                             // 整理角排序，最终是 左上-右上-右下-左下 这样的环形排列
                             // 1. 先按照 y 排序
-                            Collections.sort(corners, new Comparator<Pair<Double, Double>>() {
-                                @Override
-                                public int compare(Pair<Double, Double> obj1, Pair<Double, Double> obj2) {
-                                    return (int) (obj1.second - obj2.second);
-                                }
-                            });
+                            corners.sort((obj1, obj2) -> (int) (obj1.second - obj2.second));
 
                             // 2. 分别截取前2 和 后2，
                             List<Pair<Double, Double>> startTwo = corners.subList(0, 2);
                             List<Pair<Double, Double>> endTwo = corners.subList(2, 4);
 
                             // 3. 对前两个整理排序
-                            Collections.sort(startTwo, new Comparator<Pair<Double, Double>>() {
-                                @Override
-                                public int compare(Pair<Double, Double> obj1, Pair<Double, Double> obj2) {
-                                    return (int) (obj1.first - obj2.first);
-                                }
-                            });
+                            startTwo.sort((obj1, obj2) -> (int) (obj1.first - obj2.first));
 
-                            // 对后两个整理排序
-                            Collections.sort(endTwo, new Comparator<Pair<Double, Double>>() {
-                                @Override
-                                public int compare(Pair<Double, Double> obj1, Pair<Double, Double> obj2) {
-                                    return (int) (obj2.first - obj1.first);
-                                }
-                            });
+                            // 4. 对后两个整理排序
+                            endTwo.sort((obj1, obj2) -> (int) (obj2.first - obj1.first));
 
                             // 触发toast通知
                             msg.what = ResponseCode.FIND_MARKER.getCode();
@@ -263,7 +242,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                             intent.putExtra("rule", rule);
                             intent.putExtra("engine", engine);
                             startActivity(intent);
-
                         }
 
                         @Override

@@ -50,7 +50,14 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:textSize="20sp"
-                android:text="模拟落子"/>
+                android:text="落子"/>
+            <Button
+                android:id="@+id/btn_undo"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text="回退"/>
             <Button
                 android:id="@+id/btn_exit"
                 android:layout_width="0dp"

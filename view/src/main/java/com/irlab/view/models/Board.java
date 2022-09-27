@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import androidx.annotation.NonNull;
 
 import java.io.Serializable;
+import java.security.InvalidParameterException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -12,6 +13,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
 
 import onion.w4v3xrmknycexlsd.lib.sgfcharm.BuildConfig;
 
@@ -25,17 +27,19 @@ public class Board implements Serializable {
     public final Point[][] points;
     public List<Point> recordPoints;
     private final int initialHandicap;
-    private final GameRecord gameRecord;
+    public final GameRecord gameRecord;
 
     private Player P1, P2, actualPlayer;
     private int handicap;
+    private int successivePassCount;
 
     public Board(int width, int height, int handicap) {
         this.width = width;
         this.height = height;
         this.initialHandicap = handicap;
+        this.successivePassCount = 0;
         this.points = new Point[width + 1][height + 1];
-        this.gameRecord = new GameRecord(width, height, handicap);
+        this.gameRecord = new GameRecord(width, height);
         this.recordPoints = new ArrayList<>();
         initBoard();
     }
@@ -47,8 +51,8 @@ public class Board implements Serializable {
         actualPlayer = P1;
 
         // 初始化棋盘
-        for (int x = 1; x <= this.width; x ++ ) {
-            for (int y = 1; y <= this.height; y ++ ) {
+        for (int x = 1; x <= this.width; x++) {
+            for (int y = 1; y <= this.height; y++) {
                 points[x][y] = new Point(this, x, y);
             }
         }
@@ -95,7 +99,7 @@ public class Board implements Serializable {
         Set<Group> adjGroups = point.getAdjacentGroups();
         Group newGroup = new Group(point, player);
         point.setGroup(newGroup);
-        for (com.irlab.view.models.Group group : adjGroups) {
+        for (Group group : adjGroups) {
             if (group.getOwner() == player) {
                 newGroup.add(group, point);
             } else {
@@ -161,31 +165,82 @@ public class Board implements Serializable {
     }
 
     public boolean nextPlayer() {
-        return changePlayer();
+        return changePlayer(false);
     }
 
-    public boolean changePlayer() {
-        if (handicap < initialHandicap) {
+    public boolean precedentPlayer() {
+        return changePlayer(true);
+    }
+
+    public boolean changePlayer(boolean undo) {
+        if (handicap < initialHandicap && !undo) {
             handicap++;
+            return false;
+        } else if (undo && this.gameRecord.nbrPreceding() < initialHandicap) {
+            handicap--;
             return false;
         } else {
             if (actualPlayer == P1) {
                 actualPlayer = P2;
-                System.out.println("该白棋下啦");
+                System.out.println("Changing player for P2");
             } else {
                 actualPlayer = P1;
-                System.out.println("该黑棋下啦");
+                System.out.println("Changing player for P1");
             }
             return true;
         }
+    }
+
+    public boolean undo() {
+        if (gameRecord.hasPreceding()) {
+            GameTurn current = gameRecord.getLastTurn();
+            gameRecord.undo();
+            GameTurn last = gameRecord.getLastTurn();
+            takeGameTurn(last, P1, P2);
+            actualPlayer.removeCapturedStones(current.getCountCapturedStones());
+            precedentPlayer();
+            successivePassCount = last.getPassCount();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void takeGameTurn(GameTurn gameTurn, Player one, Player two) {
+        this.freeIntersections();
+        int[][] boardState = gameTurn.getBoardState();
+        for (int x = 1; x <= width; x++) {
+            for (int y = 1; y <= height; y++) {
+                int state = boardState[x][y];
+                if (state == 1) {
+                    play(getPoint(x, y), one);
+                } else if (state == 2) {
+                    play(getPoint(x, y), two);
+                }
+            }
+        }
+    }
+
+    public void freeIntersections() {
+        for (int i = 1; i <= 19; i ++ ) {
+            for (int j = 1; j <= 19; j ++ ) {
+                Point point = getPoint(i, j);
+                point.setGroup(null);
+            }
+        }
+/*        for (Point[] intersectionColumn : points) {
+            for (Point intersection : intersectionColumn) {
+                intersection.setStoneChain(null);
+            }
+        }*/
     }
 
     @NonNull
     @Override
     public String toString() {
         StringBuilder board = new StringBuilder();
-        for (int i = 1; i <= width; i ++ ) {
-            for (int j = 1; j <= height; j ++ ) {
+        for (int i = 1; i <= width; i++) {
+            for (int j = 1; j <= height; j++) {
                 Point cross = points[i][j];
                 if (cross.getGroup() == null) {
                     board.append("· ");
@@ -209,7 +264,7 @@ public class Board implements Serializable {
     }
 
     private void writeHeader(StringBuilder sgf, String blackPlayer, String whitePlayer, String komi) {
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat sdf =  new SimpleDateFormat("yyyy-MM-dd");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Calendar c = Calendar.getInstance();
         String date = sdf.format(new Date(c.getTimeInMillis()));
 

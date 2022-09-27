@@ -5,48 +5,61 @@ import java.util.Arrays;
 import java.util.Set;
 
 public class GameTurn implements Serializable {
-    private final int[][] BoardState;
-    private final int x, y;
+    public final int[][] boardState;
+    public final int x, y;
     private final int hashCode;
     private int passCount;
+    private final int countCapturedStones;
 
     public GameTurn(int width, int height) {
-        BoardState = new int[width][height];
+        boardState = new int[width + 1][height + 1];
         passCount = 0;
+        countCapturedStones = 0;
 
         x = -1;
         y = -1;
 
-        hashCode = Arrays.deepHashCode(BoardState);
+        hashCode = Arrays.deepHashCode(boardState);
     }
 
     private GameTurn(GameTurn prev, int X, int Y, int playerId, int handicap, Set<Point> freedPoint) {
-        int width = prev.BoardState.length;
-        int height = prev.BoardState[0].length;
+        int width = prev.boardState.length;
+        int height = prev.boardState[0].length;
 
-        BoardState = new int[width][height];
+        boardState = new int[width][height];
         for (int i = 0; i < width; i++) {
-            BoardState[i] = prev.BoardState[i].clone();
+            boardState[i] = prev.boardState[i].clone();
         }
         x = X;
         y = Y;
 
         if (x >= 0 && y >= 0) {
-            BoardState[x][y] = playerId;
+            boardState[x][y] = playerId;
             passCount = 0;
         } else {
             passCount = prev.passCount + 1;
         }
 
         for (Point freedpoint : freedPoint) {
-            BoardState[freedpoint.getX()][freedpoint.getY()] = 0;
+            boardState[freedpoint.getX()][freedpoint.getY()] = 0;
         }
-        hashCode = Arrays.deepHashCode(BoardState);
+        countCapturedStones = freedPoint.size();
+        hashCode = Arrays.deepHashCode(boardState);
     }
 
     public GameTurn toNext(int X, int Y, int playerId, int handicap, Set<Point> freedPoint) {
         return new GameTurn(this, X, Y, playerId, handicap, freedPoint);
     }
+
+    public int getCountCapturedStones() {
+        return countCapturedStones;
+    }
+
+    public int[][] getBoardState() {
+        return boardState;
+    }
+
+    public int getPassCount() { return passCount; }
 
     @Override
     public int hashCode() {
@@ -60,6 +73,6 @@ public class GameTurn implements Serializable {
 
         GameTurn castedObj = (GameTurn) obj;
 
-        return hashCode == castedObj.hashCode && Arrays.deepEquals(this.BoardState, castedObj.BoardState);
+        return hashCode == castedObj.hashCode && Arrays.deepEquals(this.boardState, castedObj.boardState);
     }
 }

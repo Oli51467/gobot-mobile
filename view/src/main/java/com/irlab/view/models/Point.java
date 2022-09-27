@@ -16,13 +16,13 @@ public class Point implements Serializable {
     private boolean isPass;
 
     // 描述该点是否在一个组内或属于哪个组
-    private Group Group;
+    private Group group;
 
     public Point(Board board, int x, int y) {
         this.board = board;
         this.x = x;
         this.y = y;
-        this.Group = null;
+        this.group = null;
         this.isPass = false;
     }
 
@@ -35,16 +35,16 @@ public class Point implements Serializable {
     }
 
     public Group getGroup() {
-        return Group;
+        return group;
     }
 
     // Group可以为空
-    public void setGroup(com.irlab.view.models.Group Group) {
-        this.Group = Group;
+    public void setGroup(Group group) {
+        this.group = group;
     }
 
     public boolean isEmpty() {
-        return Group == null;
+        return group == null;
     }
 
     // 拿到相邻棋子所属的组
@@ -60,8 +60,8 @@ public class Point implements Serializable {
 
             if (board.isInBoard(newX, newY)) {
                 Point adjPoint = board.getPoint(newX, newY);
-                if (adjPoint.Group != null) {
-                    adjacentGroups.add(adjPoint.Group);
+                if (adjPoint.group != null) {
+                    adjacentGroups.add(adjPoint.group);
                 }
             }
         }

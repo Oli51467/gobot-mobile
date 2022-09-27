@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 
 import com.irlab.view.models.Board;
+import com.irlab.view.models.Point;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -67,12 +68,6 @@ public class Drawer {
         goldenPaint.setTextSize(100);
     }
 
-    public static void drawBoardContour(Mat image, MatOfPoint boardContour) {
-        List<MatOfPoint> contourList = new ArrayList<>();
-        contourList.add(boardContour);
-        Imgproc.drawContours(image, contourList, -1, mRed, 4);
-    }
-
     /**
      * 在用户友好界面上画棋盘 放置于屏幕左侧
      * @param bitmap 在bitmap上画
@@ -82,7 +77,7 @@ public class Drawer {
      * @param y 画布的初始位置y
      * @return 返回画好的bitmap
      */
-    public Bitmap drawBoard(Bitmap bitmap, Board board, com.irlab.view.models.Point lastMove, int x, int y) {
+    public Bitmap drawBoard(Bitmap bitmap, int[][] board, Point lastMove, int x, int y) {
         bitmap.eraseColor(Color.parseColor("#dbb069"));
         // 创建画布
         Canvas canvas = new Canvas(bitmap);
@@ -115,15 +110,15 @@ public class Drawer {
                 if (checkIsStar(i, j)) {
                     canvas.drawCircle(centerX, centerY, STAR_RADIUS, blackPaint);
                 }
-                if (board.getPoint(i, j).getGroup() != null) {
+                if (board[i][j] != 0) {
                     if (lastMove != null) {
                         if (i == lastMove.getX() && j == lastMove.getY()) {
                             canvas.drawCircle(centerX, centerY, LAST_MOVE_RADIUS, bluePaint);
                         }
                     }
-                    if (board.getPoint(i, j).getGroup().getOwner().getIdentifier() == Board.BLACK_STONE) {
+                    if (board[i][j] == Board.BLACK_STONE) {
                         canvas.drawCircle(centerX, centerY, STONE_RADIUS, blackPaint);
-                    } else if (board.getPoint(i, j).getGroup().getOwner().getIdentifier() == Board.WHITE_STONE) {
+                    } else if (board[i][j] == Board.WHITE_STONE) {
                         canvas.drawCircle(centerX, centerY, STONE_RADIUS, whitePaint);
                     }
                 }

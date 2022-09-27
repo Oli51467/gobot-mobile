@@ -51,6 +51,7 @@ import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 import com.irlab.view.bluetooth.BluetoothService;
 import com.irlab.view.models.Board;
+import com.irlab.view.models.GameTurn;
 import com.irlab.view.models.Player;
 import com.irlab.view.models.Point;
 import com.irlab.view.utils.Drawer;
@@ -64,9 +65,7 @@ import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -79,24 +78,22 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
     public static final int BLANK = 0, BLACK = 1, WHITE = 2, WIDTH = 20, HEIGHT = 20, THREAD_NUM = 19, SINGLE_THREAD_TASK = 19;
     public static final int BOARD_WIDTH = 1000, BOARD_HEIGHT = 1000, INFO_WIDTH = 880, INFO_HEIGHT = 350;
-    private static final List<Pair<Integer, Integer>> playSets = new ArrayList<>();
     public static final String Logger = "djnxyxy";
     private final Context mContext = this;
 
-    public static int previousX, previousY;
     public static boolean init = true;
     public static Drawer drawer;
 
     private String userName, playPosition, blackPlayer, whitePlayer, komi, rule, engine;
-    private ImageView playView;
+    private ImageView playView, playerInfoView, boardView;
 
     private Bitmap[][] bitmapMatrix;
+    private Bitmap boardBitmap, bitmap4PlayerInfo, bitmap4PlayInfo;
 
     public int[][] curBoard;
     public int[][] lastBoard;
 
     public Board board;
-    public Board previousBoard;
 
     public Point lastMove;
 
@@ -117,6 +114,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
         OpenCVLoader.initDebug();
         initArgs();
+        initViews();
         initBoard();
         beginDrawing();
         startCamera();
@@ -154,7 +152,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     Bitmap bitmap = adjustPhotoRotation(JPEGImageToBitmap(image), 0);
                     Utils.bitmapToMat(bitmap, originBoard);
                     runOnUiThread(() -> ToastUtil.show(mContext, "请稍后..."));
-                    // tempFun(); 演示用
                     identifyChessboardAndGenMove(originBoard);
                     Log.d(Logger, "图像捕获成功");
                     imageProxy.close();
@@ -169,38 +166,20 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             clearBoard(userName);
             Intent intent = new Intent(this, SelectConfigActivity.class);
             startActivity(intent);
+        } else if (vid == R.id.btn_undo) {
+            if (board.gameRecord.getSize() == 1) return;
+            undo();
         }
     }
 
-    private void tempFun() {
-        for (Pair<Integer, Integer> playSet : playSets) {
-            int moveX = playSet.first;
-            int moveY = playSet.second;
-            playPosition = getPositionByIndex(moveX, moveY);
-            Player player = board.getPlayer();
-            // 可以落子
-            if (board.play(moveX, moveY, player)) {
-                if (!init) {
-                    previousBoard.play(previousX, previousY, board.getLastPlayer());
-                } else {
-                    init = false;
-                }
-                // 更新一下矩阵棋盘 更新为落完子后的棋盘局面 因为可能有提子
-                updateMetricBoard();
-                board.nextPlayer();
-                previousX = moveX;
-                previousY = moveY;
-                // 将落子传到引擎 引擎走棋 更新
-                lastMove = board.getPoint(previousX, previousY);
-                beginDrawing();
-            }
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    public void undo() {
+        board.undo();
+        lastBoard = board.gameRecord.getLastTurn().boardState;
+        lastMove = board.getPoint(board.gameRecord.getLastTurn().x, board.gameRecord.getLastTurn().y);
+        if (lastMove == null) playPosition = "";
+        else playPosition = getPositionByIndex(lastMove.getX(), lastMove.getY());
+        Log.d(Logger, board.toString());
+        beginDrawing();
     }
 
     @SuppressLint("RestrictedApi")
@@ -233,7 +212,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         PERFORMANCE 是默认模式。PreviewView 会使用 SurfaceView 显示视频串流，但在某些情况下会回退为使用 TextureView。
         SurfaceView 具有专用的绘图界面，该对象更有可能通过内部硬件合成器实现硬件叠加层，尤其是当预览视频上面没有其他界面元素（如按钮）时。
         通过使用硬件叠加层进行渲染，视频帧会避开 GPU 路径，从而能降低平台功耗并缩短延迟时间。*/
-        //previewView.setImplementationMode(PreviewView.ImplementationMode.PERFORMANCE);
+        previewView.setImplementationMode(PreviewView.ImplementationMode.PERFORMANCE);
         // 缩放类型
         previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
         // 将所选相机和任意用例绑定到生命周期
@@ -243,7 +222,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     /**
      * 识别棋盘并走棋
      */
-    public boolean identifyChessboardAndGenMove(Mat originBoard) {
+    public void identifyChessboardAndGenMove(Mat originBoard) {
         InitialBoardDetector initialBoardDetector = new InitialBoardDetector(corners);
         Bitmap orthogonalBoard = initialBoardDetector.getPerspectiveTransformImage(originBoard);
 
@@ -251,7 +230,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             // 如果未获取到棋盘，直接返回
             String error = "未获取到棋盘信息";
             Log.e(Logger, error);
-            return false;
+            return;
         }
         int moveX, moveY;
         bitmapMatrix = splitImage(orthogonalBoard, WIDTH);
@@ -283,7 +262,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             Bitmap bitmap4PlayInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
             Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, 0, playPosition);
             playView.setImageBitmap(playInfo);
-            return false;
         } else {
             moveX = move.first;
             moveY = move.second;
@@ -293,29 +271,18 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             // 可以落子
             if (board.play(moveX, moveY, player)) {
                 Log.d(Logger, "合法落子");
-                if (!init) {
-                    previousBoard.play(previousX, previousY, board.getLastPlayer());
-                } else {
-                    init = false;
-                }
-                // 更新一下矩阵棋盘 更新为落完子后的棋盘局面 因为可能有提子
-                updateMetricBoard();
+                Log.d(Logger, "落子后： \n" + board.toString());
                 board.nextPlayer();
-                previousX = moveX;
-                previousY = moveY;
-                // 将落子传到引擎 引擎走棋 更新
-                lastMove = board.getPoint(previousX, previousY);
-                beginDrawing();
-
                 // TODO 当前这里发送给引擎是通过共享变量 lastMove传递的
+                GameTurn lastTurn = board.gameRecord.getLastTurn();
+                lastBoard = lastTurn.boardState;
+                lastMove = board.getPoint(lastTurn.x, lastTurn.y);
                 //sendToEngine(getApplicationContext());
-                Log.d(Logger, board + "--------------\n" + "lastBoard:\n");
-                Log.d(Logger, previousBoard.toString());
-                return true;
+                beginDrawing();
+                Log.d(Logger, lastTurn.x + " " + lastTurn.y);
             } else {
                 Log.e(Logger, "这里不可以落子");
                 curBoard[moveX][moveY] = BLANK;
-                return false;
             }
         }
     }
@@ -329,12 +296,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         engine = intent.getStringExtra("engine");
         userName = MyApplication.getInstance().preferences.getString("userName", null);
         previewView = findViewById(R.id.previewView);
-        for (int i = 1; i <= 4; i ++ ) {
-            for (int j = 7; j >= 5; j -- ) {
-                Pair<Integer, Integer> playSet = new Pair<>(i, j);
-                playSets.add(playSet);
-            }
-        }
     }
 
     /**
@@ -343,8 +304,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     private void initBoard() {
         drawer = new Drawer();
         board = new Board(WIDTH, HEIGHT, 0);
-        previousBoard = new Board(WIDTH, HEIGHT, 0);
-
         lastBoard = new int[WIDTH + 1][HEIGHT + 1];
         curBoard = new int[WIDTH + 1][HEIGHT + 1];
         for (int i = 1; i <= WIDTH; i++) {
@@ -367,22 +326,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             }
         }
         return null;
-    }
-
-    /**
-     * 更新矩阵棋盘
-     */
-    private void updateMetricBoard() {
-        for (int i = 1; i <= WIDTH; i++) {
-            for (int j = 1; j <= HEIGHT; j++) {
-                Point cross = board.points[i][j];
-                if (cross.getGroup() == null) {
-                    lastBoard[i][j] = BLANK;
-                } else {
-                    lastBoard[i][j] = cross.getGroup().getOwner().getIdentifier();
-                }
-            }
-        }
     }
 
     /**
@@ -481,12 +424,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                             Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
                             // 将引擎下的棋走上 并更新棋盘
                             board.play(enginePlay.second, enginePlay.first, board.getPlayer());
-                            previousBoard.play(previousX, previousY, board.getLastPlayer());
-                            updateMetricBoard();
+                            lastBoard = board.gameRecord.getLastTurn().boardState;
                             board.nextPlayer();
-                            previousX = enginePlay.second;
-                            previousY = enginePlay.first;
-                            lastMove = board.getPoint(previousX, previousY);
+                            lastMove = board.getPoint(board.gameRecord.getLastTurn().x, board.gameRecord.getLastTurn().y);
 
                             // 将引擎落子位置传给下位机
                             if (bluetoothService != null) {
@@ -512,28 +452,33 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         });
     }
 
-    /**
-     * 画棋盘，展示棋局
-     */
-    private void beginDrawing() {
-        int identifier = lastMove == null ? 0 : lastMove.getGroup().getOwner().getIdentifier();
+    private void initViews() {
+        playerInfoView = findViewById(R.id.iv_player_info);
+        boardView = findViewById(R.id.iv_board);
+        playView = findViewById(R.id.iv_play_info);
         Button btn_return_play = findViewById(R.id.btn_take_picture);
         btn_return_play.setOnClickListener(this);
 
         Button btn_return = findViewById(R.id.btn_exit);
         btn_return.setOnClickListener(this);
 
-        Bitmap boardBitmap = Bitmap.createBitmap(BOARD_WIDTH, BOARD_HEIGHT, Bitmap.Config.ARGB_8888);
-        Bitmap showBoard = drawer.drawBoard(boardBitmap, board, lastMove, 0, 0);
+        Button btn_undo = findViewById(R.id.btn_undo);
+        btn_undo.setOnClickListener(this);
 
-        Bitmap bitmap4PlayerInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
-        Bitmap bitmap4PlayInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
+        boardBitmap = Bitmap.createBitmap(BOARD_WIDTH, BOARD_HEIGHT, Bitmap.Config.ARGB_8888);
+        bitmap4PlayerInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
+        bitmap4PlayInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
+    }
+
+    /**
+     * 画棋盘，展示棋局
+     */
+    private void beginDrawing() {
+        int identifier = (lastMove == null || lastMove.getGroup() == null) ? 0 : lastMove.getGroup().getOwner().getIdentifier();
+
+        Bitmap showBoard = drawer.drawBoard(boardBitmap, lastBoard, lastMove, 0, 0);
         Bitmap playerInfo = drawer.drawPlayerInfo(bitmap4PlayerInfo, blackPlayer, whitePlayer, rule, komi, engine);
         Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, identifier, playPosition);
-
-        ImageView playerInfoView = findViewById(R.id.iv_player_info);
-        ImageView boardView = findViewById(R.id.iv_board);
-        playView = findViewById(R.id.iv_play_info);
 
         boardView.setImageBitmap(showBoard);
         playerInfoView.setImageBitmap(playerInfo);

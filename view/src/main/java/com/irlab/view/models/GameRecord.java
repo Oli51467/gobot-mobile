@@ -1,15 +1,16 @@
 package com.irlab.view.models;
 
 import java.io.Serializable;
+import java.util.EmptyStackException;
 import java.util.Stack;
 
 public class GameRecord implements Serializable {
 
-    private final Stack<GameTurn> preceding;
+    protected final Stack<GameTurn> preceding;
 
     private final Stack<GameTurn> following;
 
-    public GameRecord(int width, int height, int handicap) {
+    public GameRecord(int width, int height) {
         preceding = new Stack<>();
         following = new Stack<>();
         GameTurn first = new GameTurn(width, height);
@@ -21,29 +22,40 @@ public class GameRecord implements Serializable {
         following.clear();
     }
 
+    public boolean hasPreceding() {
+        return preceding.size() > 1;
+    }
+
+    public int nbrPreceding() { return preceding.size() - 1; }
+
+    public void undo() throws EmptyStackException {
+        if (preceding.size() > 1) {
+            following.push(preceding.pop());
+        } else {
+            throw new EmptyStackException();
+        }
+    }
+
+    public void redo() throws EmptyStackException {
+        preceding.push(following.pop());
+    }
+
     public Iterable<GameTurn> getTurns() {
         return preceding;
     }
 
     public GameTurn getLastTurn() {
-        return preceding.peek();
+        if (!preceding.empty()) {
+            return preceding.peek();
+        }
+        else return new GameTurn(20, 20);
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || obj.getClass() != this.getClass()) return false;
+    public void pop() {
+        if (!preceding.empty()) preceding.pop();
+    }
 
-        GameRecord castedObj = (GameRecord) obj;
-
-        if (preceding.size() != castedObj.preceding.size() | following.size() != castedObj.following.size()) return false;
-
-        for (int i = 0; i < preceding.size(); i++) {
-            if (!preceding.get(i).equals(castedObj.preceding.get(i))) return false;
-        }
-        for (int i = 0; i < following.size(); i++) {
-            if (!following.get(i).equals(castedObj.following.get(i))) return false;
-        }
-        return true;
+    public int getSize() {
+        return preceding.size();
     }
 }
