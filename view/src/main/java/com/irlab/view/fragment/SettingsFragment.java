@@ -118,7 +118,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onStart() {
         super.onStart();
-        showInfo.setText("Hi! " + userName);
+        showInfo.setText(userName);
         bluetoothService = BluetoothActivity.bluetoothService;
     }
 

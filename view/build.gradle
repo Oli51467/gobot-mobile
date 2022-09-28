@@ -103,6 +103,7 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:1.1.0-alpha11"
     implementation "androidx.camera:camera-view:1.0.0-alpha31"
     implementation "androidx.camera:camera-extensions:1.0.0-alpha31"
+    implementation "de.hdodenhof:circleimageview:3.0.1" // 开源项目 CircleImageView 轻松实现图片圆形化的功能
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

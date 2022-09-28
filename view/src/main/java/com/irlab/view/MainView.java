@@ -15,7 +15,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
@@ -155,8 +155,8 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
 
     // 初始化fragment中的控件并设置监听事件
     public void initFragmentViewsAndEvents() {
-        RelativeLayout openBluetooth = findViewById(R.id.layout_bluetooth);
-        RelativeLayout openSpeech = findViewById(R.id.layout_speech);
+        LinearLayout openBluetooth = findViewById(R.id.layout_bluetooth);
+        LinearLayout openSpeech = findViewById(R.id.layout_speech);
         Button logout = findViewById(R.id.btn_logout);
         Button play = findViewById(R.id.btn_play);
         Button playSettings = findViewById(R.id.btn_play_settings);

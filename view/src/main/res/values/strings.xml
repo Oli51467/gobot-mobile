@@ -25,4 +25,5 @@
     <string name="instructions_paragraph5">五、如果发现错误的移动，请单击界面上的“左箭头”按钮，然后让应用进行重新检测。</string>
     <string name="instructions_paragraph6">六、若发现棋盘的相对位置错误，请单击界面上的“向左旋转”或“向右旋转”按钮，将棋盘旋转以调整到正确的位置。或单击棋盘按钮将边框移动到最开始的位置。</string>
     <string name="instructions_paragraph7">七、结束录制后，您的游戏将保存在移动设备文件系统中名为“archive_recorder”的文件夹中。</string>
+    <string name="setting">设置</string>
 </resources>

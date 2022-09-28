@@ -10,90 +10,112 @@
 
         <TextView
             style="@style/textview_bar_style"
-            android:text="设置" />
+            android:text="@string/setting" />
     </RelativeLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="12dp">
+    <androidx.cardview.widget.CardView
+        style="@style/cardView_setting_style"
+        app:cardCornerRadius="12dp">
+        <LinearLayout
+            android:id="@+id/person_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+            <!--圆形图片-->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:layout_marginStart="20dp"
+                android:id="@+id/iv_profile"
+                android:layout_marginTop="4dp"
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                android:layout_gravity="center_vertical"
+                app:shapeAppearanceOverlay="@style/circleImageStyle"
+                android:src="@mipmap/default_profile" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:layout_gravity="center_vertical"
+                android:layout_marginTop="-12dp"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/tv_show_username"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:textSize="16sp"
+                    android:text="123456@qq.com"/>
+            </LinearLayout>
 
-        <TextView
-            android:id="@+id/tv_show_username"
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        style="@style/cardView_setting_style"
+        android:layout_marginTop="12dp"
+        app:cardCornerRadius="12dp">
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
-            android:layout_marginTop="16dp"
-            android:text="显示用户名"
-            android:textSize="36sp"/>
-        <!--圆形图片-->
-        <com.google.android.material.imageview.ShapeableImageView
-            android:layout_marginLeft="20dp"
-            android:id="@+id/iv_profile"
-            android:layout_width="90dp"
-            android:layout_height="90dp"
-            android:background="@color/white"
-            app:shapeAppearanceOverlay="@style/circleImageStyle"
-            android:src="@mipmap/default_profile" />
+            android:orientation="vertical">
+            <LinearLayout
+                android:id="@+id/layout_bluetooth"
+                style="@style/cardView_linearLayout_style">
 
-    </LinearLayout>
+                <de.hdodenhof.circleimageview.CircleImageView
+                    style="@style/circleImageView_style"
+                    android:src="@drawable/ic_bluetooth"/>
+
+                <LinearLayout
+                    style="@style/linearLayout_in_circleImageView"
+                    android:background="@drawable/shape_underline">
+                    <TextView
+                        style="@style/textView_in_circleImageView"
+                        android:text="蓝牙" />
+                    <ImageView
+                        style="@style/imageView_in_circleImageView"
+                        android:src="@drawable/icon_enter" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layout_speech"
+                style="@style/cardView_linearLayout_style">
+                <de.hdodenhof.circleimageview.CircleImageView
+                    style="@style/circleImageView_style"
+                    android:src="@drawable/icon_speech" />
+
+                <LinearLayout
+                    style="@style/linearLayout_in_circleImageView">
+                    <TextView
+                        style="@style/textView_in_circleImageView"
+                        android:text="语音测试" />
+                    <ImageView
+                        style="@style/imageView_in_circleImageView"
+                        android:src="@drawable/icon_enter" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
 
     <LinearLayout
         style="@style/linearLayout_settings_style">
 
         <RelativeLayout
-            android:id="@+id/layout_bluetooth"
-            style="@style/relativeLayout_settings_style">
-
-            <ImageView
-                android:id="@+id/iv_bluetooth"
-                style="@style/leftImageView_settings_style"
-                android:src="@drawable/ic_bluetooth" />
-
-            <TextView
-                android:id="@+id/tv_bluetooth"
-                style="@style/textview_settings_style"
-                android:layout_toEndOf="@+id/iv_bluetooth"
-                android:text="蓝牙" />
-
-            <ImageView
-                android:id="@+id/iv_enter_bluetooth"
-                style="@style/rightImageView_settings_style"
-                android:src="@drawable/icon_enter" />
-        </RelativeLayout>
-
-        <View
-            android:layout_height="3px"
-            android:background="@color/whiteSmoke"
-            android:layout_width="fill_parent"/>
-
-        <RelativeLayout
-            android:id="@+id/layout_speech"
-            style="@style/relativeLayout_settings_style">
-
-            <ImageView
-                android:id="@+id/iv_speech"
-                style="@style/leftImageView_settings_style"
-                android:src="@drawable/icon_speech" />
-
-            <TextView
-                android:id="@+id/tv_speech"
-                style="@style/textview_settings_style"
-                android:layout_toEndOf="@+id/iv_speech"
-                android:text="语音测试" />
-
-            <ImageView
-                android:id="@+id/iv_enter_speech"
-                style="@style/rightImageView_settings_style"
-                android:src="@drawable/icon_enter" />
-        </RelativeLayout>
-
-        <RelativeLayout
             android:id="@+id/layout_test_bluetooth"
             android:layout_height="wrap_content"
-            android:layout_width="match_parent"
-            style="@style/relativeLayout_settings_style">
+            android:layout_width="match_parent">
 
             <EditText
                 android:id="@+id/editText1"
@@ -128,7 +150,7 @@
             <TextView
                 android:id="@+id/layout_bluetooth_content"
                 android:layout_width="match_parent"
-                android:layout_height="100dp"
+                android:layout_height="60dp"
                 android:text="指令记录："
                 android:textSize="16sp" />
 
@@ -145,7 +167,7 @@
         android:id="@+id/btn_logout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
         android:background="@drawable/bar_selector"
         android:text="退出登录"
         android:textColor="@color/red" />
