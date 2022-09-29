@@ -18,8 +18,7 @@ import okhttp3.MediaType;
 public class MyApplication extends Application {
 
     public static final String SERVER = "http://8.142.10.225:8081";
-    // public static final String ENGINE_SERVER = "http://8.142.10.225:5000"; // 阿里云服务器
-    public static final String ENGINE_SERVER = "http://10.102.33.40:5000"; // 学校服务器
+    public static final String ENGINE_SERVER = "http://8.142.10.225:5000"; // 阿里云服务器
     public static final String[] T = {"让先", "让2子", "让3子", "让4子", "让5子", "让6子", "让7子", "让8子", "让9子"};
     public static final String[] ENGINES = {"b20", "b40"};
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
@@ -28,7 +27,7 @@ public class MyApplication extends Application {
     public static final int THREAD_NUM = 19;
     public static final int STONE_NUM = 361;
     public static SqueezeNcnn squeezencnn;
-    public static boolean initNet = false;
+    public static boolean initNet = false, initEngine = false;
     public static ThreadPoolExecutor threadPool;
     private static MyApplication MyApp; // 提供自己的唯一实例
     protected static Context context;

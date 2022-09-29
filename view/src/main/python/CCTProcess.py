@@ -104,13 +104,6 @@ def main(byte_array):
                 code = cct_decode(cct_eroded, n, color)
                 if code < 500 and code not in code_table:
                     code_table.append([code, box1[0][0], box1[0][1]])
-                # 将编码在原图像中绘制出来.各参数依次是：图片，添加的文字，左上角坐标，字体，字体大小，颜色，字体粗细
-                cv2.putText(img, str(code), (int(box3[0][0] - 0.25 * s), int(box1[0][1] + 0.5 * s)),
-                            cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 2)
-                # 绘制拟合出的椭圆
-                cv2.ellipse(img, box1, (0, 255, 0), 1)
-                cv2.ellipse(img, box2, (0, 255, 0), 1)
-                cv2.ellipse(img, box3, (0, 255, 0), 1)
     return code_table
 
 

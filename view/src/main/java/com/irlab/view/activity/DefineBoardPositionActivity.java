@@ -5,8 +5,6 @@ import com.chaquo.python.PyObject;
 import com.chaquo.python.android.AndroidPlatform;
 import com.chaquo.python.Python;
 
-import static com.irlab.view.engine.EngineInterface.clearBoard;
-import static com.irlab.view.engine.EngineInterface.initEngine;
 import static com.irlab.view.utils.ImageUtils.JPEGImageToByteArray;
 
 import android.annotation.SuppressLint;
@@ -19,7 +17,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
-import android.util.Size;
 import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
@@ -82,8 +79,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_define_board_position);
         initWindow();
-        //initEngine(getApplicationContext(), userName);
-        clearBoard(userName);
         initViews();
         getInfoFromActivity();
         initPython();

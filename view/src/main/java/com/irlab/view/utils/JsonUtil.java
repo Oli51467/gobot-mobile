@@ -81,11 +81,11 @@ public class JsonUtil {
         return jsonParam.toString();
     }
 
-    public static String getJsonFormOfClearBoard(String userName) {
+    public static String getCmd2JsonForm(String userName, String cmd) {
         JSONObject jsonParam = new JSONObject();
         try {
             jsonParam.put("username", userName);
-            jsonParam.put("cmd", "clear_board");
+            jsonParam.put("cmd", cmd);
         } catch (JSONException e) {
             Log.d(TAG, e.toString());
         }

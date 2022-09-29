@@ -1,14 +1,12 @@
 package com.irlab.view.activity;
 
-import static com.irlab.base.MyApplication.ENGINE_SERVER;
-import static com.irlab.base.MyApplication.JSON;
+import static com.irlab.base.MyApplication.initEngine;
 import static com.irlab.base.MyApplication.squeezencnn;
 
 import static com.irlab.base.MyApplication.threadPool;
 import static com.irlab.view.activity.DefineBoardPositionActivity.corners;
 import static com.irlab.view.activity.DefineBoardPositionActivity.imageCapture;
 import static com.irlab.view.activity.DefineBoardPositionActivity.mExecutorService;
-import static com.irlab.view.engine.EngineInterface.clearBoard;
 import static com.irlab.view.utils.BoardUtil.genPlayCmd;
 import static com.irlab.view.utils.BoardUtil.getPositionByIndex;
 import static com.irlab.view.utils.BoardUtil.transformIndex;
@@ -46,10 +44,10 @@ import androidx.core.content.ContextCompat;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
-import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 import com.irlab.view.bluetooth.BluetoothService;
+import com.irlab.view.engine.EngineInterface;
 import com.irlab.view.models.Board;
 import com.irlab.view.models.GameTurn;
 import com.irlab.view.models.Player;
@@ -58,21 +56,13 @@ import com.irlab.view.utils.Drawer;
 import com.irlab.view.process.InitialBoardDetector;
 import com.irlab.view.utils.JsonUtil;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class DetectBoardActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -94,8 +84,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public int[][] lastBoard;
 
     public Board board;
-
     public Point lastMove;
+
+    public EngineInterface engineInterface;
 
     // 蓝牙服务
     protected BluetoothService bluetoothService;
@@ -116,6 +107,11 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         initArgs();
         initViews();
         initBoard();
+        if (!initEngine) {
+            engineInterface.initEngine();
+            engineInterface.clearBoard();
+            initEngine = true;
+        }
         beginDrawing();
         startCamera();
     }
@@ -134,7 +130,8 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
     public void onDestroy() {
         super.onDestroy();
-        clearBoard(userName);
+        engineInterface.clearBoard();
+        engineInterface.closeEngine();
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -163,7 +160,8 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 }
             });
         } else if (vid == R.id.btn_exit) {
-            clearBoard(userName);
+            engineInterface.showBoard();
+            engineInterface.clearBoard();
             Intent intent = new Intent(this, SelectConfigActivity.class);
             startActivity(intent);
         } else if (vid == R.id.btn_undo) {
@@ -277,38 +275,13 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 GameTurn lastTurn = board.gameRecord.getLastTurn();
                 lastBoard = lastTurn.boardState;
                 lastMove = board.getPoint(lastTurn.x, lastTurn.y);
-                //sendToEngine(getApplicationContext());
+                conn2Engine(getApplicationContext());
                 beginDrawing();
                 Log.d(Logger, lastTurn.x + " " + lastTurn.y);
             } else {
                 Log.e(Logger, "这里不可以落子");
                 curBoard[moveX][moveY] = BLANK;
             }
-        }
-    }
-
-    private void initArgs() {
-        Intent intent = getIntent();
-        blackPlayer = intent.getStringExtra("blackPlayer");
-        whitePlayer = intent.getStringExtra("whitePlayer");
-        komi = intent.getStringExtra("komi");
-        rule = intent.getStringExtra("rule");
-        engine = intent.getStringExtra("engine");
-        userName = MyApplication.getInstance().preferences.getString("userName", null);
-        previewView = findViewById(R.id.previewView);
-    }
-
-    /**
-     * 初始化上一个棋盘为空
-     */
-    private void initBoard() {
-        drawer = new Drawer();
-        board = new Board(WIDTH, HEIGHT, 0);
-        lastBoard = new int[WIDTH + 1][HEIGHT + 1];
-        curBoard = new int[WIDTH + 1][HEIGHT + 1];
-        for (int i = 1; i <= WIDTH; i++) {
-            Arrays.fill(lastBoard[i], BLANK);
-            Arrays.fill(curBoard[i], BLANK);
         }
     }
 
@@ -331,125 +304,51 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     /**
      * 将落子信息发送给引擎，如果发送成功，则继续由引擎产生下一步
      */
-    public void sendToEngine(Context context) {
-
+    public void conn2Engine(Context context) {
         String playCmd = genPlayCmd(lastMove);
-        String json = JsonUtil.getJsonFormOfPlayIndex(userName, playCmd);
-
-        // 将指令发送给围棋引擎
+        String jsonInfo = JsonUtil.getJsonFormOfPlayIndex(userName, playCmd);
+        Log.d(Logger, "json: " + jsonInfo);
         Log.i(Logger, playCmd);
+        // 将指令发送给围棋引擎
 
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
-        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                String error = "走棋指令发送引擎，连接失败！";
-                Log.e(Logger, error);
+        String result = engineInterface.sendIndexes2Engine(jsonInfo);
+        if (result.equals("success")) {
+            int identifier = lastMove.getGroup().getOwner().getIdentifier();
+            Log.d(Logger, identifier + " ");
+            String json = "";
+            if (identifier == Board.BLACK_STONE) {
+                json = JsonUtil.getJsonFormOfgenMove(userName, "W");
+            } else if (identifier == Board.WHITE_STONE) {
+                json = JsonUtil.getJsonFormOfgenMove(userName, "B");
             }
+            Log.d(Logger, "json: " + json);
+            String genMoveResult = engineInterface.genMove(json);
+            if (!genMoveResult.equals("failed") && !genMoveResult.equals("")) {
+                playPosition = genMoveResult;
+                Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
+                Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
+                // 将引擎下的棋走上 并更新棋盘信息
+                board.play(enginePlay.second, enginePlay.first, board.getPlayer());
+                lastBoard = board.gameRecord.getLastTurn().boardState;
+                lastMove = board.getPoint(board.gameRecord.getLastTurn().x, board.gameRecord.getLastTurn().y);
+                board.nextPlayer();
 
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = Objects.requireNonNull(response.body()).string();
-                try {
-                    JSONObject jsonObject = new JSONObject(responseData);
-                    Log.d(Logger, "send to engine ..." + jsonObject);
-                    int code = jsonObject.getInt("code");
-                    Message msg = new Message();
-                    msg.obj = context;
-                    if (code == 1000) {
-                        msg.what = ResponseCode.PLAY_PASS_TO_ENGINE_SUCCESSFULLY.getCode();
-                        handler.sendMessage(msg);
-                        Log.d(Logger, "发送给引擎成功");
-                        int identifier = lastMove.getGroup().getOwner().getIdentifier();
-                        if (identifier == Board.BLACK_STONE) {
-                            genMove(getApplicationContext(), "W");
-                        } else if (identifier == Board.WHITE_STONE) {
-                            genMove(getApplicationContext(), "B");
-                        }
-                    } else if (code == 4001) {
-                        msg.what = ResponseCode.CANNOT_PLAY.getCode();
-                        handler.sendMessage(msg);
-                        Log.d(Logger, "无法落子");
-                    } else {
-                        msg.what = ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode();
-                        handler.sendMessage(msg);
-                        Log.d(Logger, "传递给引擎失败");
-                    }
-                } catch (JSONException e) {
-                    Log.d(Logger, e.toString());
+                // 将引擎落子位置传给下位机
+                if (bluetoothService != null) {
+                    Log.d(Logger, "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
+                    bluetoothService.sendData("L" + playPosition + "Z", false);
+                } else {
+                    Log.d(Logger, "落子位置发给下位机失败！");
+                    Message tempMsg = new Message();
+                    tempMsg.obj = context;
+                    tempMsg.what = ResponseCode.BLUETOOTH_SERVICE_FAILED.getCode();
+                    handler.sendMessage(tempMsg);
                 }
             }
-        });
-    }
-
-
-    /**
-     * 引擎产生下一步
-     */
-    private void genMove(Context context, String whichPlayer) {
-        String json = JsonUtil.getJsonFormOfgenMove(userName, whichPlayer);
-        Log.d(Logger, json);
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
-        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                String error = "引擎自动走棋指令发送失败，连接失败！";
-                Log.e(Logger, error);
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = Objects.requireNonNull(response.body()).string();
-                try {
-                    JSONObject jsonObject = new JSONObject(responseData);
-                    Log.d(Logger, "引擎走棋回调：" + jsonObject);
-                    int code = jsonObject.getInt("code");
-                    Message msg = new Message();
-                    msg.obj = context;
-                    if (code == 1000) {
-                        Log.d(Logger, "引擎gen move 成功");
-                        JSONObject callBackData = jsonObject.getJSONObject("data");
-                        Log.d(Logger, "引擎落子坐标:" + callBackData);
-                        playPosition = callBackData.getString("position");
-                        Log.d(Logger, "回调坐标:" + playPosition);
-                        if (playPosition.equals("resign")) {
-                            Log.d(Logger, "引擎认输");
-                            msg.what = ResponseCode.ENGINE_RESIGN.getCode();
-                        } else if (playPosition.equals("pass")) {
-                            Log.d(Logger, "引擎停一手");
-                            msg.what = ResponseCode.ENGINE_PASS.getCode();
-                        } else {
-                            msg.what = ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode();
-                            Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
-                            Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
-                            // 将引擎下的棋走上 并更新棋盘
-                            board.play(enginePlay.second, enginePlay.first, board.getPlayer());
-                            lastBoard = board.gameRecord.getLastTurn().boardState;
-                            board.nextPlayer();
-                            lastMove = board.getPoint(board.gameRecord.getLastTurn().x, board.gameRecord.getLastTurn().y);
-
-                            // 将引擎落子位置传给下位机
-                            if (bluetoothService != null) {
-                                Log.d(Logger, "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
-                                bluetoothService.sendData("L" + playPosition + "Z", false);
-                            } else {
-                                Log.d(Logger, "落子位置发给下位机失败！");
-                                Message tempMsg = new Message();
-                                tempMsg.obj = context;
-                                tempMsg.what = ResponseCode.BLUETOOTH_SERVICE_FAILED.getCode();
-                                handler.sendMessage(tempMsg);
-                            }
-                        }
-                    } else {
-                        msg.what = ResponseCode.ENGINE_PLAY_FAILED.getCode();
-                        Log.d(Logger, "引擎gen move 失败");
-                    }
-                    handler.sendMessage(msg);
-                } catch (JSONException e) {
-                    Log.d(Logger, e.toString());
-                }
-            }
-        });
+        } else if (result.equals("unplayable")){
+            playPosition = "此处无法落子";
+            beginDrawing();
+        }
     }
 
     private void initViews() {
@@ -468,6 +367,32 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         boardBitmap = Bitmap.createBitmap(BOARD_WIDTH, BOARD_HEIGHT, Bitmap.Config.ARGB_8888);
         bitmap4PlayerInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
         bitmap4PlayInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
+    }
+
+    private void initArgs() {
+        Intent intent = getIntent();
+        blackPlayer = intent.getStringExtra("blackPlayer");
+        whitePlayer = intent.getStringExtra("whitePlayer");
+        komi = intent.getStringExtra("komi");
+        rule = intent.getStringExtra("rule");
+        engine = intent.getStringExtra("engine");
+        userName = MyApplication.getInstance().preferences.getString("userName", null).replaceAll("\n", "");
+        previewView = findViewById(R.id.previewView);
+    }
+
+    /**
+     * 初始化上一个棋盘为空
+     */
+    private void initBoard() {
+        drawer = new Drawer();
+        board = new Board(WIDTH, HEIGHT, 0);
+        lastBoard = new int[WIDTH + 1][HEIGHT + 1];
+        curBoard = new int[WIDTH + 1][HEIGHT + 1];
+        for (int i = 1; i <= WIDTH; i++) {
+            Arrays.fill(lastBoard[i], BLANK);
+            Arrays.fill(curBoard[i], BLANK);
+        }
+        engineInterface = new EngineInterface(userName, mContext);
     }
 
     /**
