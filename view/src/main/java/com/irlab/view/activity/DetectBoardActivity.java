@@ -1,6 +1,5 @@
 package com.irlab.view.activity;
 
-import static com.irlab.base.MyApplication.initEngine;
 import static com.irlab.base.MyApplication.squeezencnn;
 
 import static com.irlab.base.MyApplication.threadPool;
@@ -21,7 +20,6 @@ import android.graphics.Bitmap;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
@@ -107,11 +105,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         initArgs();
         initViews();
         initBoard();
-        if (!initEngine) {
-            engineInterface.initEngine();
-            engineInterface.clearBoard();
-            initEngine = true;
-        }
         beginDrawing();
         startCamera();
     }
@@ -131,7 +124,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public void onDestroy() {
         super.onDestroy();
         engineInterface.clearBoard();
-        engineInterface.closeEngine();
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -275,8 +267,8 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 GameTurn lastTurn = board.gameRecord.getLastTurn();
                 lastBoard = lastTurn.boardState;
                 lastMove = board.getPoint(lastTurn.x, lastTurn.y);
-                conn2Engine(getApplicationContext());
                 beginDrawing();
+                conn2Engine(getApplicationContext());
                 Log.d(Logger, lastTurn.x + " " + lastTurn.y);
             } else {
                 Log.e(Logger, "这里不可以落子");
@@ -314,7 +306,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         String result = engineInterface.sendIndexes2Engine(jsonInfo);
         if (result.equals("success")) {
             int identifier = lastMove.getGroup().getOwner().getIdentifier();
-            Log.d(Logger, identifier + " ");
             String json = "";
             if (identifier == Board.BLACK_STONE) {
                 json = JsonUtil.getJsonFormOfgenMove(userName, "W");
@@ -325,15 +316,17 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             String genMoveResult = engineInterface.genMove(json);
             if (!genMoveResult.equals("failed") && !genMoveResult.equals("")) {
                 playPosition = genMoveResult;
-                Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
-                Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
-                // 将引擎下的棋走上 并更新棋盘信息
-                board.play(enginePlay.second, enginePlay.first, board.getPlayer());
-                lastBoard = board.gameRecord.getLastTurn().boardState;
-                lastMove = board.getPoint(board.gameRecord.getLastTurn().x, board.gameRecord.getLastTurn().y);
-                board.nextPlayer();
-
-                // 将引擎落子位置传给下位机
+                if (!genMoveResult.equals("resign") && !genMoveResult.equals("pass")) {
+                    Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
+                    Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
+                    // 将引擎下的棋走上 并更新棋盘信息
+                    board.play(enginePlay.second, enginePlay.first, board.getPlayer());
+                    lastBoard = board.gameRecord.getLastTurn().boardState;
+                    lastMove = board.getPoint(board.gameRecord.getLastTurn().x, board.gameRecord.getLastTurn().y);
+                    board.nextPlayer();
+                }
+                beginDrawing();
+                // TODO:将引擎落子位置传给下位机
                 if (bluetoothService != null) {
                     Log.d(Logger, "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
                     bluetoothService.sendData("L" + playPosition + "Z", false);
@@ -411,7 +404,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     }
 
     @SuppressLint("HandlerLeak")
-    private final Handler handler = new Handler(Looper.getMainLooper()) {
+    private final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);

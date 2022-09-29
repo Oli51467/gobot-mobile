@@ -5,6 +5,7 @@ import com.chaquo.python.PyObject;
 import com.chaquo.python.android.AndroidPlatform;
 import com.chaquo.python.Python;
 
+import static com.irlab.base.MyApplication.initEngine;
 import static com.irlab.view.utils.ImageUtils.JPEGImageToByteArray;
 
 import android.annotation.SuppressLint;
@@ -14,6 +15,7 @@ import android.content.pm.PackageManager;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
@@ -40,6 +42,7 @@ import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
+import com.irlab.view.engine.EngineInterface;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +85,12 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
         initViews();
         getInfoFromActivity();
         initPython();
+        if (!initEngine) {
+            EngineInterface engineInterface = new EngineInterface(userName, this);
+            engineInterface.initEngine();
+            engineInterface.clearBoard();
+            initEngine = true;
+        }
         if (requestPermissions()) {
             startCamera();
         } else {
@@ -254,7 +263,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
     }
 
     @SuppressLint("HandlerLeak")
-    private final Handler handler = new Handler() {
+    private final Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);

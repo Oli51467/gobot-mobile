@@ -216,14 +216,16 @@ public class EngineInterface {
                         Log.d(Logger, "回调坐标:" + playPosition);
                         if (playPosition.equals("resign")) {
                             Log.d(Logger, "引擎认输");
+                            result[0] = "引擎认输";
                             msg.what = ResponseCode.ENGINE_RESIGN.getCode();
                         } else if (playPosition.equals("pass")) {
                             Log.d(Logger, "引擎停一手");
+                            result[0] = "引擎停一手";
                             msg.what = ResponseCode.ENGINE_PASS.getCode();
                         } else {
                             msg.what = ResponseCode.ENGINE_PLAY_SUCCESSFULLY.getCode();
+                            result[0] = playPosition;
                         }
-                        result[0] = playPosition;
                     } else {
                         msg.what = ResponseCode.ENGINE_PLAY_FAILED.getCode();
                         Log.d(Logger, "引擎gen move 失败");
@@ -232,6 +234,7 @@ public class EngineInterface {
                     handler.sendMessage(msg);
                 } catch (JSONException e) {
                     Log.d(Logger, e.toString());
+                    result[0] = "failed";
                 }
                 cdl.countDown();
             }
