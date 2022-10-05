@@ -43,11 +43,14 @@ public class EngineInterface {
     }
 
     public void clearBoard() {
+        CountDownLatch cdl = new CountDownLatch(1);
         String json = JsonUtil.getCmd2JsonForm(userName, "clear_board");
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                cdl.countDown();
+                Log.e(Logger, "clearBoard:" + e.getMessage());
             }
 
             @Override
@@ -59,12 +62,18 @@ public class EngineInterface {
                     int code = jsonObject.getInt("code");
                     if (code == 1000) {
                         Log.d(Logger, "清空棋盘...Done");
+                        cdl.countDown();
                     }
                 } catch (JSONException e) {
-                    Log.d(TAG, e.toString());
+                    Log.d(Logger, "clear_board JsonException" + e.getMessage());
                 }
             }
         });
+        try {
+            cdl.await();
+        } catch (InterruptedException e) {
+            Log.e(Logger, e.getMessage());
+        }
     }
 
     /**
@@ -76,7 +85,7 @@ public class EngineInterface {
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/init", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.e(Logger, e.getMessage());
+                Log.e(Logger, "初始化引擎出错:" + e.getMessage());
             }
 
             @Override
@@ -98,25 +107,28 @@ public class EngineInterface {
                     // TODO: 后期应该改为状态展示的方式，在页面上展示引擎连接状态，比如一个绿灯
                     handler.sendMessage(msg);
                 } catch (JSONException e) {
-                    Log.d(Logger, e.toString());
+                    Log.d(Logger, "初始化引擎JsonException:" + e.getMessage());
                 }
             }
         });
     }
 
     public void closeEngine() {
-        String json = JsonUtil.getCmd2JsonForm(userName, "quit");
+        CountDownLatch cdl = new CountDownLatch(1);
+        String json = JsonUtil.getCmd2JsonForm(userName, "close");
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.e(Logger, e.getMessage());
+                Log.e(Logger, "关闭引擎出错：" + e.getMessage());
+                cdl.countDown();
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 String responseData = Objects.requireNonNull(response.body()).string();
                 try {
+                    cdl.countDown();
                     JSONObject jsonObject = new JSONObject(responseData);
                     int code = jsonObject.getInt("code");
                     if (code == 1000) {
@@ -125,10 +137,15 @@ public class EngineInterface {
                         Log.d(Logger, "关闭引擎失败");
                     }
                 } catch (JSONException e) {
-                    Log.d(Logger, e.toString());
+                    Log.d(Logger, "关闭引擎Json格式错误：" + e.getMessage());
                 }
             }
         });
+        try {
+            cdl.await();
+        } catch (InterruptedException e) {
+            Log.e(Logger, e.getMessage());
+        }
     }
 
     public String sendIndexes2Engine(String jsonInfo) {
@@ -179,7 +196,7 @@ public class EngineInterface {
         try {
             cdl.await();
         } catch (InterruptedException e) {
-            Log.d(Logger, e.getMessage());
+            Log.e(Logger, e.getMessage());
         }
         return result[0];
     }
@@ -242,17 +259,20 @@ public class EngineInterface {
         try {
             cdl.await();
         } catch (InterruptedException e) {
-            Log.d(Logger, e.getMessage());
+            Log.e(Logger, e.getMessage());
         }
         return result[0];
     }
 
     public void showBoard() {
+        CountDownLatch cdl = new CountDownLatch(1);
         String json = JsonUtil.getJsonFormOfShowBoard(userName);
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.d(Logger, "展示棋盘错误：" + e.getMessage());
+                cdl.countDown();
             }
 
             @Override
@@ -269,10 +289,16 @@ public class EngineInterface {
                         Log.d(Logger, "展示棋盘失败");
                     }
                 } catch (JSONException e) {
-                    Log.d(Logger, e.toString());
+                    Log.d(Logger, "展示棋盘Json异常：" + e.getMessage());
                 }
+                cdl.countDown();
             }
         });
+        try {
+            cdl.await();
+        } catch (InterruptedException e) {
+            Log.d(Logger, e.getMessage());
+        }
     }
 
     /**

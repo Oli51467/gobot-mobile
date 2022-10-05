@@ -60,6 +60,7 @@ import org.opencv.core.Mat;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 public class DetectBoardActivity extends AppCompatActivity implements View.OnClickListener {
@@ -67,6 +68,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public static final int BLANK = 0, BLACK = 1, WHITE = 2, WIDTH = 20, HEIGHT = 20, THREAD_NUM = 19, SINGLE_THREAD_TASK = 19;
     public static final int BOARD_WIDTH = 1000, BOARD_HEIGHT = 1000, INFO_WIDTH = 880, INFO_HEIGHT = 350;
     public static final String Logger = "djnxyxy";
+
     private final Context mContext = this;
 
     public static boolean init = true;
@@ -74,26 +76,18 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
     private String userName, playPosition, blackPlayer, whitePlayer, komi, rule, engine;
     private ImageView playView, playerInfoView, boardView;
-
     private Bitmap[][] bitmapMatrix;
     private Bitmap boardBitmap, bitmap4PlayerInfo, bitmap4PlayInfo;
-
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+    private PreviewView previewView;
+    private ProcessCameraProvider cameraProvider;
     public int[][] curBoard;
     public int[][] lastBoard;
-
     public Board board;
     public Point lastMove;
-
     public EngineInterface engineInterface;
-
     // 蓝牙服务
     protected BluetoothService bluetoothService;
-
-    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
-
-    private PreviewView previewView;
-
-    private ProcessCameraProvider cameraProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,9 +140,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     imageProxy.close();
                 }
                 @Override
-                public void onError(@NonNull ImageCaptureException exception) {
-                    super.onError(exception);
-                    Log.e(Logger, exception.getMessage());
+                public void onError(@NonNull ImageCaptureException e) {
+                    super.onError(e);
+                    Log.e(Logger, "拍照失败，错误：" + e.getMessage());
                 }
             });
         } else if (vid == R.id.btn_exit) {
@@ -163,12 +157,12 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     }
 
     public void undo() {
-        board.undo();
+        if (!board.undo()) return;
         lastBoard = board.gameRecord.getLastTurn().boardState;
         lastMove = board.getPoint(board.gameRecord.getLastTurn().x, board.gameRecord.getLastTurn().y);
         if (lastMove == null) playPosition = "";
         else playPosition = getPositionByIndex(lastMove.getX(), lastMove.getY());
-        Log.d(Logger, board.toString());
+        Log.d(Logger, "undo后的棋盘：" + board.toString());
         beginDrawing();
     }
 
@@ -182,7 +176,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 // 选择相机并绑定生命周期和用例
                 bindPreview(cameraProvider);
             } catch (ExecutionException | InterruptedException e) {
-                Log.e(Logger, e.getMessage());
+                Log.e(Logger, "start camera failed: " + e.getMessage());
             }
         }, ContextCompat.getMainExecutor(this));
     }
@@ -244,10 +238,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             };
             threadPool.execute(runnable);
         }
-
         Pair<Integer, Integer> move = getMoveByDiff();
         if (move == null) {
-            Log.d(Logger, "未落子");
+            Log.i(Logger, "未落子");
             playPosition = "未检测到落子";
             Bitmap bitmap4PlayInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
             Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, 0, playPosition);
@@ -260,8 +253,14 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             Player player = board.getPlayer();
             // 可以落子
             if (board.play(moveX, moveY, player)) {
-                Log.d(Logger, "合法落子");
-                Log.d(Logger, "落子后： \n" + board.toString());
+                // 落子后被吃掉的棋子
+                Set<Point> capturedStones = board.capturedStones;
+                // 吃子结果
+                Log.d(Logger, "被吃掉的棋子位置：");
+                for (Point capturedStone : capturedStones) {
+                    Log.i(Logger, capturedStone.getX() + "" + capturedStone.getY());
+                }
+                Log.d(Logger, "落子后的棋盘： \n" + board.toString());
                 board.nextPlayer();
                 // TODO 当前这里发送给引擎是通过共享变量 lastMove传递的
                 GameTurn lastTurn = board.gameRecord.getLastTurn();
@@ -269,7 +268,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 lastMove = board.getPoint(lastTurn.x, lastTurn.y);
                 beginDrawing();
                 conn2Engine(getApplicationContext());
-                Log.d(Logger, lastTurn.x + " " + lastTurn.y);
+                Log.d(Logger, "lastTurn上一步：" + lastTurn.x + " " + lastTurn.y);
             } else {
                 Log.e(Logger, "这里不可以落子");
                 curBoard[moveX][moveY] = BLANK;
@@ -299,7 +298,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public void conn2Engine(Context context) {
         String playCmd = genPlayCmd(lastMove);
         String jsonInfo = JsonUtil.getJsonFormOfPlayIndex(userName, playCmd);
-        Log.d(Logger, "json: " + jsonInfo);
+        Log.d(Logger, "手动走棋指令json格式的数据: " + jsonInfo);
         Log.i(Logger, playCmd);
         // 将指令发送给围棋引擎
 
@@ -312,7 +311,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             } else if (identifier == Board.WHITE_STONE) {
                 json = JsonUtil.getJsonFormOfgenMove(userName, "B");
             }
-            Log.d(Logger, "json: " + json);
+            Log.d(Logger, "引擎走棋指令json格式的数据: " + json);
             String genMoveResult = engineInterface.genMove(json);
             if (!genMoveResult.equals("failed") && !genMoveResult.equals("")) {
                 playPosition = genMoveResult;

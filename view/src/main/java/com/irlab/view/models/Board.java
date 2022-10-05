@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import androidx.annotation.NonNull;
 
 import java.io.Serializable;
-import java.security.InvalidParameterException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -13,7 +12,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Stack;
 
 import onion.w4v3xrmknycexlsd.lib.sgfcharm.BuildConfig;
 
@@ -26,18 +24,17 @@ public class Board implements Serializable {
     private final int height;
     public final Point[][] points;
     public List<Point> recordPoints;
+    public Set<Point> capturedStones;
     private final int initialHandicap;
     public final GameRecord gameRecord;
 
     private Player P1, P2, actualPlayer;
     private int handicap;
-    private int successivePassCount;
 
     public Board(int width, int height, int handicap) {
         this.width = width;
         this.height = height;
         this.initialHandicap = handicap;
-        this.successivePassCount = 0;
         this.points = new Point[width + 1][height + 1];
         this.gameRecord = new GameRecord(width, height);
         this.recordPoints = new ArrayList<>();
@@ -60,7 +57,7 @@ public class Board implements Serializable {
     }
 
     public boolean isInBoard(int x, int y) {
-        return (x > 0 && x <= width && y > 0 && y <= height);
+        return (x > 0 && x < width && y > 0 && y < height);
     }
 
     public boolean isInBoard(Point Point) {
@@ -93,7 +90,7 @@ public class Board implements Serializable {
         if (point.getGroup() != null) return false;
 
         // 为判断打劫 要记录吃掉的棋子和吃掉的组
-        Set<Point> capturedStones = new HashSet<>();
+        capturedStones = new HashSet<>();
         Set<Group> capturedGroups = new HashSet<>();
 
         Set<Group> adjGroups = point.getAdjacentGroups();
@@ -159,11 +156,6 @@ public class Board implements Serializable {
         return actualPlayer;
     }
 
-    public Player getLastPlayer() {
-        if (actualPlayer == P1) return P2;
-        else return P1;
-    }
-
     public boolean nextPlayer() {
         return changePlayer(false);
     }
@@ -199,7 +191,6 @@ public class Board implements Serializable {
             takeGameTurn(last, P1, P2);
             actualPlayer.removeCapturedStones(current.getCountCapturedStones());
             precedentPlayer();
-            successivePassCount = last.getPassCount();
             return true;
         } else {
             return false;
@@ -222,17 +213,12 @@ public class Board implements Serializable {
     }
 
     public void freeIntersections() {
-        for (int i = 1; i <= 19; i ++ ) {
-            for (int j = 1; j <= 19; j ++ ) {
+        for (int i = 1; i < width; i ++ ) {
+            for (int j = 1; j < height; j ++ ) {
                 Point point = getPoint(i, j);
                 point.setGroup(null);
             }
         }
-/*        for (Point[] intersectionColumn : points) {
-            for (Point intersection : intersectionColumn) {
-                intersection.setStoneChain(null);
-            }
-        }*/
     }
 
     @NonNull
