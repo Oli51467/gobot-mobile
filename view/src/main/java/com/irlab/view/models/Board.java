@@ -225,8 +225,8 @@ public class Board implements Serializable {
     @Override
     public String toString() {
         StringBuilder board = new StringBuilder();
-        for (int i = 1; i <= width; i++) {
-            for (int j = 1; j <= height; j++) {
+        for (int i = 1; i < width; i++) {
+            for (int j = 1; j < height; j++) {
                 Point cross = points[i][j];
                 if (cross.getGroup() == null) {
                     board.append("· ");
