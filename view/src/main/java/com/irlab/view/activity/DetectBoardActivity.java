@@ -268,7 +268,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 lastMove = board.getPoint(lastTurn.x, lastTurn.y);
                 beginDrawing();
                 conn2Engine(getApplicationContext());
-                Log.d(Logger, "lastTurn上一步：" + lastTurn.x + " " + lastTurn.y);
             } else {
                 Log.e(Logger, "这里不可以落子");
                 curBoard[moveX][moveY] = BLANK;
@@ -320,8 +319,10 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
                     // 将引擎下的棋走上 并更新棋盘信息
                     board.play(enginePlay.second, enginePlay.first, board.getPlayer());
-                    lastBoard = board.gameRecord.getLastTurn().boardState;
-                    lastMove = board.getPoint(board.gameRecord.getLastTurn().x, board.gameRecord.getLastTurn().y);
+                    GameTurn lastTurn = board.gameRecord.getLastTurn();
+                    lastBoard = lastTurn.boardState;
+                    Log.d(Logger, "lastMove上一步：" + lastTurn.x + " " + lastTurn.y);
+                    lastMove = board.getPoint(lastTurn.x, lastTurn.y);
                     board.nextPlayer();
                 }
                 beginDrawing();

@@ -1,6 +1,7 @@
 package com.irlab.base.utils;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -23,7 +24,7 @@ public class HttpUtil {
     // 使用POST方式向服务器提交数据并获取返回提示数据
     public static void sendOkHttpResponse(final String address,
                                           final RequestBody requestBody, final Callback callback) {
-        OkHttpClient client = new OkHttpClient();
+        OkHttpClient client = new OkHttpClient.Builder().readTimeout(30, TimeUnit.SECONDS).build();
         // JSONObject这里是要提交的数据部分
         Request request = new Request.Builder()
                 .url(address)
