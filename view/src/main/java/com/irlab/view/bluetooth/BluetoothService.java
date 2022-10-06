@@ -75,13 +75,18 @@ public class BluetoothService {
             if (bluetoothAdapter.isEnabled()) {
                 Toast.makeText(mContext, "手机蓝牙已开启", Toast.LENGTH_SHORT).show();
             } else {
+                // 如果手机蓝牙未开启，则开启手机蓝牙
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 mContext.startActivity(enableBtIntent);
             }
         }
     }
 
-    // 蓝牙设备可被发现的时间
+
+    /**
+     * 蓝牙设备可被发现的时间
+     * 原来是 bluetooth activity 初始化时候进行调用,先改为不调用
+     */
     @SuppressLint("MissingPermission")
     public void ensureDiscoverable() {
         if (bluetoothAdapter.getScanMode() != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
@@ -174,6 +179,10 @@ public class BluetoothService {
         }
     }
 
+    /**
+     * 定义广播接收器
+     * 接收并改变蓝牙状态信息
+     */
     @SuppressLint("MissingPermission")
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -200,20 +209,27 @@ public class BluetoothService {
     };
 
 
-    // 注册蓝牙广播过滤器
+    /**
+     * 注册蓝牙广播过滤器
+     * 在初始化蓝牙 init bluetooth 时候调用
+     */
     @SuppressLint("MissingPermission")
     public void RegisterBroadcast() {
         Log.d("Register", "注册广播");
         IntentFilter bluetoothIntent = new IntentFilter();
         bluetoothIntent.addAction(BluetoothDevice.ACTION_FOUND);
-        bluetoothIntent.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        bluetoothIntent.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        // 注册广播这里先取消下面两个action
+        // bluetoothIntent.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        // bluetoothIntent.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         Log.d("Register", "广播信息过滤注册");
         mContext.registerReceiver(broadcastReceiver, bluetoothIntent);
         bluetoothAdapter.startDiscovery();
     }
 
-    // 注销蓝牙广播
+    /**
+     * 注销蓝牙广播
+     * 在bluetooth activity destroy 时调用
+     */
     @SuppressLint("MissingPermission")
     public void deleteBroadcast() {
         if (bluetoothAdapter == null) {

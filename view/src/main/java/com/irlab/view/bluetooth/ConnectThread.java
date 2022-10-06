@@ -38,7 +38,8 @@ public class ConnectThread extends Thread {
 
         //1、获取bluetoothSocket
         try {
-            tmp = bluetoothDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString(uuid));
+            // tmp = bluetoothDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString(uuid));
+            tmp = bluetoothDevice.createRfcommSocketToServiceRecord(UUID.fromString(uuid));
         } catch (IOException e) {
             Log.e(TAG, "ConnectThread-->获取BluetoothSocket异常!" + e.getMessage());
         }

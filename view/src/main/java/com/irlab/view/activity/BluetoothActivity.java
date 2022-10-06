@@ -100,10 +100,15 @@ public class BluetoothActivity extends AppCompatActivity implements View.OnClick
     public void initBluetooth() {
         deviceAdapter = new DeviceAdapter(this);
         bluetoothService = new BluetoothService(this, deviceAdapter, this, handler);
+
+        // 候选清空列表
         bluetoothService.initBluetooth();
-        bluetoothService.ensureDiscoverable();
+        // 不用确保本机蓝牙的可见性
+        // bluetoothService.ensureDiscoverable();
         bluetoothService.RegisterBroadcast();
-        bluetoothService.disBondAllDevices();
+
+        // 该方法不能调用，不能每次都将已经绑定过的删除，这样用户绑定的其他设备也会没了
+        // bluetoothService.disBondAllDevices();
     }
 
     // 可用设备列表
