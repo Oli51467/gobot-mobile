@@ -133,6 +133,16 @@ public class BluetoothService {
 
     @SuppressLint("MissingPermission")
     public void prepareConnect(BluetoothDevice device, boolean isClick) {
+
+        if (device.getBondState() == BluetoothDevice.BOND_BONDED && !isClick){
+            // 已经匹配，并且上次练过，直接连接
+            // 数据库存储蓝牙设备信息
+            SharedPreferences.Editor editor = mContext.getSharedPreferences("device", MODE_PRIVATE).edit();
+            editor.putString("last_connected_address", device.getAddress());
+            editor.apply();
+            // 开始连接
+            startConnectDevice(device, MY_BLUETOOTH_UUID);
+        }
         if (device.getBondState() == BluetoothDevice.BOND_NONE) {
             createOrRemoveBond(CREATE_BOND, device);    // 建立匹配
             //数据库存储蓝牙设备信息
