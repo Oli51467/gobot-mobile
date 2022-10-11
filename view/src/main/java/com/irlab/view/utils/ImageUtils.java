@@ -53,14 +53,13 @@ public class ImageUtils {
     public static Bitmap[][] splitImage(Bitmap rawBitmap, int piece) {
 
         Bitmap[][] bitmapMatrix = new Bitmap[piece + 1][piece + 1];
-        int unitHeight = rawBitmap.getHeight() / piece;
-        int unitWidth = rawBitmap.getWidth() / piece;
+        int unitHeight = rawBitmap.getHeight() / 19;
+        int unitWidth = rawBitmap.getWidth() / 19;
         Bitmap unitBitmap;
-        for (int i = 0; i < piece; i++) {
-            for (int j = 0; j < piece; j++) {
+        for (int i = 0; i < 19; i++) {
+            for (int j = 0; j < 19; j++) {
                 unitBitmap = Bitmap.createBitmap(rawBitmap, j * unitWidth, i * unitHeight, unitWidth, unitHeight);
                 bitmapMatrix[i + 1][j + 1] = unitBitmap;
-                // save_bitmap(unitBitmap, i + "-" + j);
             }
         }
         return bitmapMatrix;
@@ -74,8 +73,8 @@ public class ImageUtils {
      * @return 透视变化后的图像
      */
     public static Mat imagePerspectiveTransform(Mat originImage, Mat cornerPoints) {
-        int x = 1920;
-        int y = 1920;
+        int x = 4256;
+        int y = 4256;
 
         Mat resultImage = new Mat(y, x, originImage.type());
         Mat resultCorners = new Mat(4, 1, CvType.CV_32FC2);

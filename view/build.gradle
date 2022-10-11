@@ -55,7 +55,7 @@ android {
     sourceSets {
         main {
             assets {
-                srcDirs 'src/main/assets', 'src/main/assets/image'
+                srcDirs 'src/main/assets'
             }
         }
     }
@@ -104,6 +104,9 @@ dependencies {
     implementation "androidx.camera:camera-view:1.0.0-alpha31"
     implementation "androidx.camera:camera-extensions:1.0.0-alpha31"
     implementation "de.hdodenhof:circleimageview:3.0.1" // 开源项目 CircleImageView 轻松实现图片圆形化的功能
+    // pytorch
+    implementation 'org.pytorch:pytorch_android_lite:1.9.0'
+    implementation 'org.pytorch:pytorch_android_torchvision:1.9.0'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

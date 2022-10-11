@@ -98,8 +98,6 @@ JNIEXPORT jstring JNICALL Java_com_irlab_base_SqueezeNcnn_Detect(JNIEnv* env, jo
         return env->NewStringUTF("no vulkan capable gpu");
     }
 
-    double start_time = ncnn::get_current_time();
-
     AndroidBitmapInfo info;
     AndroidBitmap_getInfo(env, bitmap, &info);
 
@@ -125,8 +123,6 @@ JNIEXPORT jstring JNICALL Java_com_irlab_base_SqueezeNcnn_Detect(JNIEnv* env, jo
 
         ncnn::Mat out;
         ex.extract(res_param_id::BLOB_output, out);
-
-
 
         cls_scores.resize(out.w);
         for (int j=0; j<out.w; j++)
@@ -160,26 +156,13 @@ JNIEXPORT jstring JNICALL Java_com_irlab_base_SqueezeNcnn_Detect(JNIEnv* env, jo
     for (int i = 0; i < size; i++)
     {
         vec[i] = std::make_pair(cls_scores[i],class_names[i]);
-
     }
 
-
     std::sort(vec.begin(), vec.end(),std::greater<std::pair<float,std::string>>());
-
-    char tmp[32];
-    sprintf(tmp, "%.1f", vec[0].first*100);
-
-    double elasped = ncnn::get_current_time() - start_time;
-
-    char time[32];
-    sprintf(time, "%.1fms",elasped);
-
     std::string result_str = vec[0].second;
-
 
     jstring result = env->NewStringUTF(result_str.c_str());
 
-//
 //    // return top class
 //    int top_class = 0;
 //    float max_score = 0.f;

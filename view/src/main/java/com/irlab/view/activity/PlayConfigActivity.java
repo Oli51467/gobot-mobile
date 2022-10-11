@@ -1,6 +1,8 @@
 package com.irlab.view.activity;
 
 import static com.irlab.base.MyApplication.SERVER;
+import static com.irlab.base.MyApplication.T;
+import static com.irlab.base.utils.ViewUtil.initWindow;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,6 +22,7 @@ import android.widget.TextView;
 
 import com.irlab.base.MyApplication;
 import com.irlab.base.entity.CellData;
+import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.MainView;
@@ -37,6 +39,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -47,20 +50,14 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
     public static final String TAG = PlayConfigActivity.class.getName();
 
     private RecyclerView mRecyclerView = null;
-
     private RecyclerViewAdapter mAdapter = null;
-
-    // 每一条数据都是一个CellData实体 放到list中
-    public List<CellData> list = new ArrayList<>();
-
-    private SharedPreferences sharedPreferences;
+    public List<CellData> configList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_play_config);
-        getSupportActionBar().hide();
-        sharedPreferences = MyApplication.getInstance().preferences;
+        Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
         initData();
     }
 
@@ -78,17 +75,17 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
 
     // 初始化数据
     private void initData() {
-        list = new ArrayList<>();
+        configList = new ArrayList<>();
         // 从数据库拿到所有已经配置好的配置信息
-        String userName = sharedPreferences.getString("userName", null);
+        String userName = MyApplication.getInstance().preferences.getString("userName", null);
         HttpUtil.sendOkHttpRequest( SERVER + "/api/getPlayConfig?userName=" + userName, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-
+                Log.e(TAG, "获取config信息失败:" + e.getMessage());
             }
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = response.body().string();
+                String responseData = Objects.requireNonNull(response.body()).string();
                 addCellDataToList(responseData);
             }
         });
@@ -112,7 +109,7 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
     @Override
     public void onItemClickListener(View view, int position) {
         // 根据点击的位置 先拿到CellData 通过CellData拿到该配置信息的id
-        CellData cellData = list.get(position);
+        CellData cellData = configList.get(position);
         Intent intent = new Intent(this, EditConfigActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         // 通过bundle向下一个activity传递一个对象 该对象必须先实现序列化接口
@@ -137,7 +134,7 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
                 .setWindowAnimations(R.style.dialog_style)
                 // 删除一条选中的数据 根据position拿到对应的cellData 再拿到配置的id
                 .setConformButton("删除", () -> {
-                    CellData cellData = list.get(position);
+                    CellData cellData = configList.get(position);
                     Long id = cellData.getId();
                     HttpUtil.sendOkHttpDelete(SERVER + "/api/deletePlayConfig?id=" + id, new Callback() {
                         @Override
@@ -172,10 +169,10 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
                 int cKomi = jsonObject.getInt("komi");
                 int cRule = jsonObject.getInt("rule");
                 CellData cellData = new CellData(cid, cPlayerBlack, cPlayerWhite, cEngine, cDescription, cKomi, cRule);
-                list.add(cellData);
+                configList.add(cellData);
             }
             Message msg = new Message();
-            msg.what = 1;
+            msg.what = ResponseCode.LOAD_CONFIG_SUCCESSFULLY.getCode();
             handler.sendMessage(msg);
         } catch (JSONException e) {
             Log.d(TAG, e.toString());
@@ -194,9 +191,9 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if (msg.what == 1) {
+            if (msg.what == ResponseCode.LOAD_CONFIG_SUCCESSFULLY.getCode()) {
                 // 初始化适配器 将数据填充进去
-                mAdapter = new RecyclerViewAdapter(list);
+                mAdapter = new RecyclerViewAdapter(configList);
                 initViews();
                 // 线性布局 第二个参数是容器的走向, 第三个时候反转意思就是以中间为对称轴左右两边互换。
                 LinearLayoutManager linearLayoutManager = new LinearLayoutManager(PlayConfigActivity.this, LinearLayoutManager.VERTICAL, false);

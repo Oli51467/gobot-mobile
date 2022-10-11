@@ -6,6 +6,7 @@ import com.chaquo.python.android.AndroidPlatform;
 import com.chaquo.python.Python;
 
 import static com.irlab.base.MyApplication.initEngine;
+import static com.irlab.base.utils.ViewUtil.initWindow;
 import static com.irlab.view.utils.ImageUtils.JPEGImageToByteArray;
 
 import android.annotation.SuppressLint;
@@ -21,7 +22,6 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.Surface;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
@@ -46,7 +46,6 @@ import com.irlab.view.engine.EngineInterface;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,34 +53,30 @@ import java.util.concurrent.Executors;
 public class DefineBoardPositionActivity extends AppCompatActivity implements View.OnClickListener {
 
     public static final String Logger = "djnxyxy";
-    private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
-    private final int REQUEST_CODE_PERMISSIONS = 101;
     public static final ImageCapture imageCapture = new ImageCapture.Builder()
             // .setTargetResolution(new Size(1024, 1024))
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
             .setTargetRotation(Surface.ROTATION_0)
             .setTargetAspectRatio(AspectRatio.RATIO_16_9)
             .build();
+    public static List<Pair<Double, Double>> corners = new ArrayList<>();
+
+    private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
+    private final int REQUEST_CODE_PERMISSIONS = 101;
 
     private String blackPlayer, whitePlayer, komi, rule, engine, userName;
-
     private PreviewView previewView;
-
     private ProcessCameraProvider cameraProvider;
-
     public static ExecutorService mExecutorService; // 声明一个线程池对象
-
     private Python py;
-
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
-
-    public static List<Pair<Double, Double>> corners = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_define_board_position);
-        initWindow();
+        userName = MyApplication.getInstance().preferences.getString("userName", null); // 获取 username 作为连接引擎的唯一主键
+        initWindow(this);
         initViews();
         getInfoFromActivity();
         initPython();
@@ -96,13 +91,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
         } else {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
         }
-    }
-
-    private void initWindow() {
-        Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);   // 透明状态栏
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);   // 透明导航栏
-        userName = MyApplication.getInstance().preferences.getString("userName", null); // 获取 username 作为连接引擎的唯一主键
     }
 
     private void initViews() {

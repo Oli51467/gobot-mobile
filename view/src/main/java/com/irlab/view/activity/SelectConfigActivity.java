@@ -1,6 +1,7 @@
 package com.irlab.view.activity;
 
 import static com.irlab.base.MyApplication.SERVER;
+import static com.irlab.base.utils.ViewUtil.initWindow;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,7 +13,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,7 +21,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.irlab.base.MyApplication;
 import com.irlab.base.entity.CellData;
@@ -48,27 +47,18 @@ import okhttp3.Response;
 public class SelectConfigActivity extends AppCompatActivity implements View.OnClickListener, RecyclerViewAdapter.setClick {
 
     public static final String TAG = SelectConfigActivity.class.getName();
-
     public static final int PERMISSION_REQUEST_CODE = 123;
 
     private RecyclerView mRecyclerView = null;
-
     private RecyclerViewAdapter mAdapter = null;
-
     private Button begin = null;
-
-    // 每一条数据都是一个CellData实体 放到list中
-    //TODO 对 CellData list重命名，直接用list不好
-    private List<CellData> list;
-
-    private SharedPreferences sharedPreferences;
+    private List<CellData> configList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_config);
-        Objects.requireNonNull(getSupportActionBar()).hide();
-        sharedPreferences = MyApplication.getInstance().preferences;
+        Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
         initData();
     }
 
@@ -85,13 +75,13 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
 
     // 初始化数据
     private void initData() {
-        list = new ArrayList<>();
-        String userName = sharedPreferences.getString("userName", null);
+        configList = new ArrayList<>();
+        String userName = MyApplication.getInstance().preferences.getString("userName", null);
         // 从数据库拿到所有已经配置好的配置信息
         HttpUtil.sendOkHttpRequest(SERVER + "/api/getPlayConfig?userName=" + userName, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-
+                Log.e(TAG, "初始化用户配置数据失败: " + e.getMessage());
             }
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
@@ -135,13 +125,13 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         if (!neededPermissions.isEmpty()) {
             ActivityCompat.requestPermissions(SelectConfigActivity.this, neededPermissions.toArray(new String[0]), PERMISSION_REQUEST_CODE);
         } else {
-            startDetectBoardAcitivity();
+            startDetectBoardActivity();
         }
     }
 
-    private void startDetectBoardAcitivity() {
+    private void startDetectBoardActivity() {
         // 根据点击的位置 先拿到CellData 通过CellData拿到配置信息
-        CellData cellData = list.get(mAdapter.getmPosition());
+        CellData cellData = configList.get(mAdapter.getmPosition());
         // 传递黑方、白方、贴目设置
         String blackPlayer = cellData.getPlayerBlack();
         String whitePlayer = cellData.getPlayerWhite();
@@ -164,7 +154,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startDetectBoardAcitivity();
+                startDetectBoardActivity();
             } else {
                 ToastUtil.show(this, getResources().getString(R.string.toast_camera_permission));
             }
@@ -184,7 +174,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
                 int cKomi = jsonObject.getInt("komi");
                 int cRule = jsonObject.getInt("rule");
                 CellData cellData = new CellData(cid, cPlayerBlack, cPlayerWhite, cEngine, cDescription, cKomi, cRule);
-                list.add(cellData);
+                configList.add(cellData);
             }
             Message msg = new Message();
             msg.what = ResponseCode.LOAD_CONFIG_SUCCESSFULLY.getCode();
@@ -201,7 +191,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
             super.handleMessage(msg);
             if (msg.what == ResponseCode.LOAD_CONFIG_SUCCESSFULLY.getCode()) {
                 // 初始化适配器 将数据填充进去
-                mAdapter = new RecyclerViewAdapter(list);
+                mAdapter = new RecyclerViewAdapter(configList);
                 initViews();
                 // 线性布局 第二个参数是容器的走向, 第三个时候反转意思就是以中间为对称轴左右两边互换。
                 LinearLayoutManager linearLayoutManager = new LinearLayoutManager(SelectConfigActivity.this, LinearLayoutManager.VERTICAL, false);

@@ -1,12 +1,11 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.MyApplication.ENGINES;
 import static com.irlab.base.MyApplication.JSON;
 import static com.irlab.base.MyApplication.SERVER;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -23,6 +22,8 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.irlab.base.MyApplication;
 import com.irlab.base.entity.CellData;
 import com.irlab.base.response.ResponseCode;
@@ -47,38 +48,30 @@ import okhttp3.Response;
 /*
 结构同添加配置界面
  */
-public class EditConfigActivity extends Activity implements View.OnClickListener, AdapterView.OnItemSelectedListener, RadioGroup.OnCheckedChangeListener {
+public class EditConfigActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener, RadioGroup.OnCheckedChangeListener {
 
     public static final String TAG = EditConfigActivity.class.getName();
 
-    private SharedPreferences preferences;
-
-    // 分别为选择规则的下拉列表
-    private Spinner tSpinner, engineSpinner;
-
+    private Spinner tSpinner, engineSpinner;    // 分别为选择规则的下拉列表
     private Button save = null;
-
     private EditText mPlayerBlack, mPlayerWhite, mDescription;
-
     private Map<String, Object> config;
-
     private Long id;
-
     private int posT = 0, posEngine = 0, rule = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_config);
+        Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
         // 从bundle中拿到传来的CellData
         CellData configInfo = (CellData) getIntent().getSerializableExtra("configItem");
-        preferences = MyApplication.getInstance().preferences;
         // 根据id找到对应的配置信息
         id = configInfo.getId();
         HttpUtil.sendOkHttpRequest(SERVER + "/api/getPlayConfigById?id=" + id, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-
+                Log.e(TAG, "config信息获取失败:" + e.getMessage());
             }
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
@@ -104,25 +97,29 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
 
     private void initView() {
         RadioGroup mRule = findViewById(R.id.rg_rule);
-        tSpinner = findViewById(R.id.spinner_T);
-        engineSpinner = findViewById(R.id.spinner_engine);
-        save = findViewById(R.id.btn_save);
         ImageView back = findViewById(R.id.header_back);
+        RadioButton chineseRule = findViewById(R.id.rb_chinese_rule);
+        RadioButton japaneseRule = findViewById(R.id.rb_japanese_rule);
         mPlayerBlack = findViewById(R.id.et_player_black);
         mPlayerWhite = findViewById(R.id.et_player_white);
         mDescription = findViewById(R.id.et_desc);
-        RadioButton chineseRule = findViewById(R.id.rb_chinese_rule);
-        RadioButton japaneseRule = findViewById(R.id.rb_japanese_rule);
+        tSpinner = findViewById(R.id.spinner_T);
+        engineSpinner = findViewById(R.id.spinner_engine);
+        save = findViewById(R.id.btn_save);
 
         // 设置内容
         mPlayerBlack.setText(Objects.requireNonNull(config.get("playerBlack")).toString());
         mPlayerWhite.setText(Objects.requireNonNull(config.get("playerWhite")).toString());
         mDescription.setText(Objects.requireNonNull(config.get("desc")).toString());
-        posT = (Integer) config.get("komi");
-        // ### 暂时手动判断 这里以后要看一下怎么改方便
-        if (Objects.equals(config.get("engine"), "b20")) posEngine = 0;
-        else posEngine = 1;
-        if ((Integer) config.get("rule") == 0) {
+        posT = (Integer) Objects.requireNonNull(config.get("komi"));
+        // 判断选择的是哪个段位来确定引擎
+        for (int i = 0; i < ENGINES.length; i ++ ) {
+            if (Objects.requireNonNull(config.get("engine")).equals(ENGINES[i])) {
+                posEngine = i;
+                break;
+            }
+        }
+        if ((Integer) Objects.requireNonNull(config.get("rule")) == 0) {
             chineseRule.setChecked(true);
         } else {
             japaneseRule.setChecked(true);
@@ -134,7 +131,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         mRule.setOnCheckedChangeListener(this);
     }
 
-    private void initData() {
+    private void initAdapter() {
         // 初始化适配器
         // 选择让几子的String适配器
         ArrayAdapter<String> tAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, MyApplication.T);
@@ -159,7 +156,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
         }
         else if (vid == R.id.btn_save) {
             // 获取输入框的数据
-            String userName = preferences.getString("userName", null);
+            String userName = MyApplication.getInstance().preferences.getString("userName", null);
             String playerBlack = mPlayerBlack.getText().toString();
             String playerWhite = mPlayerWhite.getText().toString();
             String desc = mDescription.getText().toString();
@@ -170,11 +167,11 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
             HttpUtil.sendOkHttpResponse(SERVER + "/api/updatePlayConfig?id=" + id, requestBody, new Callback() {
                 @Override
                 public void onFailure(@NonNull Call call, @NonNull IOException e) {
-
+                    Log.e(TAG, "配置信息保存失败" + e.getMessage());
                 }
 
                 @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                public void onResponse(@NonNull Call call, @NonNull Response response) {
                     runOnUiThread(() -> {
                         // 插入成功后跳转
                         Toast.makeText(EditConfigActivity.this, "保存成功", Toast.LENGTH_SHORT).show();
@@ -225,7 +222,7 @@ public class EditConfigActivity extends Activity implements View.OnClickListener
             if (msg.what == ResponseCode.GET_PLAY_CONFIG_SUCCESSFULLY.getCode()) {
                 // 初始化界面和数据
                 initView();
-                initData();
+                initAdapter();
                 ButtonListenerUtil.buttonEnabled(save, 0, 100,mPlayerBlack, mPlayerWhite, mDescription);
                 ButtonListenerUtil.buttonChangeColor(0, 100, EditConfigActivity.this, save, mPlayerBlack, mPlayerWhite, mDescription);
             }

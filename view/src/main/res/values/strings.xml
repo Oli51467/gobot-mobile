@@ -20,10 +20,10 @@
     <string name="instructions_title">使用说明</string>
     <string name="instructions_paragraph1">一、单击对局设置按钮，添加并保存您常用的对局信息。单击您所添加的对局信息可以进行编辑，长按您所添加的对局信息可以进行删除。</string>
     <string name="instructions_paragraph2">二、添加对局设置后，单击开始对弈按钮，在所展示的已添加的对局设置中选择您所希望条目进行对弈。</string>
-    <string name="instructions_paragraph3">三、单击开始后，调整您的手机。让它的摄像头可以完整地看到围棋棋盘。视角越高越好，并在红色边框与围棋棋盘完全重合时，保持静止状态并单击OK。</string>
-    <string name="instructions_paragraph4">四、接下来正式开始对弈，该应用程序将开始检测落子动作。当检测到落子时，应用程序会发出哔声，并在左下图中显示检测到的落子位置。在整个过程中，尽可能地保持手机处于绝对静止状态，因为任何不必要的移动都可能造成检测的偏差。</string>
-    <string name="instructions_paragraph5">五、如果发现错误的移动，请单击界面上的“左箭头”按钮，然后让应用进行重新检测。</string>
-    <string name="instructions_paragraph6">六、若发现棋盘的相对位置错误，请单击界面上的“向左旋转”或“向右旋转”按钮，将棋盘旋转以调整到正确的位置。或单击棋盘按钮将边框移动到最开始的位置。</string>
-    <string name="instructions_paragraph7">七、结束录制后，您的游戏将保存在移动设备文件系统中名为“archive_recorder”的文件夹中。</string>
+    <string name="instructions_paragraph3">三、单击开始后，调整您的手机。让它的摄像头可以完整地看到围棋棋盘的四个角。视角越高越好，当系统检测到棋盘后，会自动跳转到虚拟棋盘界面。</string>
+    <string name="instructions_paragraph4">四、接下来正式开始对弈，该应用程序将开始检测落子动作。当检测到落子时，应用程序会在棋盘上显示检测到的落子位置。在整个过程中，尽可能地保持手机处于绝对静止状态，因为任何不必要的移动都可能造成检测的偏差。</string>
+    <string name="instructions_paragraph5"></string>
+    <string name="instructions_paragraph6"></string>
+    <string name="instructions_paragraph7"></string>
     <string name="setting">设置</string>
 </resources>

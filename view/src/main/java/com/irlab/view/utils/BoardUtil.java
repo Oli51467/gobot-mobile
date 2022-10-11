@@ -1,6 +1,10 @@
 package com.irlab.view.utils;
 
 
+import static com.irlab.view.activity.DetectBoardActivity.BLANK;
+import static com.irlab.view.activity.DetectBoardActivity.HEIGHT;
+import static com.irlab.view.activity.DetectBoardActivity.WIDTH;
+
 import android.util.Log;
 import android.util.Pair;
 
@@ -40,5 +44,21 @@ public class BoardUtil {
             cnt ++;
         }
         return new Pair<>(cnt, 20 - Integer.parseInt(number));
+    }
+
+    /**
+     * 通过比较现在的棋盘和上一个棋盘获得落子位置
+     */
+    public static Pair<Integer, Integer> getMoveByDiff(int[][] lastBoard, int[][] curBoard, Board board) {
+        Pair<Integer, Integer> move;
+        for (int i = 1; i <= WIDTH; i++) {
+            for (int j = 1; j <= HEIGHT; j++) {
+                if (lastBoard[i][j] == BLANK && curBoard[i][j] != BLANK && curBoard[i][j] == board.getPlayer().getIdentifier()) {
+                    move = new Pair<>(i, j);
+                    return move;
+                }
+            }
+        }
+        return null;
     }
 }

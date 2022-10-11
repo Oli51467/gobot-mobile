@@ -17,12 +17,12 @@ import java.util.List;
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> implements View.OnClickListener, View.OnLongClickListener {
 
     // 数据容器
-    private List<CellData> list;
+    private List<CellData> configList;
 
     private int mPosition = -1;
 
-    public RecyclerViewAdapter(List<CellData> list) {
-        this.list = list;
+    public RecyclerViewAdapter(List<CellData> configList) {
+        this.configList = configList;
     }
 
     private setClick onItemClickListener;
@@ -32,7 +32,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         private final ImageView check;
-        private final TextView playerBlack, playerWhite, desc, rule;
+        private final TextView playerBlack, playerWhite, level, rule;
         private final View root;
 
         public ViewHolder(View root) {
@@ -42,13 +42,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             playerBlack = root.findViewById(R.id.tv_player_black);
             playerWhite = root.findViewById(R.id.tv_player_white);
             rule = root.findViewById(R.id.tv_rule);
-            desc = root.findViewById(R.id.tv_desc);
+            level = root.findViewById(R.id.tv_level);
         }
     }
 
     @Override
     public int getItemCount() {
-        return list.size();
+        return configList.size();
     }
 
     public int getmPosition() { return this.mPosition; }
@@ -59,12 +59,12 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         // 双方信息
-        holder.playerBlack.setText(list.get(position).getPlayerBlack().trim());
-        holder.playerWhite.setText(list.get(position).getPlayerWhite().trim());
-        // description
-        holder.desc.setText(list.get(position).getDesc().trim());
+        holder.playerBlack.setText(configList.get(position).getPlayerBlack().trim());
+        holder.playerWhite.setText(configList.get(position).getPlayerWhite().trim());
+        // 段位信息
+        holder.level.setText(configList.get(position).getEngine().trim());
         // 规则
-        holder.rule.setText(list.get(position).getRule() == 0 ? "中国规则" : "日本规则");
+        holder.rule.setText(configList.get(position).getRule() == 0 ? "中国规则" : "日本规则");
         // 设置tag
         holder.root.setTag(position);
         if (position == getmPosition()) {

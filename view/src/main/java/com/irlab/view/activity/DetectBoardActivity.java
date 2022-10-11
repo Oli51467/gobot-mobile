@@ -6,7 +6,9 @@ import static com.irlab.base.MyApplication.threadPool;
 import static com.irlab.view.activity.DefineBoardPositionActivity.corners;
 import static com.irlab.view.activity.DefineBoardPositionActivity.imageCapture;
 import static com.irlab.view.activity.DefineBoardPositionActivity.mExecutorService;
+import static com.irlab.view.utils.AssetsUtil.getFileFromAssets;
 import static com.irlab.view.utils.BoardUtil.genPlayCmd;
+import static com.irlab.view.utils.BoardUtil.getMoveByDiff;
 import static com.irlab.view.utils.BoardUtil.getPositionByIndex;
 import static com.irlab.view.utils.BoardUtil.transformIndex;
 import static com.irlab.view.utils.ImageUtils.JPEGImageToBitmap;
@@ -57,10 +59,18 @@ import com.irlab.view.utils.JsonUtil;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.pytorch.IValue;
+import org.pytorch.LiteModuleLoader;
+import org.pytorch.MemoryFormat;
+import org.pytorch.Module;
+import org.pytorch.Tensor;
+import org.pytorch.torchvision.TensorImageUtils;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
 public class DetectBoardActivity extends AppCompatActivity implements View.OnClickListener {
@@ -68,6 +78,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public static final int BLANK = 0, BLACK = 1, WHITE = 2, WIDTH = 20, HEIGHT = 20, THREAD_NUM = 19, SINGLE_THREAD_TASK = 19;
     public static final int BOARD_WIDTH = 1000, BOARD_HEIGHT = 1000, INFO_WIDTH = 880, INFO_HEIGHT = 350;
     public static final String Logger = "djnxyxy";
+    public static String[] STONE_CLASSES = new String[]{"black", "blank", "white",};
 
     private final Context mContext = this;
 
@@ -89,13 +100,15 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     // 蓝牙服务
     protected BluetoothService bluetoothService;
 
+    Module module = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_battle_info);
         Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
-        OpenCVLoader.initDebug();
+        initLoaders();
         initArgs();
         initViews();
         initBoard();
@@ -134,7 +147,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     assert image != null;
                     Bitmap bitmap = adjustPhotoRotation(JPEGImageToBitmap(image), 0);
                     Utils.bitmapToMat(bitmap, originBoard);
-                    runOnUiThread(() -> ToastUtil.show(mContext, "请稍后..."));
                     identifyChessboardAndGenMove(originBoard);
                     Log.d(Logger, "图像捕获成功");
                     imageProxy.close();
@@ -166,7 +178,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         beginDrawing();
     }
 
-    @SuppressLint("RestrictedApi")
     public void startCamera() {
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
@@ -182,7 +193,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     }
 
     @SuppressLint({"RestrictedApi", "UnsafeOptInUsageError"})
-    void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
+    public void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
         cameraProvider.unbindAll();
         // 绑定Preview
         Preview preview = new Preview.Builder().build();
@@ -192,10 +203,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         CameraSelector cameraSelector = new CameraSelector.Builder()
                 .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                 .build();
-        /*将预览流渲染到目标 View 上
-        PERFORMANCE 是默认模式。PreviewView 会使用 SurfaceView 显示视频串流，但在某些情况下会回退为使用 TextureView。
-        SurfaceView 具有专用的绘图界面，该对象更有可能通过内部硬件合成器实现硬件叠加层，尤其是当预览视频上面没有其他界面元素（如按钮）时。
-        通过使用硬件叠加层进行渲染，视频帧会避开 GPU 路径，从而能降低平台功耗并缩短延迟时间。*/
         previewView.setImplementationMode(PreviewView.ImplementationMode.PERFORMANCE);
         // 缩放类型
         previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
@@ -234,11 +241,48 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     } else {
                         curBoard[i][j] = BLANK;
                     }
+                    /*// 准备输入张量
+                    // bitmapToFloat32Tensor creates tensors in the torchvision format using Bitmap as a source.
+                    Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(
+                            bitmapMatrix[i][j],
+                            TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
+                            TensorImageUtils.TORCHVISION_NORM_STD_RGB,
+                            MemoryFormat.CHANNELS_LAST);
+
+                    // running the model
+                    Tensor outputTensor = module.forward(IValue.from(inputTensor)).toTensor();
+
+                    // getting tensor content as java array of floats
+                    final float[] scores = outputTensor.getDataAsFloatArray();
+
+                    // searching for the index with maximum score
+                    float maxScore = -Float.MAX_VALUE;
+                    int maxScoreIdx = -1;
+                    for (int k = 0; k < scores.length; k++) {
+                        if (scores[k] > maxScore) {
+                            maxScore = scores[k];
+                            maxScoreIdx = k;
+                        }
+                    }
+                    if (maxScoreIdx == -1) {
+                        for (int u = 0; u < scores.length; u ++ ) {
+                            Log.e(Logger, scores[u] + "\n");
+                        }
+                        break;
+                    }
+                    String resultClass = STONE_CLASSES[maxScoreIdx];
+                    if (resultClass.equals("black")) {
+                        curBoard[i][j] = BLACK;
+                    } else if (resultClass.equals("white")) {
+                        curBoard[i][j] = WHITE;
+                    } else if (resultClass.equals("blank")) {
+                        curBoard[i][j] = BLANK;
+                    }*/
                 }
             };
             threadPool.execute(runnable);
         }
-        Pair<Integer, Integer> move = getMoveByDiff();
+        Pair<Integer, Integer> move = getMoveByDiff(lastBoard, curBoard, board);
         if (move == null) {
             Log.i(Logger, "未落子");
             playPosition = "未检测到落子";
@@ -273,22 +317,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 curBoard[moveX][moveY] = BLANK;
             }
         }
-    }
-
-    /**
-     * 通过比较现在的棋盘和上一个棋盘获得落子位置
-     */
-    private Pair<Integer, Integer> getMoveByDiff() {
-        Pair<Integer, Integer> move;
-        for (int i = 1; i <= WIDTH; i++) {
-            for (int j = 1; j <= HEIGHT; j++) {
-                if (lastBoard[i][j] == BLANK && curBoard[i][j] != BLANK && curBoard[i][j] == board.getPlayer().getIdentifier()) {
-                    move = new Pair<>(i, j);
-                    return move;
-                }
-            }
-        }
-        return null;
     }
 
     /**
@@ -342,6 +370,16 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             playPosition = "此处无法落子";
             beginDrawing();
         }
+    }
+
+    private void initLoaders() {
+        OpenCVLoader.initDebug();
+        /*// load模型权重文件
+        try {
+            module = LiteModuleLoader.load(getFileFromAssets(this, "model1010.pt"));
+        } catch (IOException e) {
+            Log.e(Logger, "load模型失败:" + e.getMessage());
+        }*/
     }
 
     private void initViews() {

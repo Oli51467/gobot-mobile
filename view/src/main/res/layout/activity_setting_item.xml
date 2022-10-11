@@ -55,10 +55,10 @@
 
             <TextView
                 style="@style/textview_setting_card_hint"
-                android:text="描述:" />
+                android:text="段位:" />
 
             <TextView
-                android:id="@+id/tv_desc"
+                android:id="@+id/tv_level"
                 style="@style/textview_setting_card_info" />
 
         </LinearLayout>

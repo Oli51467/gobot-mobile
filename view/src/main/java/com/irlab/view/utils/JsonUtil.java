@@ -42,6 +42,7 @@ public class JsonUtil {
         JSONObject jsonParam = new JSONObject();
         try {
             jsonParam.put("username", userName);
+            jsonParam.put("weight", "10k9k");
         } catch (JSONException e) {
             Log.e(Logger, "初始化引擎Json格式转化错误: " + e.getMessage());
         }
