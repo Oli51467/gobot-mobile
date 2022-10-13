@@ -1,10 +1,8 @@
 package com.irlab.base;
 
-import android.annotation.SuppressLint;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.alibaba.android.arouter.launcher.ARouter;
@@ -27,14 +25,12 @@ public class MyApplication extends Application {
     public static final String appid = "a716e470";
     public static final int THREAD_NUM = 19;
     public static final int STONE_NUM = 361;
-    public static SqueezeNcnn squeezencnn;
-    public static boolean initNet = false, initEngine = false;
+    public static boolean initEngine = false;
     public static ThreadPoolExecutor threadPool;
     private static MyApplication MyApp; // 提供自己的唯一实例
     protected static Context context;
 
     public SharedPreferences preferences;
-    public MyTask initNcnn;
 
     @Override
     public void onCreate() {
@@ -49,11 +45,6 @@ public class MyApplication extends Application {
         // 初始化线程池 可复用
         threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 2, 10, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(STONE_NUM));
-        // 初始化Ncnn
-        if (!initNet) {
-            initNcnn = new MyTask();
-            initNcnn.execute(squeezencnn);
-        }
         Log.d(TAG, "onCreate");
     }
 
@@ -65,27 +56,9 @@ public class MyApplication extends Application {
     @Override
     public void onTerminate() {
         super.onTerminate();
-        initNcnn.cancel(true);
     }
 
     public static Context getContext() {
         return context;
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    public class MyTask extends AsyncTask<SqueezeNcnn, Integer, Boolean> {
-
-        @Override
-        protected Boolean doInBackground(SqueezeNcnn... squeezeNcnns) {
-            squeezencnn = new SqueezeNcnn();
-            boolean ret_init = squeezencnn.Init(getAssets());
-            if (!ret_init) {
-                Log.e(TAG, "squeezencnn Init failed");
-            } else {
-                Log.i("djnxyxy", "squeezeNcnn init successful");
-                initNet = true;
-            }
-            return ret_init;
-        }
     }
 }

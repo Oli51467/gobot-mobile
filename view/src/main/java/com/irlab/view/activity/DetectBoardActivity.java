@@ -1,25 +1,19 @@
 package com.irlab.view.activity;
 
-import static com.irlab.base.MyApplication.squeezencnn;
-
-import static com.irlab.base.MyApplication.threadPool;
 import static com.irlab.view.activity.DefineBoardPositionActivity.corners;
 import static com.irlab.view.activity.DefineBoardPositionActivity.imageCapture;
 import static com.irlab.view.activity.DefineBoardPositionActivity.mExecutorService;
 import static com.irlab.view.utils.AssetsUtil.getFileFromAssets;
 import static com.irlab.view.utils.BoardUtil.genPlayCmd;
-import static com.irlab.view.utils.BoardUtil.getMoveByDiff;
 import static com.irlab.view.utils.BoardUtil.getPositionByIndex;
 import static com.irlab.view.utils.BoardUtil.transformIndex;
-import static com.irlab.view.utils.ImageUtils.JPEGImageToBitmap;
-import static com.irlab.view.utils.ImageUtils.adjustPhotoRotation;
+import static com.irlab.view.utils.ImageUtils.convertImageProxyToBitmap;
 import static com.irlab.view.utils.ImageUtils.splitImage;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -52,8 +46,8 @@ import com.irlab.view.models.Board;
 import com.irlab.view.models.GameTurn;
 import com.irlab.view.models.Player;
 import com.irlab.view.models.Point;
-import com.irlab.view.utils.Drawer;
 import com.irlab.view.process.InitialBoardDetector;
+import com.irlab.view.utils.Drawer;
 import com.irlab.view.utils.JsonUtil;
 
 import org.opencv.android.OpenCVLoader;
@@ -70,7 +64,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
 public class DetectBoardActivity extends AppCompatActivity implements View.OnClickListener {
@@ -82,7 +75,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
     private final Context mContext = this;
 
-    public static boolean init = true;
     public static Drawer drawer;
 
     private String userName, playPosition, blackPlayer, whitePlayer, komi, rule, engine;
@@ -143,14 +135,13 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 @Override
                 public void onCaptureSuccess(@NonNull ImageProxy imageProxy) {
                     super.onCaptureSuccess(imageProxy);
-                    Image image = imageProxy.getImage();
-                    assert image != null;
-                    Bitmap bitmap = adjustPhotoRotation(JPEGImageToBitmap(image), 0);
+                    Bitmap bitmap = convertImageProxyToBitmap(imageProxy);
                     Utils.bitmapToMat(bitmap, originBoard);
                     identifyChessboardAndGenMove(originBoard);
                     Log.d(Logger, "图像捕获成功");
                     imageProxy.close();
                 }
+
                 @Override
                 public void onError(@NonNull ImageCaptureException e) {
                     super.onError(e);
@@ -203,7 +194,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         CameraSelector cameraSelector = new CameraSelector.Builder()
                 .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                 .build();
-        previewView.setImplementationMode(PreviewView.ImplementationMode.PERFORMANCE);
         // 缩放类型
         previewView.setScaleType(PreviewView.ScaleType.FILL_CENTER);
         // 将所选相机和任意用例绑定到生命周期
@@ -224,65 +214,49 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             return;
         }
         int moveX, moveY;
-        bitmapMatrix = splitImage(orthogonalBoard, WIDTH);
-        for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex++) {
-            int innerT = threadIndex;
-            Runnable runnable = () -> {
-                for (int mTask = 0; mTask < SINGLE_THREAD_TASK; mTask++) {
-                    // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
-                    int cnt = innerT * 19 + mTask;
-                    int i = cnt / 19 + 1;
-                    int j = cnt % 19 + 1;
-                    String result = squeezencnn.Detect(bitmapMatrix[i][j], true);
-                    if (result.equals("black")) {
-                        curBoard[i][j] = BLACK;
-                    } else if (result.equals("white")) {
-                        curBoard[i][j] = WHITE;
-                    } else {
-                        curBoard[i][j] = BLANK;
-                    }
-                    /*// 准备输入张量
-                    // bitmapToFloat32Tensor creates tensors in the torchvision format using Bitmap as a source.
-                    Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(
-                            bitmapMatrix[i][j],
-                            TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
-                            TensorImageUtils.TORCHVISION_NORM_STD_RGB,
-                            MemoryFormat.CHANNELS_LAST);
+        Pair<Integer, Integer> move = null;
+        boolean isPlay = false;
+        splitImage(orthogonalBoard, WIDTH, bitmapMatrix);
 
-                    // running the model
-                    Tensor outputTensor = module.forward(IValue.from(inputTensor)).toTensor();
+        for (int i = 1; i < WIDTH; i ++ ) {
+            for (int j = 1; j < WIDTH; j ++ ) {
+                Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(
+                        bitmapMatrix[i][j],
+                        TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
+                        TensorImageUtils.TORCHVISION_NORM_STD_RGB,
+                        MemoryFormat.CHANNELS_LAST);
 
-                    // getting tensor content as java array of floats
-                    final float[] scores = outputTensor.getDataAsFloatArray();
+                // running the model
+                Tensor outputTensor = module.forward(IValue.from(inputTensor)).toTensor();
 
-                    // searching for the index with maximum score
-                    float maxScore = -Float.MAX_VALUE;
-                    int maxScoreIdx = -1;
-                    for (int k = 0; k < scores.length; k++) {
-                        if (scores[k] > maxScore) {
-                            maxScore = scores[k];
-                            maxScoreIdx = k;
-                        }
+                // getting tensor content as java array of floats
+                float[] scores = outputTensor.getDataAsFloatArray();
+
+                // searching for the index with maximum score
+                float maxScore = -Float.MAX_VALUE;
+                int maxScoreIdx = -1;
+                for (int k = 0; k < scores.length; k++) {
+                    if (scores[k] > maxScore) {
+                        maxScore = scores[k];
+                        maxScoreIdx = k;
                     }
-                    if (maxScoreIdx == -1) {
-                        for (int u = 0; u < scores.length; u ++ ) {
-                            Log.e(Logger, scores[u] + "\n");
-                        }
-                        break;
-                    }
-                    String resultClass = STONE_CLASSES[maxScoreIdx];
-                    if (resultClass.equals("black")) {
-                        curBoard[i][j] = BLACK;
-                    } else if (resultClass.equals("white")) {
-                        curBoard[i][j] = WHITE;
-                    } else if (resultClass.equals("blank")) {
-                        curBoard[i][j] = BLANK;
-                    }*/
                 }
-            };
-            threadPool.execute(runnable);
+                String resultClass = STONE_CLASSES[maxScoreIdx];
+                if (resultClass.equals("black")) {
+                    curBoard[i][j] = BLACK;
+                } else if (resultClass.equals("white")) {
+                    curBoard[i][j] = WHITE;
+                } else if (resultClass.equals("blank")) {
+                    curBoard[i][j] = BLANK;
+                }
+                if (lastBoard[i][j] == BLANK && curBoard[i][j] != BLANK && curBoard[i][j] == board.getPlayer().getIdentifier()) {
+                    move = new Pair<>(i, j);
+                    isPlay = true;
+                    break;
+                }
+            }
+            if (isPlay) break;
         }
-        Pair<Integer, Integer> move = getMoveByDiff(lastBoard, curBoard, board);
         if (move == null) {
             Log.i(Logger, "未落子");
             playPosition = "未检测到落子";
@@ -326,9 +300,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         String playCmd = genPlayCmd(lastMove);
         String jsonInfo = JsonUtil.getJsonFormOfPlayIndex(userName, playCmd);
         Log.d(Logger, "手动走棋指令json格式的数据: " + jsonInfo);
-        Log.i(Logger, playCmd);
         // 将指令发送给围棋引擎
-
         String result = engineInterface.sendIndexes2Engine(jsonInfo);
         if (result.equals("success")) {
             int identifier = lastMove.getGroup().getOwner().getIdentifier();
@@ -354,7 +326,8 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     board.nextPlayer();
                 }
                 beginDrawing();
-                // TODO:将引擎落子位置传给下位机
+                // 落子传到下位机
+                // TODO:将吃子位置传给下位机
                 if (bluetoothService != null) {
                     Log.d(Logger, "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
                     bluetoothService.sendData("L" + playPosition + "Z", false);
@@ -366,7 +339,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     handler.sendMessage(tempMsg);
                 }
             }
-        } else if (result.equals("unplayable")){
+        } else if (result.equals("unplayable")) {
             playPosition = "此处无法落子";
             beginDrawing();
         }
@@ -374,12 +347,12 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
     private void initLoaders() {
         OpenCVLoader.initDebug();
-        /*// load模型权重文件
+        // load模型权重文件
         try {
-            module = LiteModuleLoader.load(getFileFromAssets(this, "model1010.pt"));
+            module = LiteModuleLoader.load(getFileFromAssets(this, "test_model.pt"));
         } catch (IOException e) {
             Log.e(Logger, "load模型失败:" + e.getMessage());
-        }*/
+        }
     }
 
     private void initViews() {
@@ -419,6 +392,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         board = new Board(WIDTH, HEIGHT, 0);
         lastBoard = new int[WIDTH + 1][HEIGHT + 1];
         curBoard = new int[WIDTH + 1][HEIGHT + 1];
+        bitmapMatrix = new Bitmap[WIDTH + 1][HEIGHT + 1];
         for (int i = 1; i <= WIDTH; i++) {
             Arrays.fill(lastBoard[i], BLANK);
             Arrays.fill(curBoard[i], BLANK);

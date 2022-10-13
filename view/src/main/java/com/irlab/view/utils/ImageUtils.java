@@ -1,26 +1,22 @@
 package com.irlab.view.utils;
 
-import static org.opencv.core.Core.flip;
-
 import android.annotation.SuppressLint;
-import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.icu.text.SimpleDateFormat;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.text.format.DateUtils;
 import android.util.Log;
+
+import androidx.camera.core.ImageProxy;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -33,11 +29,12 @@ import org.opencv.imgproc.Imgproc;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.Date;
 
 public class ImageUtils {
 
@@ -50,9 +47,7 @@ public class ImageUtils {
      * @param piece     分割的参数
      * @return 分割后的Bitmap数组
      */
-    public static Bitmap[][] splitImage(Bitmap rawBitmap, int piece) {
-
-        Bitmap[][] bitmapMatrix = new Bitmap[piece + 1][piece + 1];
+    public static Bitmap[][] splitImage(Bitmap rawBitmap, int piece, Bitmap[][] bitmapMatrix) {
         int unitHeight = rawBitmap.getHeight() / 19;
         int unitWidth = rawBitmap.getWidth() / 19;
         Bitmap unitBitmap;
@@ -316,5 +311,40 @@ public class ImageUtils {
         Matrix m = new Matrix();
         m.setRotate(orientationDegree, (float) bm.getWidth() / 2, (float) bm.getHeight() / 2);
         return Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), m, true);
+    }
+
+    public static Bitmap convertImageProxyToBitmap(ImageProxy image) {
+        ByteBuffer byteBuffer = image.getPlanes()[0].getBuffer();
+        byteBuffer.rewind();
+        byte[] bytes = new byte[byteBuffer.capacity()];
+        byteBuffer.get(bytes);
+        byte[] clonedBytes = bytes.clone();
+        return BitmapFactory.decodeByteArray(clonedBytes, 0, clonedBytes.length);
+    }
+
+    /**
+     * API29 中的最新保存图片到相册的方法
+     */
+    public static void saveImage2Gallery(Bitmap toBitmap, Context context) {
+        //开始一个新的进程执行保存图片的操作
+        Uri insertUri = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, new ContentValues());
+        //使用use可以自动关闭流
+        try {
+            OutputStream outputStream = context.getContentResolver().openOutputStream(insertUri, "rw");
+            if (toBitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)) {
+                Log.e("save_gallery", "保存成功");
+            } else {
+                Log.e("save_gallery", "保存失败");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static InputStream Bitmap2InputStream(Bitmap bm) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bm.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        InputStream is = new ByteArrayInputStream(baos.toByteArray());
+        return is;
     }
 }
