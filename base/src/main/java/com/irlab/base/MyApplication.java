@@ -7,7 +7,7 @@ import android.util.Log;
 
 import com.alibaba.android.arouter.launcher.ARouter;
 
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -43,8 +43,8 @@ public class MyApplication extends Application {
 
         preferences = getSharedPreferences("config", Context.MODE_PRIVATE);
         // 初始化线程池 可复用
-        threadPool = new ThreadPoolExecutor(THREAD_NUM, THREAD_NUM + 2, 10, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(STONE_NUM));
+        threadPool = new ThreadPoolExecutor(THREAD_NUM, 100, 5, TimeUnit.MINUTES,
+                new LinkedBlockingDeque<>());
         Log.d(TAG, "onCreate");
     }
 

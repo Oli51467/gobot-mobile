@@ -68,7 +68,7 @@ import java.util.concurrent.ExecutionException;
 
 public class DetectBoardActivity extends AppCompatActivity implements View.OnClickListener {
 
-    public static final int BLANK = 0, BLACK = 1, WHITE = 2, WIDTH = 20, HEIGHT = 20, THREAD_NUM = 19, SINGLE_THREAD_TASK = 19;
+    public static final int BLANK = 0, BLACK = 1, WHITE = 2, WIDTH = 20, HEIGHT = 20;
     public static final int BOARD_WIDTH = 1000, BOARD_HEIGHT = 1000, INFO_WIDTH = 880, INFO_HEIGHT = 350;
     public static final String Logger = "djnxyxy";
     public static String[] STONE_CLASSES = new String[]{"black", "blank", "white",};
@@ -89,6 +89,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public Board board;
     public Point lastMove;
     public EngineInterface engineInterface;
+    private Button btn_play;
     // 蓝牙服务
     protected BluetoothService bluetoothService;
 
@@ -122,13 +123,15 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
     public void onDestroy() {
         super.onDestroy();
-        engineInterface.clearBoard();
+        //engineInterface.clearBoard();
+        engineInterface.closeEngine();
     }
 
     @SuppressLint("UnsafeOptInUsageError")
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.btn_take_picture) { // 直接拍照
+            runOnUiThread(() -> btn_play.setEnabled(false));
             Mat originBoard = new Mat();
             // 捕获棋盘 -> 识别棋子
             imageCapture.takePicture(mExecutorService, new ImageCapture.OnImageCapturedCallback() {
@@ -149,8 +152,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 }
             });
         } else if (vid == R.id.btn_exit) {
-            engineInterface.showBoard();
+            engineInterface.getGameAndSave();
             engineInterface.clearBoard();
+            engineInterface.closeEngine();
             Intent intent = new Intent(this, SelectConfigActivity.class);
             startActivity(intent);
         } else if (vid == R.id.btn_undo) {
@@ -217,49 +221,35 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         Pair<Integer, Integer> move = null;
         boolean isPlay = false;
         splitImage(orthogonalBoard, WIDTH, bitmapMatrix);
-
-        for (int i = 1; i < WIDTH; i ++ ) {
-            for (int j = 1; j < WIDTH; j ++ ) {
-                Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(
-                        bitmapMatrix[i][j],
-                        TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
-                        TensorImageUtils.TORCHVISION_NORM_STD_RGB,
-                        MemoryFormat.CHANNELS_LAST);
-
-                // running the model
-                Tensor outputTensor = module.forward(IValue.from(inputTensor)).toTensor();
-
-                // getting tensor content as java array of floats
-                float[] scores = outputTensor.getDataAsFloatArray();
-
-                // searching for the index with maximum score
-                float maxScore = -Float.MAX_VALUE;
-                int maxScoreIdx = -1;
-                for (int k = 0; k < scores.length; k++) {
-                    if (scores[k] > maxScore) {
-                        maxScore = scores[k];
-                        maxScoreIdx = k;
-                    }
-                }
-                String resultClass = STONE_CLASSES[maxScoreIdx];
-                if (resultClass.equals("black")) {
-                    curBoard[i][j] = BLACK;
-                } else if (resultClass.equals("white")) {
-                    curBoard[i][j] = WHITE;
-                } else if (resultClass.equals("blank")) {
-                    curBoard[i][j] = BLANK;
-                }
-                if (lastBoard[i][j] == BLANK && curBoard[i][j] != BLANK && curBoard[i][j] == board.getPlayer().getIdentifier()) {
-                    move = new Pair<>(i, j);
+        for (int j = 4; j <= 16; j += 12 ) {
+            for (int k = 4; k <= 16; k += 12) {
+                move = findStoneBySerpentineTraversal(j, k);
+                if (move != null) {
                     isPlay = true;
                     break;
                 }
             }
             if (isPlay) break;
         }
+        if (!isPlay) {
+            for (int i = 1; i < WIDTH; i++) {
+                for (int j = 1; j < WIDTH; j++) {
+                    if (lastBoard[i][j] != BLANK) {
+                        continue;
+                    }
+                    if (detectStone(i, j)) {
+                        move = new Pair<>(i, j);
+                        isPlay = true;
+                        break;
+                    }
+                }
+                if (isPlay) break;
+            }
+        }
         if (move == null) {
             Log.i(Logger, "未落子");
             playPosition = "未检测到落子";
+            runOnUiThread(() -> btn_play.setEnabled(true));
             Bitmap bitmap4PlayInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
             Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, 0, playPosition);
             playView.setImageBitmap(playInfo);
@@ -288,8 +278,10 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 conn2Engine(getApplicationContext());
             } else {
                 Log.e(Logger, "这里不可以落子");
+                playPosition = "这里不可以落子";
                 curBoard[moveX][moveY] = BLANK;
             }
+            runOnUiThread(() -> btn_play.setEnabled(true));
         }
     }
 
@@ -342,7 +334,82 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         } else if (result.equals("unplayable")) {
             playPosition = "此处无法落子";
             beginDrawing();
+        } else {
+            Log.e(Logger, result);
         }
+    }
+
+    /**
+     * 从四个角寻找落子
+     * @param i 横坐标
+     * @param j 纵坐标
+     * @return 若有落子，返回坐标，否则返回null
+     */
+    private Pair<Integer, Integer> findStoneBySerpentineTraversal(int i, int j) {
+        if (detectStone(i, j)) return new Pair<>(i, j);
+        int x1 = i - 1, y1 = j - 1;
+        int x2 = i + 1, y2 = j + 1;
+        while (x1 > 1 && y1 > 1 && x1 < WIDTH - 1 && y1 < WIDTH - 1) {
+            for (int x = x2 - 1; x >= x1; x--) {
+                if (detectStone(x, y2)) return new Pair<>(x, y2);
+            }
+            for (int y = y2 - 1; y >= y1; y--) {
+                if (detectStone(x1, y)) return new Pair<>(x1, y);
+            }
+            for (int x = x1 + 1; x <= x2; x++) {
+                if (detectStone(x, y1)) return new Pair<>(x, y1);
+            }
+            for (int y = y1 + 1; y <= y2; y++) {
+                if (detectStone(x2, y)) return new Pair<>(x2, y);
+            }
+            x1 --;
+            x2 ++;
+            y1 --;
+            y2 ++;
+        }
+        return null;
+    }
+
+    /**
+     * 模型检测某个位置是否有落子
+     * @param x 横坐标
+     * @param y 纵坐标
+     * @return 返回是否有落子
+     */
+    private boolean detectStone(int x, int y) {
+        Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(
+                bitmapMatrix[x][y],
+                TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
+                TensorImageUtils.TORCHVISION_NORM_STD_RGB,
+                MemoryFormat.CHANNELS_LAST);
+
+        // running the model
+        Tensor outputTensor = module.forward(IValue.from(inputTensor)).toTensor();
+
+        // getting tensor content as java array of floats
+        float[] scores = outputTensor.getDataAsFloatArray();
+
+        // searching for the index with maximum score
+        float maxScore = -Float.MAX_VALUE;
+        int maxScoreIdx = -1;
+        for (int k = 0; k < scores.length; k++) {
+            if (scores[k] > maxScore) {
+                maxScore = scores[k];
+                maxScoreIdx = k;
+            }
+        }
+        String resultClass = STONE_CLASSES[maxScoreIdx];
+        if (resultClass.equals("black")) {
+            curBoard[x][y] = BLACK;
+        } else if (resultClass.equals("white")) {
+            curBoard[x][y] = WHITE;
+        } else if (resultClass.equals("blank")) {
+            curBoard[x][y] = BLANK;
+        }
+        if (lastBoard[x][y] == BLANK && curBoard[x][y] != BLANK && curBoard[x][y] == board.getPlayer().getIdentifier()) {
+            return true;
+        }
+        return false;
     }
 
     private void initLoaders() {
@@ -359,8 +426,8 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         playerInfoView = findViewById(R.id.iv_player_info);
         boardView = findViewById(R.id.iv_board);
         playView = findViewById(R.id.iv_play_info);
-        Button btn_return_play = findViewById(R.id.btn_take_picture);
-        btn_return_play.setOnClickListener(this);
+        btn_play = findViewById(R.id.btn_take_picture);
+        btn_play.setOnClickListener(this);
 
         Button btn_return = findViewById(R.id.btn_exit);
         btn_return.setOnClickListener(this);
@@ -397,7 +464,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             Arrays.fill(lastBoard[i], BLANK);
             Arrays.fill(curBoard[i], BLANK);
         }
-        engineInterface = new EngineInterface(userName, mContext);
+        engineInterface = new EngineInterface(userName, mContext, blackPlayer, whitePlayer);
     }
 
     /**

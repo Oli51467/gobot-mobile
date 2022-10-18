@@ -81,9 +81,14 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
         getInfoFromActivity();
         initPython();
         if (!initEngine) {
-            EngineInterface engineInterface = new EngineInterface(userName, this);
+            EngineInterface engineInterface = new EngineInterface(userName, this, blackPlayer, whitePlayer);
             engineInterface.initEngine();
-            engineInterface.clearBoard();
+            if (rule.equals("中国规则")) {
+                engineInterface.setRules("chinese");
+            } else {
+                engineInterface.setRules("japanese");
+            }
+            //engineInterface.clearBoard();
             initEngine = true;
         }
         if (requestPermissions()) {

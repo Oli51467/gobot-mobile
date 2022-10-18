@@ -25,7 +25,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginStart="10dp"
         android:layout_marginLeft="10dp">
 
         <ImageView
@@ -38,11 +37,12 @@
             android:id="@+id/iv_play_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"/>
+            android:layout_marginTop="10dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
             <Button
                 android:id="@+id/btn_take_picture"
@@ -57,15 +57,23 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:textSize="20sp"
-                android:text="回退"/>
+                android:text="悔棋"/>
+            <Button
+                android:id="@+id/count_stone"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text="数子"/>
             <Button
                 android:id="@+id/btn_exit"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:textSize="20sp"
-                android:text="退出"/>
+                android:text="认输"/>
         </LinearLayout>
+
     </LinearLayout>
 
 

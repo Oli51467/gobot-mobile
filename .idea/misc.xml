@@ -75,7 +75,8 @@
         <entry key="..\:/AndroidProject/gobot/view/src/main/res/drawable/select_selector.xml" value="0.139" />
         <entry key="..\:/AndroidProject/gobot/view/src/main/res/drawable/shape_underline.xml" value="0.2205" />
         <entry key="..\:/AndroidProject/gobot/view/src/main/res/drawable/txt_select_selector.xml" value="0.139" />
-        <entry key="..\:/AndroidProject/gobot/view/src/main/res/layout/activity_battle_info.xml" value="0.12916666666666668" />
+        <entry key="..\:/AndroidProject/gobot/view/src/main/res/layout/activity_battle_info.xml" value="0.165" />
+        <entry key="..\:/AndroidProject/gobot/view/src/main/res/layout/activity_bluetooth.xml" value="0.13019250253292808" />
         <entry key="..\:/AndroidProject/gobot/view/src/main/res/layout/activity_edit_config.xml" value="0.2513586956521739" />
         <entry key="..\:/AndroidProject/gobot/view/src/main/res/layout/activity_instruction.xml" value="0.25" />
         <entry key="..\:/AndroidProject/gobot/view/src/main/res/layout/activity_play_config.xml" value="0.2513586956521739" />
