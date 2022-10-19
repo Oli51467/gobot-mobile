@@ -1,5 +1,6 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.MyApplication.threadPool;
 import static com.irlab.view.activity.DefineBoardPositionActivity.corners;
 import static com.irlab.view.activity.DefineBoardPositionActivity.imageCapture;
 import static com.irlab.view.activity.DefineBoardPositionActivity.mExecutorService;
@@ -64,6 +65,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
 public class DetectBoardActivity extends AppCompatActivity implements View.OnClickListener {
@@ -93,7 +95,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     // 蓝牙服务
     protected BluetoothService bluetoothService;
 
-    Module module = null;
+    Module[] mobileNetModule;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,10 +103,10 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_battle_info);
         Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
+        initBoard();
         initLoaders();
         initArgs();
         initViews();
-        initBoard();
         beginDrawing();
         startCamera();
     }
@@ -123,7 +125,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
     public void onDestroy() {
         super.onDestroy();
-        //engineInterface.clearBoard();
+        engineInterface.clearBoard();
         engineInterface.closeEngine();
     }
 
@@ -152,7 +154,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 }
             });
         } else if (vid == R.id.btn_exit) {
-            engineInterface.getGameAndSave();
+            //engineInterface.getGameAndSave();
             engineInterface.clearBoard();
             engineInterface.closeEngine();
             Intent intent = new Intent(this, SelectConfigActivity.class);
@@ -217,10 +219,36 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             Log.e(Logger, error);
             return;
         }
-        int moveX, moveY;
-        Pair<Integer, Integer> move = null;
-        boolean isPlay = false;
         splitImage(orthogonalBoard, WIDTH, bitmapMatrix);
+        int moveX, moveY;
+
+        final Pair<Integer, Integer>[] move = new Pair[]{null};
+        CountDownLatch cdl = new CountDownLatch(19);
+        for (int threadIndex = 0; threadIndex < 19; threadIndex++) {
+            int innerT = threadIndex;
+            Runnable task = () -> {
+                for (int mTask = 0; mTask < 19; mTask++) {
+                    if (move[0] != null) break;
+                    // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
+                    int cnt = innerT * 19 + mTask;
+                    int i = cnt / 19 + 1;
+                    int j = cnt % 19 + 1;
+                    if (detectStone(i, j, innerT)) {
+                        move[0] = new Pair<>(i, j);
+                        break;
+                    }
+                }
+                cdl.countDown();
+            };
+            if (move[0] == null) threadPool.execute(task);
+        }
+        try {
+            cdl.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        /*boolean isPlay = false;
+        Pair<Integer, Integer> move = null;
         for (int j = 4; j <= 16; j += 12 ) {
             for (int k = 4; k <= 16; k += 12) {
                 move = findStoneBySerpentineTraversal(j, k);
@@ -237,7 +265,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     if (lastBoard[i][j] != BLANK) {
                         continue;
                     }
-                    if (detectStone(i, j)) {
+                    if (detectStone(i, j, 0)) {
                         move = new Pair<>(i, j);
                         isPlay = true;
                         break;
@@ -245,8 +273,8 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 }
                 if (isPlay) break;
             }
-        }
-        if (move == null) {
+        }*/
+        if (move[0] == null) {
             Log.i(Logger, "未落子");
             playPosition = "未检测到落子";
             runOnUiThread(() -> btn_play.setEnabled(true));
@@ -254,8 +282,8 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, 0, playPosition);
             playView.setImageBitmap(playInfo);
         } else {
-            moveX = move.first;
-            moveY = move.second;
+            moveX = move[0].first;
+            moveY = move[0].second;
             Log.d(Logger, moveX + " " + moveY);
             playPosition = getPositionByIndex(moveX, moveY);
             Player player = board.getPlayer();
@@ -346,21 +374,21 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
      * @return 若有落子，返回坐标，否则返回null
      */
     private Pair<Integer, Integer> findStoneBySerpentineTraversal(int i, int j) {
-        if (detectStone(i, j)) return new Pair<>(i, j);
+        if (detectStone(i, j, 0)) return new Pair<>(i, j);
         int x1 = i - 1, y1 = j - 1;
         int x2 = i + 1, y2 = j + 1;
         while (x1 > 1 && y1 > 1 && x1 < WIDTH - 1 && y1 < WIDTH - 1) {
             for (int x = x2 - 1; x >= x1; x--) {
-                if (detectStone(x, y2)) return new Pair<>(x, y2);
+                if (detectStone(x, y2, 0)) return new Pair<>(x, y2);
             }
             for (int y = y2 - 1; y >= y1; y--) {
-                if (detectStone(x1, y)) return new Pair<>(x1, y);
+                if (detectStone(x1, y, 0)) return new Pair<>(x1, y);
             }
             for (int x = x1 + 1; x <= x2; x++) {
-                if (detectStone(x, y1)) return new Pair<>(x, y1);
+                if (detectStone(x, y1, 0)) return new Pair<>(x, y1);
             }
             for (int y = y1 + 1; y <= y2; y++) {
-                if (detectStone(x2, y)) return new Pair<>(x2, y);
+                if (detectStone(x2, y, 0)) return new Pair<>(x2, y);
             }
             x1 --;
             x2 ++;
@@ -376,15 +404,18 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
      * @param y 纵坐标
      * @return 返回是否有落子
      */
-    private boolean detectStone(int x, int y) {
-        Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(
+    private boolean detectStone(int x, int y, int threadId) {
+        if (bitmapMatrix[x][y] == null || lastBoard[x][y] != BLANK) return false;
+        // load模型权重文件
+        Module module = mobileNetModule[threadId];
+        Tensor tensor = TensorImageUtils.bitmapToFloat32Tensor(
                 bitmapMatrix[x][y],
                 TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
                 TensorImageUtils.TORCHVISION_NORM_STD_RGB,
                 MemoryFormat.CHANNELS_LAST);
 
         // running the model
-        Tensor outputTensor = module.forward(IValue.from(inputTensor)).toTensor();
+        Tensor outputTensor = module.forward(IValue.from(tensor)).toTensor();
 
         // getting tensor content as java array of floats
         float[] scores = outputTensor.getDataAsFloatArray();
@@ -414,12 +445,27 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
     private void initLoaders() {
         OpenCVLoader.initDebug();
-        // load模型权重文件
+        CountDownLatch cdl = new CountDownLatch(19);
+        for (int i = 0; i < 19; i ++ ) {
+            try {
+                mobileNetModule[i] = LiteModuleLoader.load(getFileFromAssets(this, "test_model.pt"));
+            } catch (IOException e) {
+                Log.e(Logger, "load模型失败:" + e.getMessage());
+            } finally {
+                cdl.countDown();
+            }
+        }
         try {
-            module = LiteModuleLoader.load(getFileFromAssets(this, "test_model.pt"));
+            cdl.await();
+        } catch (Exception e) {
+            Log.d(Logger, e.getMessage());
+        }
+        /*// load模型权重文件
+        try {
+            mobileNetModule = LiteModuleLoader.load(getFileFromAssets(this, "test_model.pt"));
         } catch (IOException e) {
             Log.e(Logger, "load模型失败:" + e.getMessage());
-        }
+        }*/
     }
 
     private void initViews() {
@@ -460,6 +506,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         lastBoard = new int[WIDTH + 1][HEIGHT + 1];
         curBoard = new int[WIDTH + 1][HEIGHT + 1];
         bitmapMatrix = new Bitmap[WIDTH + 1][HEIGHT + 1];
+        mobileNetModule = new Module[WIDTH + 1];
         for (int i = 1; i <= WIDTH; i++) {
             Arrays.fill(lastBoard[i], BLANK);
             Arrays.fill(curBoard[i], BLANK);

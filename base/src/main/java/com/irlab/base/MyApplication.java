@@ -24,7 +24,6 @@ public class MyApplication extends Application {
     public static final String TAG = MyApplication.class.getName();
     public static final String appid = "a716e470";
     public static final int THREAD_NUM = 19;
-    public static final int STONE_NUM = 361;
     public static boolean initEngine = false;
     public static ThreadPoolExecutor threadPool;
     private static MyApplication MyApp; // 提供自己的唯一实例
@@ -43,7 +42,7 @@ public class MyApplication extends Application {
 
         preferences = getSharedPreferences("config", Context.MODE_PRIVATE);
         // 初始化线程池 可复用
-        threadPool = new ThreadPoolExecutor(THREAD_NUM, 100, 5, TimeUnit.MINUTES,
+        threadPool = new ThreadPoolExecutor(THREAD_NUM, 30, 5, TimeUnit.MINUTES,
                 new LinkedBlockingDeque<>());
         Log.d(TAG, "onCreate");
     }

@@ -50,13 +50,11 @@ public class EngineInterface {
      * }
      */
     public void clearBoard() {
-        CountDownLatch cdl = new CountDownLatch(1);
         String json = JsonUtil.getCmd2JsonForm(userName, "clear_board");
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                cdl.countDown();
                 Log.e(Logger, "clearBoard:" + e.getMessage());
             }
 
@@ -69,18 +67,12 @@ public class EngineInterface {
                     int code = jsonObject.getInt("code");
                     if (code == 1000) {
                         Log.d(Logger, "清空棋盘...Done");
-                        cdl.countDown();
                     }
                 } catch (JSONException e) {
                     Log.d(Logger, "clear_board JsonException" + e.getMessage());
                 }
             }
         });
-        try {
-            cdl.await();
-        } catch (InterruptedException e) {
-            Log.e(Logger, e.getMessage());
-        }
     }
 
     /**
@@ -132,21 +124,18 @@ public class EngineInterface {
      * }
      */
     public void closeEngine() {
-        CountDownLatch cdl = new CountDownLatch(1);
         String json = JsonUtil.getCmd2JsonForm(userName, "quit");
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 Log.e(Logger, "关闭引擎出错：" + e.getMessage());
-                cdl.countDown();
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 String responseData = Objects.requireNonNull(response.body()).string();
                 try {
-                    cdl.countDown();
                     JSONObject jsonObject = new JSONObject(responseData);
                     int code = jsonObject.getInt("code");
                     if (code == 1000) {
@@ -159,11 +148,6 @@ public class EngineInterface {
                 }
             }
         });
-        try {
-            cdl.await();
-        } catch (InterruptedException e) {
-            Log.e(Logger, e.getMessage());
-        }
     }
 
     /**
@@ -418,7 +402,6 @@ public class EngineInterface {
      * }
      */
     public void getGameAndSave() {
-        CountDownLatch cdl = new CountDownLatch(1);
         final String[] game = new String[5];
         String cmd = "printsgf 00001.sgf";
         String json = JsonUtil.getCmd2JsonForm(userName, cmd);
@@ -427,7 +410,6 @@ public class EngineInterface {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 Log.d(Logger, "输出棋谱sgf文件错误：" + e.getMessage());
-                cdl.countDown();
             }
 
             @Override
@@ -444,16 +426,9 @@ public class EngineInterface {
                     }
                 } catch (JSONException e) {
                     Log.d(Logger, "展示棋盘Json异常：" + e.getMessage());
-                } finally {
-                    cdl.countDown();
                 }
             }
         });
-        try {
-            cdl.await();
-        } catch (InterruptedException e) {
-            Log.e(Logger, "get game cdl error: " + e.getMessage());
-        }
         saveGame(game[0], game[1], game[2]);
     }
 
