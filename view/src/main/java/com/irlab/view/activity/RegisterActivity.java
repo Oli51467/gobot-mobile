@@ -1,37 +1,27 @@
 package com.irlab.view.activity;
 
-import static com.irlab.base.MyApplication.JSON;
-import static com.irlab.base.MyApplication.SERVER;
-
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.ButtonListenerUtil;
-import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.base.watcher.HideTextWatcher;
 import com.irlab.base.watcher.ValidationWatcher;
 import com.irlab.view.R;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.util.Objects;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import com.irlab.view.impl.DatabaseInterface;
 
 public class RegisterActivity extends Activity implements View.OnClickListener {
 
@@ -41,12 +31,11 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
 
     // 声明组件
     private ImageView imageView;
-
     private EditText userName;
     private EditText password;
     private EditText passwordConfirm;
-
     private Button register;
+    private DatabaseInterface databaseInterface;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -72,6 +61,7 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         password = this.findViewById(R.id.et_psw);
         passwordConfirm = this.findViewById(R.id.et_pswConfirm);
         register = this.findViewById(R.id.btn_register);
+        databaseInterface = new DatabaseInterface(this);
     }
 
     private void setListener() {
@@ -82,72 +72,34 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         passwordConfirm.addTextChangedListener(new HideTextWatcher(passwordConfirm, MAX_LENGTH, this));
         userName.addTextChangedListener(new ValidationWatcher(userName, 3,8, "用户名"));
         password.addTextChangedListener(new ValidationWatcher(password, 3, 8,"密码"));
-
     }
 
     @Override
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.btn_register) {
-            String userName = this.userName.getText().toString();
             String password = this.password.getText().toString();
             String passwordConfirm = this.passwordConfirm.getText().toString();
             if (!password.equals(passwordConfirm)) {
                 ToastUtil.show(this, "两次输入的密码不一致!");
                 return;
             }
-            // 查询是否重名
-            HttpUtil.sendOkHttpRequest(SERVER + "/api/getUserByName?userName=" + userName, new Callback() {
-                @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-
-                }
-                @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    String responseData = Objects.requireNonNull(response.body()).string();
-                    try {
-                        JSONObject jsonObject = new JSONObject(responseData);
-                        String status = jsonObject.getString("status");
-                        // 该用户名没有被注册
-                        if (status.equals("nullObject")) {
-                            String json = getJson(userName, password);
-                            RequestBody requestBody = RequestBody.Companion.create(json, JSON);
-                            HttpUtil.sendOkHttpResponse(SERVER + "/api/addUser", requestBody, new Callback() {
-                                @Override
-                                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-
-                                }
-                                @Override
-                                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                                    String responseData = Objects.requireNonNull(response.body()).string();
-                                    try {
-                                        JSONObject jsonObject = new JSONObject(responseData);
-                                        String status = jsonObject.getString("status");
-                                        if (status.equals("success")) {
-                                            runOnUiThread(() -> {
-                                                ToastUtil.show(RegisterActivity.this, "注册成功");
-                                                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                                                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                                                startActivity(intent);
-                                            });
-                                        } else {
-                                            runOnUiThread(() -> ToastUtil.show(RegisterActivity.this, "服务器异常"));
-                                        }
-                                    } catch (JSONException e) {
-                                        Log.d(TAG, e.toString());
-                                    }
-                                }
-                            });
-                        }
-                        // 用户名已被注册
-                        else {
-                            runOnUiThread(() -> ToastUtil.show(RegisterActivity.this, "该用户名已被注册"));
-                        }
-                    } catch (JSONException e) {
-                        Log.d(TAG, e.toString());
-                    }
-                }
-            });
+            int result = databaseInterface.checkName(userName.getText().toString(), password);
+            Message msg = new Message();
+            msg.obj = this;
+            if (result == ResponseCode.ADD_USER_SUCCESSFULLY.getCode()) {
+                msg.what = ResponseCode.ADD_USER_SERVER_EXCEPTION.getCode();
+                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            } else if (result == ResponseCode.USER_ALREADY_REGISTERED.getCode()) {
+                msg.what = ResponseCode.USER_ALREADY_REGISTERED.getCode();
+            } else if (result == ResponseCode.SERVER_FAILED.getCode()) {
+                msg.what = ResponseCode.SERVER_FAILED.getCode();
+            } else if (result == ResponseCode.JSON_EXCEPTION.getCode()) {
+                msg.what = ResponseCode.JSON_EXCEPTION.getCode();
+            }
+            handler.sendMessage(msg);
         }
         else if (vid == R.id.iv_return) {
             Intent intent = new Intent(this, LoginActivity.class);
@@ -156,15 +108,20 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    // 将提交到服务器的数据转换为json格式
-    private String getJson(String userName, String password) {
-        JSONObject jsonParam = new JSONObject();
-        try {
-            jsonParam.put("userName", userName);
-            jsonParam.put("password", password);
-        } catch (JSONException e) {
-            e.printStackTrace();
+    @SuppressLint("HandlerLeak")
+    private final Handler handler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == ResponseCode.USER_ALREADY_REGISTERED.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.USER_ALREADY_REGISTERED.getMsg());
+            } else if (msg.what == ResponseCode.SERVER_FAILED.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.SERVER_FAILED.getMsg());
+            } else if (msg.what == ResponseCode.JSON_EXCEPTION.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.JSON_EXCEPTION.getMsg());
+            } else if (msg.what == ResponseCode.ADD_USER_SUCCESSFULLY.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.ADD_USER_SUCCESSFULLY.getMsg());
+            }
         }
-        return jsonParam.toString();
-    }
+    };
 }

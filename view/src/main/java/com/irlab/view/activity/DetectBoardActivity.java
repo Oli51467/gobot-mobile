@@ -17,6 +17,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
@@ -42,7 +43,7 @@ import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 import com.irlab.view.bluetooth.BluetoothService;
-import com.irlab.view.engine.EngineInterface;
+import com.irlab.view.impl.EngineInterface;
 import com.irlab.view.models.Board;
 import com.irlab.view.models.GameTurn;
 import com.irlab.view.models.Player;
@@ -90,7 +91,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public int[][] lastBoard;
     public Board board;
     public Point lastMove;
-    public EngineInterface engineInterface;
+    private EngineInterface engineInterface;
     private Button btn_play;
     // 蓝牙服务
     protected BluetoothService bluetoothService;
@@ -107,7 +108,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         initLoaders();
         initArgs();
         initViews();
-        beginDrawing();
+        drawBoard();
         startCamera();
     }
 
@@ -129,30 +130,10 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         engineInterface.closeEngine();
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.btn_take_picture) { // 直接拍照
-            runOnUiThread(() -> btn_play.setEnabled(false));
-            Mat originBoard = new Mat();
-            // 捕获棋盘 -> 识别棋子
-            imageCapture.takePicture(mExecutorService, new ImageCapture.OnImageCapturedCallback() {
-                @Override
-                public void onCaptureSuccess(@NonNull ImageProxy imageProxy) {
-                    super.onCaptureSuccess(imageProxy);
-                    Bitmap bitmap = convertImageProxyToBitmap(imageProxy);
-                    Utils.bitmapToMat(bitmap, originBoard);
-                    identifyChessboardAndGenMove(originBoard);
-                    Log.d(Logger, "图像捕获成功");
-                    imageProxy.close();
-                }
-
-                @Override
-                public void onError(@NonNull ImageCaptureException e) {
-                    super.onError(e);
-                    Log.e(Logger, "拍照失败，错误：" + e.getMessage());
-                }
-            });
+            getImageAndProcess();
         } else if (vid == R.id.btn_exit) {
             //engineInterface.getGameAndSave();
             engineInterface.clearBoard();
@@ -165,6 +146,29 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         }
     }
 
+    public void getImageAndProcess() {
+        runOnUiThread(() -> btn_play.setEnabled(false));
+        Mat originBoard = new Mat();
+        // 捕获棋盘 -> 识别棋子
+        imageCapture.takePicture(mExecutorService, new ImageCapture.OnImageCapturedCallback() {
+            @Override
+            public void onCaptureSuccess(@NonNull ImageProxy imageProxy) {
+                super.onCaptureSuccess(imageProxy);
+                Bitmap bitmap = convertImageProxyToBitmap(imageProxy);
+                Utils.bitmapToMat(bitmap, originBoard);
+                identifyChessboardAndGenMove(originBoard);
+                Log.d(Logger, "图像捕获成功");
+                imageProxy.close();
+            }
+
+            @Override
+            public void onError(@NonNull ImageCaptureException e) {
+                super.onError(e);
+                Log.e(Logger, "拍照失败，错误：" + e.getMessage());
+            }
+        });
+    }
+
     public void undo() {
         if (!board.undo()) return;
         lastBoard = board.gameRecord.getLastTurn().boardState;
@@ -172,7 +176,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         if (lastMove == null) playPosition = "";
         else playPosition = getPositionByIndex(lastMove.getX(), lastMove.getY());
         Log.d(Logger, "undo后的棋盘：" + board.toString());
-        beginDrawing();
+        drawBoard();
     }
 
     public void startCamera() {
@@ -247,33 +251,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        /*boolean isPlay = false;
-        Pair<Integer, Integer> move = null;
-        for (int j = 4; j <= 16; j += 12 ) {
-            for (int k = 4; k <= 16; k += 12) {
-                move = findStoneBySerpentineTraversal(j, k);
-                if (move != null) {
-                    isPlay = true;
-                    break;
-                }
-            }
-            if (isPlay) break;
-        }
-        if (!isPlay) {
-            for (int i = 1; i < WIDTH; i++) {
-                for (int j = 1; j < WIDTH; j++) {
-                    if (lastBoard[i][j] != BLANK) {
-                        continue;
-                    }
-                    if (detectStone(i, j, 0)) {
-                        move = new Pair<>(i, j);
-                        isPlay = true;
-                        break;
-                    }
-                }
-                if (isPlay) break;
-            }
-        }*/
         if (move[0] == null) {
             Log.i(Logger, "未落子");
             playPosition = "未检测到落子";
@@ -298,11 +275,10 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 }
                 Log.d(Logger, "落子后的棋盘： \n" + board.toString());
                 board.nextPlayer();
-                // TODO 当前这里发送给引擎是通过共享变量 lastMove传递的
                 GameTurn lastTurn = board.gameRecord.getLastTurn();
                 lastBoard = lastTurn.boardState;
                 lastMove = board.getPoint(lastTurn.x, lastTurn.y);
-                beginDrawing();
+                drawBoard();
                 conn2Engine(getApplicationContext());
             } else {
                 Log.e(Logger, "这里不可以落子");
@@ -318,7 +294,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
      */
     public void conn2Engine(Context context) {
         String playCmd = genPlayCmd(lastMove);
-        String jsonInfo = JsonUtil.getJsonFormOfPlayIndex(userName, playCmd);
+        String jsonInfo = JsonUtil.getCmd2JsonForm(userName, playCmd);
         Log.d(Logger, "手动走棋指令json格式的数据: " + jsonInfo);
         // 将指令发送给围棋引擎
         String result = engineInterface.sendIndexes2Engine(jsonInfo);
@@ -345,7 +321,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     lastMove = board.getPoint(lastTurn.x, lastTurn.y);
                     board.nextPlayer();
                 }
-                beginDrawing();
+                drawBoard();
                 // 落子传到下位机
                 // TODO:将吃子位置传给下位机
                 if (bluetoothService != null) {
@@ -361,47 +337,17 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             }
         } else if (result.equals("unplayable")) {
             playPosition = "此处无法落子";
-            beginDrawing();
+            drawBoard();
         } else {
             Log.e(Logger, result);
         }
     }
 
     /**
-     * 从四个角寻找落子
-     * @param i 横坐标
-     * @param j 纵坐标
-     * @return 若有落子，返回坐标，否则返回null
-     */
-    private Pair<Integer, Integer> findStoneBySerpentineTraversal(int i, int j) {
-        if (detectStone(i, j, 0)) return new Pair<>(i, j);
-        int x1 = i - 1, y1 = j - 1;
-        int x2 = i + 1, y2 = j + 1;
-        while (x1 > 1 && y1 > 1 && x1 < WIDTH - 1 && y1 < WIDTH - 1) {
-            for (int x = x2 - 1; x >= x1; x--) {
-                if (detectStone(x, y2, 0)) return new Pair<>(x, y2);
-            }
-            for (int y = y2 - 1; y >= y1; y--) {
-                if (detectStone(x1, y, 0)) return new Pair<>(x1, y);
-            }
-            for (int x = x1 + 1; x <= x2; x++) {
-                if (detectStone(x, y1, 0)) return new Pair<>(x, y1);
-            }
-            for (int y = y1 + 1; y <= y2; y++) {
-                if (detectStone(x2, y, 0)) return new Pair<>(x2, y);
-            }
-            x1 --;
-            x2 ++;
-            y1 --;
-            y2 ++;
-        }
-        return null;
-    }
-
-    /**
      * 模型检测某个位置是否有落子
      * @param x 横坐标
      * @param y 纵坐标
+     * @param threadId 根据线程id决定使用哪一个模型文件 防止访问模型文件冲突
      * @return 返回是否有落子
      */
     private boolean detectStone(int x, int y, int threadId) {
@@ -434,13 +380,10 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             curBoard[x][y] = BLACK;
         } else if (resultClass.equals("white")) {
             curBoard[x][y] = WHITE;
-        } else if (resultClass.equals("blank")) {
+        } else {
             curBoard[x][y] = BLANK;
         }
-        if (lastBoard[x][y] == BLANK && curBoard[x][y] != BLANK && curBoard[x][y] == board.getPlayer().getIdentifier()) {
-            return true;
-        }
-        return false;
+        return lastBoard[x][y] == BLANK && curBoard[x][y] != BLANK && curBoard[x][y] == board.getPlayer().getIdentifier();
     }
 
     private void initLoaders() {
@@ -460,12 +403,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         } catch (Exception e) {
             Log.d(Logger, e.getMessage());
         }
-        /*// load模型权重文件
-        try {
-            mobileNetModule = LiteModuleLoader.load(getFileFromAssets(this, "test_model.pt"));
-        } catch (IOException e) {
-            Log.e(Logger, "load模型失败:" + e.getMessage());
-        }*/
     }
 
     private void initViews() {
@@ -517,7 +454,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     /**
      * 画棋盘，展示棋局
      */
-    private void beginDrawing() {
+    private void drawBoard() {
         int identifier = (lastMove == null || lastMove.getGroup() == null) ? 0 : lastMove.getGroup().getOwner().getIdentifier();
 
         Bitmap showBoard = drawer.drawBoard(boardBitmap, lastBoard, lastMove, 0, 0);
@@ -529,8 +466,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         playView.setImageBitmap(playInfo);
     }
 
-    @SuppressLint("HandlerLeak")
-    private final Handler handler = new Handler() {
+    private final Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);

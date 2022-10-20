@@ -1,4 +1,4 @@
-package com.irlab.view.engine;
+package com.irlab.view.impl;
 
 import static com.irlab.base.MyApplication.ENGINE_SERVER;
 import static com.irlab.base.MyApplication.JSON;
@@ -7,6 +7,7 @@ import static com.irlab.base.MyApplication.SERVER;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
@@ -291,7 +292,7 @@ public class EngineInterface {
      */
     public void showBoard() {
         CountDownLatch cdl = new CountDownLatch(1);
-        String json = JsonUtil.getJsonFormOfShowBoard(userName);
+        String json = JsonUtil.getCmd2JsonForm(userName, "showboard");
         RequestBody requestBody = RequestBody.Companion.create(json, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
@@ -469,8 +470,7 @@ public class EngineInterface {
         });
     }
 
-    @SuppressLint("HandlerLeak")
-    private static final Handler handler = new Handler() {
+    private static final Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
