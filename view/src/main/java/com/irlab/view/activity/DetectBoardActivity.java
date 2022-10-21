@@ -74,6 +74,15 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public static final String Logger = "djnxyxy";
     public static String[] STONE_CLASSES = new String[]{"black", "blank", "white"};
 
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver(){
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("play")) {
+                getImageAndProcess();
+            }
+        }
+    };
+
     private final Context mContext = this;
 
     public static Drawer drawer;
@@ -106,11 +115,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         initLoaders();
         initArgs();
         initViews();
+        initFilter();
         drawBoard();
         startCamera();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("com.irlab.view.GESTURE_UP");
-        this.registerReceiver(broadcastReceiver, intentFilter);
     }
 
     @Override
@@ -131,20 +138,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         engineInterface.closeEngine();
         unregisterReceiver(broadcastReceiver);
     }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
-    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver(){
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals("com.irlab.view.GESTURE_UP")) {
-                getImageAndProcess();
-            }
-        }
-    };
 
     @Override
     protected void onResume() {
@@ -318,7 +311,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         Log.d(Logger, "走棋指令json格式的数据: " + jsonInfo);
         // 将指令发送给围棋引擎并返回引擎落子
         playPosition = engineInterface.playGenMove(jsonInfo);
-        drawBoard();
         // 引擎没有认输或过一手就将引擎落子位置发送给下位机，并走棋
         if (!playPosition.equals("resign") && !playPosition.equals("pass") && !playPosition.equals("failed") && !playPosition.equals("unplayable")) {
             Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
@@ -330,11 +322,12 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             Log.d(Logger, "lastMove上一步：" + lastTurn.x + " " + lastTurn.y);
             lastMove = board.getPoint(lastTurn.x, lastTurn.y);
             board.nextPlayer();
+            drawBoard();
             // 落子传到下位机
             // TODO:将吃子位置传给下位机
             if (bluetoothService != null) {
                 Log.d(Logger, "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
-                //bluetoothService.sendData("L" + playPosition + "Z", false);
+                bluetoothService.sendData("L" + playPosition + "Z", false);
             } else {
                 Log.d(Logger, "落子位置发给下位机失败！");
             }
@@ -452,6 +445,12 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             Arrays.fill(curBoard[i], BLANK);
         }
         engineInterface = new EngineInterface(userName, mContext, blackPlayer, whitePlayer);
+    }
+
+    private void initFilter() {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("play");
+        this.registerReceiver(broadcastReceiver, intentFilter);
     }
 
     /**

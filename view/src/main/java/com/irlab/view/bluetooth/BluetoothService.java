@@ -27,7 +27,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 import com.irlab.view.activity.BluetoothActivity;
-import com.irlab.view.activity.DetectBoardActivity;
 import com.irlab.view.adapter.DeviceAdapter;
 import com.rosefinches.smiledialog.SmileDialog;
 import com.rosefinches.smiledialog.SmileDialogBuilder;
@@ -328,12 +327,11 @@ public class BluetoothService {
                     sendData("WZ", false);
                 } else if (buffer[0] == 65) {   // 按键落子
                     try {
-                        Intent intent = new Intent("com.irlab.view.GESTURE_UP");
+                        Intent intent = new Intent("play");
                         intent.setPackage(mContext.getPackageName());
                         mContext.sendOrderedBroadcast(intent,null);
-                        Log.d("TAG", "onReceiveDataSuccess: " + mContext.getPackageName());
                     } catch (Exception e) {
-                        Log.e("djnxyxy", "调用方法错误: " + e.getMessage());
+                        Log.e("onReceiveDataSuccess", "调用方法错误: " + e.getMessage());
                     }
                 }
 
