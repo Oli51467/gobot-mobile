@@ -31,7 +31,7 @@ public class BoardUtil {
     }
 
     public static String genPlayCmd(Point move) {
-        return "play " + (move.getGroup().getOwner().getIdentifier() == Board.BLACK_STONE ? "B" : "W") + " " + getPositionByIndex(move.getX(), move.getY());
+        return "play_genmove " + (move.getGroup().getOwner().getIdentifier() == Board.BLACK_STONE ? "B" : "W") + " " + getPositionByIndex(move.getX(), move.getY());
     }
 
     public static Pair<Integer, Integer> transformIndex(String index) {

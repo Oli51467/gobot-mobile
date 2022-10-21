@@ -27,6 +27,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 import com.irlab.view.activity.BluetoothActivity;
+import com.irlab.view.activity.DetectBoardActivity;
 import com.irlab.view.adapter.DeviceAdapter;
 import com.rosefinches.smiledialog.SmileDialog;
 import com.rosefinches.smiledialog.SmileDialogBuilder;
@@ -40,7 +41,7 @@ public class BluetoothService {
 
     private static final int CONNECTED_SUCCESS_STATUE = 0x03;
     private static final int CONNECTED_FAILURE_STATUE = 0x04;
-    public static final String Logger = BluetoothService.class.getName();
+    private static final String Logger = BluetoothService.class.getName();
 
     private final Context mContext;
     public AppCompatActivity appCompatActivity;
@@ -134,7 +135,7 @@ public class BluetoothService {
     @SuppressLint("MissingPermission")
     public void prepareConnect(BluetoothDevice device, boolean isClick) {
 
-        if (device.getBondState() == BluetoothDevice.BOND_BONDED && !isClick){
+        if (device.getBondState() == BluetoothDevice.BOND_BONDED && !isClick) {
             // 已经匹配，并且上次练过，直接连接
             // 数据库存储蓝牙设备信息
             SharedPreferences.Editor editor = mContext.getSharedPreferences("device", MODE_PRIVATE).edit();
@@ -323,8 +324,17 @@ public class BluetoothService {
             public void onReceiveDataSuccess(byte[] buffer) {
                 Log.w("onReceiveDataSuccess", "成功接收数据,长度" + buffer.length + "->" + bytes2HexString(buffer, buffer.length));
                 // 落子成功
-                if (buffer[0]==76){
+                if (buffer[0] == 76) {
                     sendData("WZ", false);
+                } else if (buffer[0] == 65) {   // 按键落子
+                    try {
+                        Intent intent = new Intent("com.irlab.view.GESTURE_UP");
+                        intent.setPackage(mContext.getPackageName());
+                        mContext.sendOrderedBroadcast(intent,null);
+                        Log.d("TAG", "onReceiveDataSuccess: " + mContext.getPackageName());
+                    } catch (Exception e) {
+                        Log.e("djnxyxy", "调用方法错误: " + e.getMessage());
+                    }
                 }
 
                 BluetoothActivity.connect_status = true;

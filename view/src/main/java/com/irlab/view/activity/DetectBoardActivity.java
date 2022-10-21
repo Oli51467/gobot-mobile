@@ -12,13 +12,12 @@ import static com.irlab.view.utils.ImageUtils.convertImageProxyToBitmap;
 import static com.irlab.view.utils.ImageUtils.splitImage;
 
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -39,8 +38,6 @@ import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.irlab.base.MyApplication;
-import com.irlab.base.response.ResponseCode;
-import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 import com.irlab.view.bluetooth.BluetoothService;
 import com.irlab.view.impl.EngineInterface;
@@ -73,8 +70,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
     public static final int BLANK = 0, BLACK = 1, WHITE = 2, WIDTH = 20, HEIGHT = 20;
     public static final int BOARD_WIDTH = 1000, BOARD_HEIGHT = 1000, INFO_WIDTH = 880, INFO_HEIGHT = 350;
+    private static final int THREAD_NUM = 19, TASK_NUM = 19;
     public static final String Logger = "djnxyxy";
-    public static String[] STONE_CLASSES = new String[]{"black", "blank", "white",};
+    public static String[] STONE_CLASSES = new String[]{"black", "blank", "white"};
 
     private final Context mContext = this;
 
@@ -110,6 +108,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         initViews();
         drawBoard();
         startCamera();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("com.irlab.view.GESTURE_UP");
+        this.registerReceiver(broadcastReceiver, intentFilter);
     }
 
     @Override
@@ -128,6 +129,26 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         super.onDestroy();
         engineInterface.clearBoard();
         engineInterface.closeEngine();
+        unregisterReceiver(broadcastReceiver);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver(){
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("com.irlab.view.GESTURE_UP")) {
+                getImageAndProcess();
+            }
+        }
+    };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     public void onClick(View v) {
@@ -135,7 +156,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         if (vid == R.id.btn_take_picture) { // 直接拍照
             getImageAndProcess();
         } else if (vid == R.id.btn_exit) {
-            //engineInterface.getGameAndSave();
+            engineInterface.getGameAndSave();
             engineInterface.clearBoard();
             engineInterface.closeEngine();
             Intent intent = new Intent(this, SelectConfigActivity.class);
@@ -147,7 +168,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     }
 
     public void getImageAndProcess() {
-        runOnUiThread(() -> btn_play.setEnabled(false));
+        Log.d(Logger, "begin processing...");
         Mat originBoard = new Mat();
         // 捕获棋盘 -> 识别棋子
         imageCapture.takePicture(mExecutorService, new ImageCapture.OnImageCapturedCallback() {
@@ -227,14 +248,14 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         int moveX, moveY;
 
         final Pair<Integer, Integer>[] move = new Pair[]{null};
-        CountDownLatch cdl = new CountDownLatch(19);
-        for (int threadIndex = 0; threadIndex < 19; threadIndex++) {
+        CountDownLatch cdl = new CountDownLatch(THREAD_NUM);
+        for (int threadIndex = 0; threadIndex < THREAD_NUM; threadIndex++) {
             int innerT = threadIndex;
             Runnable task = () -> {
-                for (int mTask = 0; mTask < 19; mTask++) {
+                for (int mTask = 0; mTask < THREAD_NUM; mTask++) {
                     if (move[0] != null) break;
                     // 由循环得到cnt, 再由cnt得到位置(i, j) cnt从0开始
-                    int cnt = innerT * 19 + mTask;
+                    int cnt = innerT * TASK_NUM + mTask;
                     int i = cnt / 19 + 1;
                     int j = cnt % 19 + 1;
                     if (detectStone(i, j, innerT)) {
@@ -279,67 +300,46 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                 lastBoard = lastTurn.boardState;
                 lastMove = board.getPoint(lastTurn.x, lastTurn.y);
                 drawBoard();
-                conn2Engine(getApplicationContext());
+                conn2Engine();
             } else {
                 Log.e(Logger, "这里不可以落子");
                 playPosition = "这里不可以落子";
                 curBoard[moveX][moveY] = BLANK;
             }
-            runOnUiThread(() -> btn_play.setEnabled(true));
         }
     }
 
     /**
      * 将落子信息发送给引擎，如果发送成功，则继续由引擎产生下一步
      */
-    public void conn2Engine(Context context) {
+    public void conn2Engine() {
         String playCmd = genPlayCmd(lastMove);
         String jsonInfo = JsonUtil.getCmd2JsonForm(userName, playCmd);
-        Log.d(Logger, "手动走棋指令json格式的数据: " + jsonInfo);
-        // 将指令发送给围棋引擎
-        String result = engineInterface.sendIndexes2Engine(jsonInfo);
-        if (result.equals("success")) {
-            int identifier = lastMove.getGroup().getOwner().getIdentifier();
-            String json = "";
-            if (identifier == Board.BLACK_STONE) {
-                json = JsonUtil.getJsonFormOfgenMove(userName, "W");
-            } else if (identifier == Board.WHITE_STONE) {
-                json = JsonUtil.getJsonFormOfgenMove(userName, "B");
+        Log.d(Logger, "走棋指令json格式的数据: " + jsonInfo);
+        // 将指令发送给围棋引擎并返回引擎落子
+        playPosition = engineInterface.playGenMove(jsonInfo);
+        drawBoard();
+        // 引擎没有认输或过一手就将引擎落子位置发送给下位机，并走棋
+        if (!playPosition.equals("resign") && !playPosition.equals("pass") && !playPosition.equals("failed") && !playPosition.equals("unplayable")) {
+            Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
+            Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
+            // 将引擎下的棋走上 并更新棋盘信息
+            board.play(enginePlay.second, enginePlay.first, board.getPlayer());
+            GameTurn lastTurn = board.gameRecord.getLastTurn();
+            lastBoard = lastTurn.boardState;
+            Log.d(Logger, "lastMove上一步：" + lastTurn.x + " " + lastTurn.y);
+            lastMove = board.getPoint(lastTurn.x, lastTurn.y);
+            board.nextPlayer();
+            // 落子传到下位机
+            // TODO:将吃子位置传给下位机
+            if (bluetoothService != null) {
+                Log.d(Logger, "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
+                //bluetoothService.sendData("L" + playPosition + "Z", false);
+            } else {
+                Log.d(Logger, "落子位置发给下位机失败！");
             }
-            Log.d(Logger, "引擎走棋指令json格式的数据: " + json);
-            String genMoveResult = engineInterface.genMove(json);
-            if (!genMoveResult.equals("failed") && !genMoveResult.equals("")) {
-                playPosition = genMoveResult;
-                if (!genMoveResult.equals("resign") && !genMoveResult.equals("pass")) {
-                    Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
-                    Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
-                    // 将引擎下的棋走上 并更新棋盘信息
-                    board.play(enginePlay.second, enginePlay.first, board.getPlayer());
-                    GameTurn lastTurn = board.gameRecord.getLastTurn();
-                    lastBoard = lastTurn.boardState;
-                    Log.d(Logger, "lastMove上一步：" + lastTurn.x + " " + lastTurn.y);
-                    lastMove = board.getPoint(lastTurn.x, lastTurn.y);
-                    board.nextPlayer();
-                }
-                drawBoard();
-                // 落子传到下位机
-                // TODO:将吃子位置传给下位机
-                if (bluetoothService != null) {
-                    Log.d(Logger, "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
-                    bluetoothService.sendData("L" + playPosition + "Z", false);
-                } else {
-                    Log.d(Logger, "落子位置发给下位机失败！");
-                    Message tempMsg = new Message();
-                    tempMsg.obj = context;
-                    tempMsg.what = ResponseCode.BLUETOOTH_SERVICE_FAILED.getCode();
-                    handler.sendMessage(tempMsg);
-                }
-            }
-        } else if (result.equals("unplayable")) {
-            playPosition = "此处无法落子";
-            drawBoard();
         } else {
-            Log.e(Logger, result);
+            Log.e(Logger, playPosition);
         }
     }
 
@@ -383,13 +383,16 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         } else {
             curBoard[x][y] = BLANK;
         }
-        return lastBoard[x][y] == BLANK && curBoard[x][y] != BLANK && curBoard[x][y] == board.getPlayer().getIdentifier();
+        if (lastBoard[x][y] == BLANK && curBoard[x][y] != BLANK && curBoard[x][y] == board.getPlayer().getIdentifier()) {
+            return true;
+        }
+        return false;
     }
 
     private void initLoaders() {
         OpenCVLoader.initDebug();
-        CountDownLatch cdl = new CountDownLatch(19);
-        for (int i = 0; i < 19; i ++ ) {
+        CountDownLatch cdl = new CountDownLatch(THREAD_NUM);
+        for (int i = 0; i < THREAD_NUM; i ++ ) {
             try {
                 mobileNetModule[i] = LiteModuleLoader.load(getFileFromAssets(this, "test_model.pt"));
             } catch (IOException e) {
@@ -456,7 +459,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
      */
     private void drawBoard() {
         int identifier = (lastMove == null || lastMove.getGroup() == null) ? 0 : lastMove.getGroup().getOwner().getIdentifier();
-
         Bitmap showBoard = drawer.drawBoard(boardBitmap, lastBoard, lastMove, 0, 0);
         Bitmap playerInfo = drawer.drawPlayerInfo(bitmap4PlayerInfo, blackPlayer, whitePlayer, rule, komi, engine);
         Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, identifier, playPosition);
@@ -465,26 +467,4 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         playerInfoView.setImageBitmap(playerInfo);
         playView.setImageBitmap(playInfo);
     }
-
-    private final Handler handler = new Handler(Looper.getMainLooper()) {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            if (msg.what == ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_SUCCESSFULLY.getMsg());
-            } else if (msg.what == ResponseCode.ENGINE_CONNECT_FAILED.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_CONNECT_FAILED.getMsg());
-            } else if (msg.what == ResponseCode.CANNOT_PLAY.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.CANNOT_PLAY.getMsg());
-            } else if (msg.what == ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.PLAY_PASS_TO_ENGINE_FAILED.getMsg());
-            } else if (msg.what == ResponseCode.ENGINE_RESIGN.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_RESIGN.getMsg());
-            } else if (msg.what == ResponseCode.ENGINE_PASS.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.ENGINE_PASS.getMsg());
-            } else if (msg.what == ResponseCode.BLUETOOTH_SERVICE_FAILED.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.BLUETOOTH_SERVICE_FAILED.getMsg());
-            }
-        }
-    };
 }
