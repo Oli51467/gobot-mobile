@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/cardview_dark_background">
+
+    <ScrollView
+        android:layout_width="345dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="35dp"
+        tools:layout_editor_absoluteY="80dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="34dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_bluetooth" />
+
+                <TextView
+                    android:id="@+id/textView4"
+                    android:layout_width="311dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:text=" 蓝牙"
+                    android:textColor="#7EBBEC"
+                    android:textSize="26sp"
+                    tools:ignore="MissingConstraints"
+                    tools:layout_editor_absoluteX="41dp"
+                    tools:layout_editor_absoluteY="5dp" />
+            </LinearLayout>
+
+            <!--            分隔-->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="" />
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="wrap_content"
+                android:layout_height="35dp"
+                app:cardBackgroundColor="#C7C7C7"
+                app:cardCornerRadius="12dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+
+                        android:layout_gravity="center_vertical"
+                        android:text=" 设备名称"
+                        android:textColor="#FDFDFD"
+                        android:textSize="20sp" />
+
+                    <TextView
+                        android:id="@+id/connectedDevice"
+                        android:layout_width="256dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:gravity="right"
+                        android:text="当前无设备连接  "
+                        android:textColor="#FDFDFD"
+                        android:textSize="20sp"
+                        tools:ignore="MissingConstraints"
+                        tools:layout_editor_absoluteX="41dp"
+                        tools:layout_editor_absoluteY="5dp" />
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+            <!--            分隔-->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/textView6"
+                    android:layout_width="320dp"
+                    android:layout_height="wrap_content"
+                    android:text=" 已配对设备"
+                    android:textColor="#FFFFFF"
+                    android:textSize="20dp"
+                    tools:ignore="MissingConstraints"
+                    tools:layout_editor_absoluteX="3dp"
+                    tools:layout_editor_absoluteY="297dp" />
+
+                <ImageButton
+                    android:id="@+id/RefreshPairedDevice"
+                    android:layout_width="25dp"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/ic_refresh" />
+            </LinearLayout>
+
+            <!--            分隔-->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:text="" />
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="#C7C7C7"
+                app:cardCornerRadius="12dp">
+
+                <TextView
+                    android:id="@+id/UnderLine0"
+                    android:layout_width="320dp"
+                    android:layout_height="0.5dp"
+                    android:background="@android:color/darker_gray"
+                    android:text="TextView" />
+
+
+                <ListView
+                    android:id="@+id/paired_device"
+                    android:layout_width="wrap_content"
+                    android:layout_height="173dp"
+                    android:backgroundTint="#CCC9C9"
+                    tools:layout_editor_absoluteX="1dp"
+                    tools:layout_editor_absoluteY="85dp" />
+            </androidx.cardview.widget.CardView>
+
+            <!--            分隔-->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/textView5"
+                    android:layout_width="320dp"
+                    android:layout_height="wrap_content"
+                    android:text=" 可用设备"
+                    android:textColor="#FFFFFF"
+                    android:textSize="20dp"
+                    tools:ignore="MissingConstraints"
+                    tools:layout_editor_absoluteX="3dp"
+                    tools:layout_editor_absoluteY="297dp" />
+
+                <ImageButton
+                    android:id="@+id/RefreshOptionDevice"
+                    android:layout_width="25dp"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/ic_refresh" />
+
+            </LinearLayout>
+
+            <!--            分隔-->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:text="" />
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="#C7C7C7"
+                app:cardCornerRadius="12dp">
+
+                <TextView
+                    android:id="@+id/UnderLine1"
+                    android:layout_width="320dp"
+                    android:layout_height="0.5dp"
+                    android:background="@android:color/darker_gray"
+                    android:text="TextView" />
+
+                <ListView
+                    android:id="@+id/option_devices"
+                    android:layout_width="wrap_content"
+                    android:layout_height="246dp"
+                    tools:layout_editor_absoluteX="3dp"
+                    tools:layout_editor_absoluteY="327dp" />
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+    </ScrollView>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -32,7 +32,7 @@ import com.irlab.base.MyApplication;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
-import com.irlab.view.activity.BluetoothActivity;
+import com.irlab.view.activity.BluetoothAppActivity;
 import com.irlab.view.bluetooth.BluetoothService;
 import com.irlab.view.utils.ImageUtils;
 import com.tbruyelle.rxpermissions2.RxPermissions;
@@ -110,7 +110,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         userName = MyApplication.getInstance().preferences.getString("userName", null);
-        bluetoothService = BluetoothActivity.bluetoothService;
+        bluetoothService = BluetoothAppActivity.bluetoothService;
         initLauncher();
     }
 
@@ -119,7 +119,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
     public void onStart() {
         super.onStart();
         showInfo.setText(userName);
-        bluetoothService = BluetoothActivity.bluetoothService;
+        bluetoothService = BluetoothAppActivity.bluetoothService;
     }
 
     // TODO: 选择照片时切出应用再切回有主页面Fragment显示错误的bug

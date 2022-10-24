@@ -6,7 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
-import com.irlab.view.activity.BluetoothActivity;
+import com.irlab.view.activity.BluetoothAppActivity;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -38,8 +38,7 @@ public class ConnectThread extends Thread {
 
         //1、获取bluetoothSocket
         try {
-            // tmp = bluetoothDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString(uuid));
-            tmp = bluetoothDevice.createRfcommSocketToServiceRecord(UUID.fromString(uuid));
+            tmp = bluetoothDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString(uuid));
         } catch (IOException e) {
             Log.e(TAG, "ConnectThread-->获取BluetoothSocket异常!" + e.getMessage());
         }
@@ -102,8 +101,8 @@ public class ConnectThread extends Thread {
                 bluetoothSocket.close();
                 bluetoothSocket = null;
             }
-            BluetoothActivity.connect_status=false;
-            BluetoothActivity.bluetoothService.setCurBluetoothDevice(null);
+            BluetoothAppActivity.connect_status=false;
+            BluetoothAppActivity.bluetoothService.setCurBluetoothDevice(null);
             Log.d(TAG, "ConnectThread:cancel-->关闭已连接的套接字释放资源");
         } catch (IOException e) {
             Log.e(TAG, "ConnectThread:cancel-->关闭已连接的套接字释放资源异常!" + e.getMessage());

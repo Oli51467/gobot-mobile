@@ -123,13 +123,13 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     @Override
     protected void onStart() {
         super.onStart();
-        bluetoothService = BluetoothActivity.bluetoothService;
+        bluetoothService = BluetoothAppActivity.bluetoothService;
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        bluetoothService = BluetoothActivity.bluetoothService;
+        bluetoothService = BluetoothAppActivity.bluetoothService;
     }
 
     public void onDestroy() {

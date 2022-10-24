@@ -1,12 +1,16 @@
 package com.irlab.view;
 
-import static com.irlab.view.activity.BluetoothActivity.bluetoothService;
+
+import static com.irlab.view.activity.BluetoothAppActivity.MY_BLUETOOTH_UUID;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -22,11 +26,13 @@ import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.irlab.base.MyApplication;
 import com.irlab.base.utils.ToastUtil;
-import com.irlab.view.activity.BluetoothActivity;
+import com.irlab.view.activity.BluetoothAppActivity;
 import com.irlab.view.activity.InstructionActivity;
 import com.irlab.view.activity.PlayConfigActivity;
 import com.irlab.view.activity.SelectConfigActivity;
 import com.irlab.view.activity.TestSpeechActivity;
+import com.irlab.view.bluetooth.BluetoothService;
+import com.irlab.view.bluetooth.LVDevicesAdapter;
 import com.irlab.view.fragment.PlayFragment;
 import com.irlab.view.fragment.ArchiveFragment;
 import com.irlab.view.fragment.SettingsFragment;
@@ -56,6 +62,7 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     private TextView archiveText = null;
 
     int last = 0;
+    public static BluetoothService bluetoothService; //静态变量,供其他Activity调用
 
     @Override
     public boolean navigateUpTo(Intent upIntent) {
@@ -86,6 +93,7 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         initFragment();
         // 设置默认的显示界面
         setTabSelection(2);
+
     }
 
     @Override
@@ -93,13 +101,12 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         super.onStart();
         // 这里初始化Fragment的组件必须在onStart()中进行, 若在onCreate中初始化, 子fragment有可能未初始化完成, 导致找不到对应组件
         initFragmentViewsAndEvents();
-        if (bluetoothService != null) bluetoothService.scanBluetooth(this);
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (bluetoothService != null) bluetoothService.scanBluetooth(this);
     }
 
     // TODO: 选择照片时切出应用再切回有主页面Fragment显示错误的bug
@@ -155,19 +162,20 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
 
     // 初始化fragment中的控件并设置监听事件
     public void initFragmentViewsAndEvents() {
-        LinearLayout openBluetooth = findViewById(R.id.layout_bluetooth);
         LinearLayout openSpeech = findViewById(R.id.layout_speech);
         Button logout = findViewById(R.id.btn_logout);
         Button play = findViewById(R.id.btn_play);
         Button playSettings = findViewById(R.id.btn_play_settings);
         Button instruction = findViewById(R.id.btn_instruction);
 
-        openBluetooth.setOnClickListener(this);
+        Button bluetooth = findViewById(R.id.btn_bluetooth);
+
         openSpeech.setOnClickListener(this);
         logout.setOnClickListener(this);
         play.setOnClickListener(this);
         playSettings.setOnClickListener(this);
         instruction.setOnClickListener(this);
+        bluetooth.setOnClickListener(this);
     }
 
     @Override
@@ -181,11 +189,6 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         }
         else if (vid == R.id.layout_archive) {
             setTabSelection(1);
-        }
-        else if (vid == R.id.layout_bluetooth) {
-            Intent intent = new Intent(MainView.this, BluetoothActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
         }
         else if (vid == R.id.layout_speech) {
             Intent intent = new Intent(MainView.this, TestSpeechActivity.class);
@@ -220,6 +223,12 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         // 使用说明
         else if (vid == R.id.btn_instruction) {
             Intent intent = new Intent(this, InstructionActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+        }
+        // 测试蓝牙
+        else if (vid == R.id.btn_bluetooth) {
+            Intent intent = new Intent(this, BluetoothAppActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         }

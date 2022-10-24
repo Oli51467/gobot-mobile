@@ -67,6 +67,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
+            <!--
             <LinearLayout
                 android:id="@+id/layout_bluetooth"
                 style="@style/cardView_linearLayout_style">
@@ -85,8 +87,8 @@
                         style="@style/imageView_in_circleImageView"
                         android:src="@drawable/icon_enter" />
                 </LinearLayout>
-
             </LinearLayout>
+            -->
 
             <LinearLayout
                 android:id="@+id/layout_speech"
