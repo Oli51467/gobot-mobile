@@ -247,7 +247,19 @@ public class BluetoothService {
             public void onReceiveDataSuccess(byte[] buffer) {
 //                Log.w("onReceiveDataSuccess", "成功接收数据,长度" + buffer.length + "->" + bytes2HexString(buffer, buffer.length));
                 BluetoothAppActivity.connect_status = true;
-                // MainShowActivity.connect_status = true;
+                // 落子成功
+                if (buffer[0] == 76) {
+                    sendData("WZ", false);
+                } else if (buffer[0] == 65) {   // 按键落子
+                    try {
+                        Intent intent = new Intent("play");
+                        intent.setPackage(context.getPackageName());
+                        context.sendOrderedBroadcast(intent,null);
+                    } catch (Exception e) {
+                        Log.e("onReceiveDataSuccess", "调用方法错误: " + e.getMessage());
+                    }
+                }
+
             }
 
             @Override
