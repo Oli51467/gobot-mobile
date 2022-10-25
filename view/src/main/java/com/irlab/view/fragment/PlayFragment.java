@@ -36,7 +36,7 @@ import com.irlab.view.activity.BluetoothAppActivity;
 import com.irlab.view.adapter.FunctionAdapter;
 import com.irlab.view.bluetooth.BluetoothService;
 import com.irlab.view.utils.ImageUtils;
-import com.irlab.view.utils.MyFunction;
+import com.irlab.view.models.MyFunction;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import org.json.JSONException;

@@ -70,7 +70,7 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         initFragment();
         // 设置默认的显示界面
         setTabSelection(2);
-
+        if (bluetoothService != null) bluetoothService.autoConnect();
     }
 
     @Override

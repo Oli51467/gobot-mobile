@@ -2,18 +2,12 @@ package com.irlab.view.activity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Service;
 import android.bluetooth.BluetoothDevice;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Vibrator;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -30,7 +24,7 @@ import androidx.core.content.ContextCompat;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.bluetooth.BluetoothService;
-import com.irlab.view.bluetooth.LVDevicesAdapter;
+import com.irlab.view.adapter.LVDevicesAdapter;
 
 import java.util.Objects;
 import java.util.Set;
@@ -40,42 +34,35 @@ import java.util.TimerTask;
 public class BluetoothAppActivity extends AppCompatActivity implements OnClickListener {
 
     public static final String TAG = "BluetoothApp";
+    private static final int CONNECTED_DEVICE_NAME = 0x01;
+    private static final int CONNECTED_SUCCESS_STATUE = 0x03;
+    private static final int CONNECTED_FAILURE_STATUE = 0x04;
+    public static final String MY_BLUETOOTH_UUID = "00001101-0000-1000-8000-00805F9B34FB";  //蓝牙通讯的uuid
+
+    public static BluetoothService bluetoothService; //静态变量,供其他Activity调用
+    public static boolean connect_status = false;
+
     private Toast mToast;
     private ListView lvDevices;
     private ListView pairedDevices;
     private LVDevicesAdapter lvDevicesAdapter;
     private LVDevicesAdapter pairedDevicesAdapter;
-
-    public static BluetoothService bluetoothService; //静态变量,供其他Activity调用
-    public static boolean connect_status = false;
-
-    public static final String MY_BLUETOOTH_UUID = "00001101-0000-1000-8000-00805F9B34FB";  //蓝牙通讯的uuid
     private TimerTask timerTaskConnectDevice; // 获取当前是否连接，在textView中显示
     private Timer timerConnectDevice;
     private TextView displayConnectDevice;
 
-    private static final int CONNECTED_DEVICE_NAME = 0x01;
-    private static final int CONNECTED_SUCCESS_STATUE = 0x03;
-    private static final int CONNECTED_FAILURE_STATUE = 0x04;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
     }
 
     @Override
     protected void onStart() {
-
         super.onStart();
         setContentView(R.layout.activity_bluetooth_app);
-
         getPermissionUseful();
         initLayout();
         initBluetooth();
-
         initOptionDevices();
         initPairedDevices();
         getTextViewConnectDevice();
@@ -146,16 +133,21 @@ public class BluetoothAppActivity extends AppCompatActivity implements OnClickLi
         // TODO 获取extra device
 
         lvDevices.setAdapter(lvDevicesAdapter);
-        lvDevices.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @SuppressLint("MissingPermission")
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                BluetoothDevice bluetoothDevice = (BluetoothDevice) lvDevicesAdapter.getItem(i);
-                showTip(bluetoothDevice.getName() + bluetoothDevice.getAddress());
-                //curBluetoothDevice = bluetoothDevice; 获取当前选中的蓝牙，下一步进行蓝牙连接，其中conOutTime暂时未启用
-                //连接前先进行配对
-                bluetoothService.boundDevice(bluetoothDevice);
+        lvDevices.setOnItemClickListener((adapterView, view, i, l) -> {
+            BluetoothDevice bluetoothDevice = (BluetoothDevice) lvDevicesAdapter.getItem(i);
+            //curBluetoothDevice = bluetoothDevice; 获取当前选中的蓝牙，下一步进行蓝牙连接，其中conOutTime暂时未启用
+            //连接前先进行配对
+            boolean flag = bluetoothService.boundDevice(bluetoothDevice);
+            if (flag) {
+                Log.i("boundDevice", "success");
+            } else {
+                Log.e("boundDevice", "failure!");
             }
+        });
+        lvDevices.setOnItemLongClickListener((parent, view, position, id) -> {
+            BluetoothDevice bluetoothDevice = (BluetoothDevice) lvDevicesAdapter.getItem(position);
+            boolean flag = bluetoothService.cancelBoundDevice(bluetoothDevice);
+            return flag;
         });
     }
 
@@ -175,27 +167,17 @@ public class BluetoothAppActivity extends AppCompatActivity implements OnClickLi
             }
         }
         pairedDevices.setAdapter(pairedDevicesAdapter);
-        pairedDevices.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @SuppressLint("MissingPermission")
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-
-
-                BluetoothDevice bluetoothDevice = (BluetoothDevice) pairedDevicesAdapter.getItem(i);
-
-                if (bluetoothService.getCurConDevice() != null && bluetoothService.getCurConDevice().getAddress().equals(bluetoothDevice.getAddress())){
-                    // 取消配对
-                    bluetoothService.clearConnectedThread();
-
-                    getTextViewConnectDevice();
-                    showTip("断开连接！");
-
-
-                }else {
-                    // 开始配对
-                    bluetoothService.startConnectDevice(bluetoothDevice, MY_BLUETOOTH_UUID, 123);
-                    Log.e("ConnectSuccess", bluetoothService.getCurConnState() + "");
-                }
+        pairedDevices.setOnItemClickListener((adapterView, view, i, l) -> {
+            BluetoothDevice bluetoothDevice = (BluetoothDevice) pairedDevicesAdapter.getItem(i);
+            if (bluetoothService.getCurConDevice() != null && bluetoothService.getCurConDevice().getAddress().equals(bluetoothDevice.getAddress())) {
+                // 取消配对
+                bluetoothService.clearConnectedThread();
+                getTextViewConnectDevice();
+                showTip("断开连接！");
+            } else {
+                // 开始配对
+                bluetoothService.startConnectDevice(bluetoothDevice, MY_BLUETOOTH_UUID, 123);
+                Log.e("ConnectSuccess", bluetoothService.getCurConnState() + "");
             }
         });
     }
@@ -229,7 +211,6 @@ public class BluetoothAppActivity extends AppCompatActivity implements OnClickLi
     }
 
 
-
     /**
      * 在线程中更新UI会产生 Only the original thread that created a view hierarchy can touch its views 异常。
      * 原因是只有创建这个View的线程才能去操作这个view，普通会认为是将view创建在非UI线程中才会出现这个错误，因此采用handle，
@@ -238,20 +219,20 @@ public class BluetoothAppActivity extends AppCompatActivity implements OnClickLi
      */
     //用handler更新UI,动态获取
     @SuppressLint("HandlerLeak")
-    private Handler handler = new Handler() {
+    private final Handler handler = new Handler() {
         @SuppressLint("MissingPermission")
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
-                case CONNECTED_DEVICE_NAME: //动态获取当前的连接设备
+                case CONNECTED_DEVICE_NAME: // 动态获取当前的连接设备
                     displayConnectDevice.setText((String) msg.obj);
                     break;
                 case CONNECTED_SUCCESS_STATUE: // 连接成功跳转退出
                     showTip("设备连接成功");
                     getTextViewConnectDevice();
                     connect_status = true;
-                    //设备连接成功就退出
+                    // 设备连接成功就退出
                     finish();
                     MainView.bluetoothService = bluetoothService;
                     break;

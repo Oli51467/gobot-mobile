@@ -101,7 +101,7 @@ public class ConnectThread extends Thread {
                 bluetoothSocket.close();
                 bluetoothSocket = null;
             }
-            BluetoothAppActivity.connect_status=false;
+            BluetoothAppActivity.connect_status = false;
             BluetoothAppActivity.bluetoothService.setCurBluetoothDevice(null);
             Log.d(TAG, "ConnectThread:cancel-->关闭已连接的套接字释放资源");
         } catch (IOException e) {

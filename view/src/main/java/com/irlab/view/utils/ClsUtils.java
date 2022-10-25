@@ -1,4 +1,4 @@
-package com.irlab.view.bluetooth.util;
+package com.irlab.view.utils;
 
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;

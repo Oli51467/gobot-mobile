@@ -8,7 +8,7 @@ public class BluetoothUtil {
      * @return 16进制字符串 有空格类似“0A D5 CD 8F BD E5 F8”
      */
     public static String bytes2HexString(byte[] b, int length) {
-        StringBuilder result = new StringBuilder();
+        StringBuffer result = new StringBuffer();
         String hex;
         for (int i = 0; i < length; i++) {
             hex = Integer.toHexString(b[i] & 0xFF);

@@ -1,5 +1,7 @@
 package com.irlab.view.bluetooth;
 
+import static com.irlab.view.utils.BluetoothUtil.bytes2HexString;
+
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
@@ -79,7 +81,7 @@ public class ConnectedThread extends Thread {
                     //2、接收数据
                     bytes = mmInStream.read(buffer);  //从(mmInStream)输入流中(读取内容)读取的一定数量字节数,并将它们存储到缓冲区buffer数组中，bytes为实际读取的字节数
                     byte[] b = Arrays.copyOf(buffer, bytes);  //存放实际读取的数据内容
-//                    Log.w(TAG, "ConnectedThread:run-->收到消息,长度" + b.length + "->" + bytes2HexString(b, b.length));  //有空格的16进制字符串
+                    Log.w(TAG, "ConnectedThread:run-->收到消息,长度" + b.length + "->" + bytes2HexString(b, b.length));  //有空格的16进制字符串
                     if (onSendReceiveDataListener != null) {
                         onSendReceiveDataListener.onReceiveDataSuccess(b);  //成功收到消息
                     }
@@ -157,7 +159,7 @@ public class ConnectedThread extends Thread {
             mmSocket = null;
 
             Log.w(TAG, "ConnectedThread:cancel-->成功断开连接");
-            BluetoothAppActivity.connect_status=false;
+            BluetoothAppActivity.connect_status = false;
             BluetoothAppActivity.bluetoothService.setCurBluetoothDevice(null);
             return true;
 
@@ -170,26 +172,6 @@ public class ConnectedThread extends Thread {
             Log.e(TAG, "ConnectedThread:cancel-->断开连接异常！" + e.getMessage());
             return false;
         }
-    }
-
-    /**
-     * 字节数组-->16进制字符串
-     *
-     * @param b      字节数组
-     * @param length 字节数组长度
-     * @return 16进制字符串 有空格类似“0A D5 CD 8F BD E5 F8”
-     */
-    public static String bytes2HexString(byte[] b, int length) {
-        StringBuffer result = new StringBuffer();
-        String hex;
-        for (int i = 0; i < length; i++) {
-            hex = Integer.toHexString(b[i] & 0xFF);
-            if (hex.length() == 1) {
-                hex = '0' + hex;
-            }
-            result.append(hex.toUpperCase()).append(" ");
-        }
-        return result.toString();
     }
 
     private OnSendReceiveDataListener onSendReceiveDataListener;
