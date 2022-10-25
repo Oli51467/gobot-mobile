@@ -74,34 +74,6 @@
 
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/layout_settings"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_centerVertical="true"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:padding="3dp">
-
-            <ImageView
-                android:id="@+id/img_settings"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_gravity="center_horizontal"
-                android:src="@drawable/tab_settings_normal" />
-
-            <TextView
-                android:id="@+id/tv_settings"
-                android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:layout_gravity="center_horizontal"
-                android:gravity="top"
-                android:text="设置"
-                android:textColor="#82858b"
-                android:textSize="13dp" />
-
-        </LinearLayout>
-
     </LinearLayout>
 
 </RelativeLayout>

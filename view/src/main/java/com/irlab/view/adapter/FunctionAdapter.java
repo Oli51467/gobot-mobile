@@ -1,6 +1,7 @@
 package com.irlab.view.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,14 +15,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.irlab.view.R;
-import com.irlab.view.utils.MyFuntion;
+import com.irlab.view.activity.BluetoothAppActivity;
+import com.irlab.view.activity.InstructionActivity;
+import com.irlab.view.activity.PlayConfigActivity;
+import com.irlab.view.activity.SelectConfigActivity;
+import com.irlab.view.activity.TestSpeechActivity;
+import com.irlab.view.utils.MyFunction;
 
 import java.util.List;
 
 public class FunctionAdapter extends RecyclerView.Adapter<FunctionAdapter.ViewHolder> {
 
     private Context context;
-    private List<MyFuntion> funcList;
+    private final List<MyFunction> funcList;
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         CardView cardView;
@@ -29,7 +35,6 @@ public class FunctionAdapter extends RecyclerView.Adapter<FunctionAdapter.ViewHo
         TextView textView;
         ImageView service_status_image;
 
-        // 标红后生成，需要重写的方法
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             cardView = (CardView) itemView;
@@ -39,7 +44,7 @@ public class FunctionAdapter extends RecyclerView.Adapter<FunctionAdapter.ViewHo
         }
     }
 
-    public FunctionAdapter(List<MyFuntion> list) {
+    public FunctionAdapter(List<MyFunction> list) {
         funcList = list;
     }
 
@@ -54,15 +59,28 @@ public class FunctionAdapter extends RecyclerView.Adapter<FunctionAdapter.ViewHo
         // 添加cardView点击响应
         final ViewHolder holder = new ViewHolder(view);
         holder.cardView.setOnClickListener(v -> {
-            int position = holder.getAdapterPosition();
-            MyFuntion myFuntion = funcList.get(position);
-
-            if (myFuntion.getName().equals("电话寻人")) {
-
-            } else if (myFuntion.getName().equals("跟随拍摄")) {
-
-            } else if (myFuntion.getName().equals("手势识别")) {
-            } else if (myFuntion.getName().equals("人脸识别")) {
+            int position = holder.getBindingAdapterPosition();
+            MyFunction function = funcList.get(position);
+            if (function.getName().equals("开始对弈")) {
+                Intent intent = new Intent(context, SelectConfigActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                context.startActivity(intent);
+            } else if (function.getName().equals("规则设置")) {
+                Intent intent = new Intent(context, PlayConfigActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                context.startActivity(intent);
+            } else if (function.getName().equals("蓝牙连接")) {
+                Intent intent = new Intent(context, BluetoothAppActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                context.startActivity(intent);
+            } else if (function.getName().equals("下棋说明")) {
+                Intent intent = new Intent(context, InstructionActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                context.startActivity(intent);
+            } else if (function.getName().equals("语音测试")) {
+                Intent intent = new Intent(context, TestSpeechActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                context.startActivity(intent);
             }
         });
         return holder;
@@ -71,7 +89,7 @@ public class FunctionAdapter extends RecyclerView.Adapter<FunctionAdapter.ViewHo
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
-        MyFuntion function = funcList.get(position);
+        MyFunction function = funcList.get(position);
         holder.textView.setText(function.getName());
         Glide.with(context).load(function.getImageId()).into(holder.imageView);
     }

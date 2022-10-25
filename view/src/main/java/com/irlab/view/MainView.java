@@ -1,16 +1,10 @@
 package com.irlab.view;
 
-
-import static com.irlab.view.activity.BluetoothAppActivity.MY_BLUETOOTH_UUID;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -19,50 +13,33 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.irlab.base.MyApplication;
 import com.irlab.base.utils.ToastUtil;
-import com.irlab.view.activity.BluetoothAppActivity;
-import com.irlab.view.activity.InstructionActivity;
-import com.irlab.view.activity.PlayConfigActivity;
-import com.irlab.view.activity.SelectConfigActivity;
-import com.irlab.view.activity.TestSpeechActivity;
 import com.irlab.view.bluetooth.BluetoothService;
-import com.irlab.view.bluetooth.LVDevicesAdapter;
 import com.irlab.view.fragment.PlayFragment;
 import com.irlab.view.fragment.ArchiveFragment;
-import com.irlab.view.fragment.SettingsFragment;
 
 import java.util.Objects;
 
 @Route(path = "/view/main")
 public class MainView extends AppCompatActivity implements View.OnClickListener {
+    public static BluetoothService bluetoothService; // 静态变量,供其他Activity调用
 
-    // 三个布局界面
+    // 布局界面
     private PlayFragment playFragment = null;
-    private SettingsFragment settingsFragment = null;
     private ArchiveFragment archiveFragment = null;
-
-    // 三个显示布局
+    // 显示布局
     private View playLayout = null;
-    private View settingsLayout = null;
     private View archiveLayout = null;
-
     // 声明组件变量
     private ImageView playImg = null;
-    private ImageView settingsImg = null;
     private ImageView archiveImg = null;
-
     private TextView playText = null;
-    private TextView settingsText = null;
     private TextView archiveText = null;
-
-    int last = 0;
-    public static BluetoothService bluetoothService; //静态变量,供其他Activity调用
 
     @Override
     public boolean navigateUpTo(Intent upIntent) {
@@ -114,9 +91,6 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     protected void onPause() {
         super.onPause();
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragment);
-        if (fragment instanceof SettingsFragment) last = 0;
-        else if (fragment instanceof ArchiveFragment) last = 1;
-        else last = 2;
     }
 
     /**
@@ -124,36 +98,27 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
      */
     public void initViews() {
         fragmentManager = getSupportFragmentManager();
-
         // 初始化控件
         playLayout = findViewById(R.id.layout_play);
-        settingsLayout = findViewById(R.id.layout_settings);
         archiveLayout = findViewById(R.id.layout_archive);
-
         playImg = findViewById(R.id.img_play);
-        settingsImg = findViewById(R.id.img_settings);
         archiveImg = findViewById(R.id.img_archive);
-
         playText = findViewById(R.id.tv_play);
-        settingsText = findViewById(R.id.tv_settings);
         archiveText = findViewById(R.id.tv_archive);
     }
 
     // 处理activity中控件的点击事件 fragment控件的点击事件必须在onStart()中进行
     public void setEvents() {
         playLayout.setOnClickListener(this);
-        settingsLayout.setOnClickListener(this);
         archiveLayout.setOnClickListener(this);
     }
 
     public void initFragment() {
         // 开启一个Fragment事务
         FragmentTransaction transaction = fragmentManager.beginTransaction();
-        settingsFragment = new SettingsFragment();
         playFragment = new PlayFragment();
         archiveFragment = new ArchiveFragment();
         // 通过事务将子fragment添加到主布局中
-        transaction.add(R.id.fragment, settingsFragment,"settings");
         transaction.add(R.id.fragment, playFragment, "play");
         transaction.add(R.id.fragment, archiveFragment, "archive");
         // 提交事务
@@ -162,40 +127,18 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
 
     // 初始化fragment中的控件并设置监听事件
     public void initFragmentViewsAndEvents() {
-        LinearLayout openSpeech = findViewById(R.id.layout_speech);
         Button logout = findViewById(R.id.btn_logout);
-        Button play = findViewById(R.id.btn_play);
-        Button playSettings = findViewById(R.id.btn_play_settings);
-        Button instruction = findViewById(R.id.btn_instruction);
-
-        Button bluetooth = findViewById(R.id.btn_bluetooth);
-
-        openSpeech.setOnClickListener(this);
         logout.setOnClickListener(this);
-        play.setOnClickListener(this);
-        playSettings.setOnClickListener(this);
-        instruction.setOnClickListener(this);
-        bluetooth.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v) {
         int vid = v.getId();
-        if (vid == R.id.layout_settings) {
-            setTabSelection(0);
-        }
-        else if (vid == R.id.layout_play) {
+        if (vid == R.id.layout_play) {
             setTabSelection(2);
-        }
-        else if (vid == R.id.layout_archive) {
+        } else if (vid == R.id.layout_archive) {
             setTabSelection(1);
-        }
-        else if (vid == R.id.layout_speech) {
-            Intent intent = new Intent(MainView.this, TestSpeechActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-        }
-        else if (vid == R.id.btn_logout) {
+        } else if (vid == R.id.btn_logout) {
             // 退出登录时, 清空SharedPreferences中保存的用户信息, 下次登录时不再自动登录
             SharedPreferences.Editor editor = preferences.edit();
             editor.remove("userName");
@@ -205,32 +148,6 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
             ARouter.getInstance().build("/auth/login")
                     .withFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     .navigation();
-        }
-        // 跳转到下棋界面
-        else if (vid == R.id.btn_play) {
-            Intent intent = new Intent(this, SelectConfigActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-            finish();
-        }
-        // 对局设置
-        else if (vid == R.id.btn_play_settings) {
-            Intent intent = new Intent(this, PlayConfigActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-            finish();
-        }
-        // 使用说明
-        else if (vid == R.id.btn_instruction) {
-            Intent intent = new Intent(this, InstructionActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-        }
-        // 测试蓝牙
-        else if (vid == R.id.btn_bluetooth) {
-            Intent intent = new Intent(this, BluetoothAppActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
         }
     }
 
@@ -244,14 +161,8 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         // 先隐藏掉所有的Fragment, 防止有多个Fragment显示在界面上的情况
         hideFragments(transaction);
-        // 设置界面
-        if (index == 0) {
-            settingsImg.setImageResource(R.drawable.tab_settings_pressed);//修改布局中的图片
-            settingsText.setTextColor(Color.parseColor("#07c160"));//修改字体颜色
-            transaction.show(settingsFragment);
-        }
         // 棋谱界面
-        else if (index == 1) {
+        if (index == 1) {
             archiveImg.setImageResource(R.drawable.tab_archive_pressed);
             archiveText.setTextColor(Color.parseColor("#07c160"));
             transaction.show(archiveFragment);
@@ -271,10 +182,6 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     private void clearSelection() {
         playImg.setImageResource(R.drawable.tab_play_normal);
         playText.setTextColor(Color.parseColor("#82858b"));
-
-        settingsImg.setImageResource(R.drawable.tab_settings_normal);
-        settingsText.setTextColor(Color.parseColor("#82858b"));
-
         archiveImg.setImageResource(R.drawable.tab_archive_normal);
         archiveText.setTextColor(Color.parseColor("#82858b"));
     }
@@ -285,9 +192,6 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     private void hideFragments(FragmentTransaction transaction) {
         if (playFragment != null) {
             transaction.hide(playFragment);
-        }
-        if (settingsFragment != null) {
-            transaction.hide(settingsFragment);
         }
         if (archiveFragment != null) {
             transaction.hide(archiveFragment);

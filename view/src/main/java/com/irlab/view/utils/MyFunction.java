@@ -1,12 +1,12 @@
 package com.irlab.view.utils;
 
-public class MyFuntion {
+public class MyFunction {
     private String name;
     private int imageId;
 
-    public MyFuntion(String name1, int imageId1) {
-        name = name1;
-        imageId = imageId1;
+    public MyFunction(String name, int imageId) {
+        this.name = name;
+        this.imageId = imageId;
     }
 
     public String getName() {

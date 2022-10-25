@@ -1,6 +1,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
     <RelativeLayout
@@ -12,25 +13,67 @@
             android:text="下棋" />
     </RelativeLayout>
 
+    <androidx.cardview.widget.CardView
+        style="@style/cardView_setting_style"
+        app:cardCornerRadius="12dp">
+        <LinearLayout
+            android:id="@+id/person_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+            <!--圆形图片-->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:layout_marginStart="20dp"
+                android:id="@+id/iv_profile"
+                android:layout_marginTop="4dp"
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                android:layout_gravity="center_vertical"
+                app:shapeAppearanceOverlay="@style/circleImageStyle"
+                android:src="@mipmap/default_profile" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:layout_gravity="center_vertical"
+                android:layout_marginTop="-12dp"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/tv_show_username"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:textSize="16sp"
+                    android:text="123456@qq.com"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp" />
 
     <Button
-        android:id="@+id/btn_play"
-        android:text="开始对弈"
-        style="@style/button_playFragment_style"/>
-
-    <Button
-        android:id="@+id/btn_play_settings"
-        android:text="对局设置"
-        style="@style/button_playFragment_style" />
-
-    <Button
-        android:id="@+id/btn_instruction"
-        android:text="使用说明"
-        style="@style/button_playFragment_style"/>
-
-    <Button
-        android:id="@+id/btn_bluetooth"
-        android:text="测试蓝牙"
-        style="@style/button_playFragment_style"/>
-
+        android:id="@+id/btn_logout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bar_selector"
+        android:text="退出登录"
+        android:textColor="@color/red" />
 </LinearLayout>
