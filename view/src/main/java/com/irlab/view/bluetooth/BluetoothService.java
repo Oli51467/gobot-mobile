@@ -232,6 +232,8 @@ public class BluetoothService {
                     } catch (Exception e) {
                         Log.e("onReceiveDataSuccess", "调用方法错误: " + e.getMessage());
                     }
+                } else if (buffer[0] == 67) {   // 没有棋子或者棋子不透光:收到C 返回发送CZ
+                    sendData("CZ", false);
                 }
             }
 

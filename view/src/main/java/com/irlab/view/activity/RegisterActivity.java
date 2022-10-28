@@ -88,7 +88,7 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
             Message msg = new Message();
             msg.obj = this;
             if (result == ResponseCode.ADD_USER_SUCCESSFULLY.getCode()) {
-                msg.what = ResponseCode.ADD_USER_SERVER_EXCEPTION.getCode();
+                msg.what = ResponseCode.ADD_USER_SUCCESSFULLY.getCode();
                 Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);

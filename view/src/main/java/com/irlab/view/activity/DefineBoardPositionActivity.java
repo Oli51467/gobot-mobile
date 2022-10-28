@@ -88,7 +88,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
             } else {
                 engineInterface.setRules("japanese");
             }
-            //engineInterface.clearBoard();
+            engineInterface.clearBoard();
             initEngine = true;
         }
         if (requestPermissions()) {

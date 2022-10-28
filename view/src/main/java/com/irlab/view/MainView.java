@@ -90,7 +90,19 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     @Override
     protected void onPause() {
         super.onPause();
-        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.fragment);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        int id = getIntent().getIntExtra("id", 0);
+        if (id == 1) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment, archiveFragment)
+                    .addToBackStack(null)
+                    .commit();
+        }
     }
 
     /**

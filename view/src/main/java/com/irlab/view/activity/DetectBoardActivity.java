@@ -74,6 +74,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public static final String Logger = "djnxyxy";
     public static String[] STONE_CLASSES = new String[]{"black", "blank", "white"};
 
+    // 接受下位机通过蓝牙发来的广播
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver(){
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -99,7 +100,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public Board board;
     public Point lastMove;
     private EngineInterface engineInterface;
-    private Button btn_play;
     // 蓝牙服务
     protected BluetoothService bluetoothService;
 
@@ -150,7 +150,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             getImageAndProcess();
         } else if (vid == R.id.btn_exit) {
             engineInterface.getGameAndSave();
-            engineInterface.clearBoard();
             engineInterface.closeEngine();
             Intent intent = new Intent(this, SelectConfigActivity.class);
             startActivity(intent);
@@ -263,12 +262,11 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         try {
             cdl.await();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Log.e(Logger, e.getMessage());
         }
         if (move[0] == null) {
             Log.i(Logger, "未落子");
             playPosition = "未检测到落子";
-            runOnUiThread(() -> btn_play.setEnabled(true));
             Bitmap bitmap4PlayInfo = Bitmap.createBitmap(INFO_WIDTH, INFO_HEIGHT, Bitmap.Config.ARGB_8888);
             Bitmap playInfo = drawer.drawPlayInfo(bitmap4PlayInfo, 0, playPosition);
             playView.setImageBitmap(playInfo);
@@ -405,7 +403,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         playerInfoView = findViewById(R.id.iv_player_info);
         boardView = findViewById(R.id.iv_board);
         playView = findViewById(R.id.iv_play_info);
-        btn_play = findViewById(R.id.btn_take_picture);
+        Button btn_play = findViewById(R.id.btn_take_picture);
         btn_play.setOnClickListener(this);
 
         Button btn_return = findViewById(R.id.btn_exit);
