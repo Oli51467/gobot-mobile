@@ -3,7 +3,6 @@ package com.irlab.view.fragment;
 import static android.app.Activity.RESULT_OK;
 import static com.irlab.base.MyApplication.SERVER;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
@@ -37,7 +36,6 @@ import com.irlab.view.adapter.FunctionAdapter;
 import com.irlab.view.bluetooth.BluetoothService;
 import com.irlab.view.utils.ImageUtils;
 import com.irlab.view.models.MyFunction;
-import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -74,7 +72,6 @@ public class PlayFragment extends Fragment implements View.OnClickListener {
     ShapeableImageView profile;
     TextView showInfo;
     private String userName;
-    private boolean hasPermissions = true;
     private File outputImagePath;   // 存储拍完照后的图片
     private BottomSheetDialog bottomSheetDialog;    // 底部弹窗
     private ActivityResultLauncher<Intent> openAlbumLauncher, openCameraLauncher;
@@ -173,7 +170,6 @@ public class PlayFragment extends Fragment implements View.OnClickListener {
         //获取editText控件的数据
         int vid = v.getId();
         if (vid == R.id.iv_profile) {
-            requestPermissions();
             bottomSheetDialog = new BottomSheetDialog(requireActivity());
             //弹窗视图
             @SuppressLint("InflateParams") View bottomView = getLayoutInflater().inflate(R.layout.dialog_bottom, null);
@@ -198,23 +194,11 @@ public class PlayFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    @SuppressLint("CheckResult")
-    private void requestPermissions() {
-        // 权限请求
-        RxPermissions rxPermissions = new RxPermissions(requireActivity());
-        rxPermissions.request(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE).subscribe(granted -> hasPermissions = granted);
-    }
-
     /**
      * 拍照
      */
     @SuppressLint("SimpleDateFormat")
     private void takePhoto() {
-        if (!hasPermissions) {
-            ToastUtil.show(getActivity(), "未获取到权限");
-            requestPermissions();
-            return;
-        }
         SimpleDateFormat timeStampFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
         String filename = timeStampFormat.format(new Date());
         outputImagePath = new File(requireActivity().getExternalCacheDir(), filename + ".jpg");
@@ -226,11 +210,6 @@ public class PlayFragment extends Fragment implements View.OnClickListener {
      * 打开相册
      */
     private void openAlbum() {
-        if (!hasPermissions) {
-            ToastUtil.show(getActivity(), "未获取到权限");
-            requestPermissions();
-            return;
-        }
         openAlbumLauncher.launch(ImageUtils.getSelectPhotoIntent());
     }
 

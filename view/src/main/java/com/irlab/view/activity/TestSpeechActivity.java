@@ -45,14 +45,6 @@ public class TestSpeechActivity extends AppCompatActivity implements View.OnClic
 
     private static final String TAG = TestSpeechActivity.class.getName();
 
-    private static final int REQUEST_CODE = 123;
-
-    String[] permissions = {Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.ACCESS_NETWORK_STATE,
-            Manifest.permission.INTERNET,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
-
     private SpeechRecognizer mIat;  // 语音听写对象
     private RecognizerDialog mIatDialog;    // 语音听写UI
     private Context mContext;
@@ -92,7 +84,6 @@ public class TestSpeechActivity extends AppCompatActivity implements View.OnClic
         Objects.requireNonNull(getSupportActionBar()).hide();
         // appid为在开放平台注册的APPID
         SpeechUtility.createUtility(TestSpeechActivity.this, "appid=" + appid);
-        initPermission();
         initComponents();
         // 使用SpeechRecognizer对象, 可根据回调消息自定义界面；
         mIat = SpeechRecognizer.createRecognizer(TestSpeechActivity.this, mInitListener);
@@ -128,33 +119,6 @@ public class TestSpeechActivity extends AppCompatActivity implements View.OnClic
             // 退出时释放连接
             mIat.cancel();
             mIat.destroy();
-        }
-    }
-
-    /**
-     * android 6.0 以上需要动态申请权限
-     */
-    private void initPermission() {
-        ArrayList<String> toApplyList = new ArrayList<>();
-
-        for (String perm : permissions) {
-            if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(this, perm)) {
-                toApplyList.add(perm);
-            }
-        }
-        String[] tmpList = new String[toApplyList.size()];
-        if (!toApplyList.isEmpty()) {
-            ActivityCompat.requestPermissions(this, toApplyList.toArray(tmpList), REQUEST_CODE);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE) {
-            if (!(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                Toast.makeText(TestSpeechActivity.this, "权限获取失败", Toast.LENGTH_SHORT).show();
-            }
         }
     }
 

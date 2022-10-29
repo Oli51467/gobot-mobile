@@ -1,4 +1,4 @@
-package com.irlab.base.utils;
+package com.irlab.view.utils;
 
 import android.app.Activity;
 import android.content.Context;
@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.Objects;
 
-public class ViewUtil {
+public class InputUtil {
     /**
      * 隐藏系统的软输入法
      */

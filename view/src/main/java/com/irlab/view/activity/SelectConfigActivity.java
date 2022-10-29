@@ -1,19 +1,14 @@
 package com.irlab.view.activity;
 
 import static com.irlab.base.MyApplication.SERVER;
-import static com.irlab.base.utils.ViewUtil.initWindow;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -26,7 +21,6 @@ import com.irlab.base.MyApplication;
 import com.irlab.base.entity.CellData;
 import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.HttpUtil;
-import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.adapter.RecyclerViewAdapter;
@@ -47,7 +41,6 @@ import okhttp3.Response;
 public class SelectConfigActivity extends AppCompatActivity implements View.OnClickListener, RecyclerViewAdapter.setClick {
 
     public static final String TAG = SelectConfigActivity.class.getName();
-    public static final int PERMISSION_REQUEST_CODE = 123;
 
     private RecyclerView mRecyclerView = null;
     private RecyclerViewAdapter mAdapter = null;
@@ -100,7 +93,7 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
             finish();
         }
         else if (vid == R.id.btn_begin) {
-            checkCameraPermission();
+            startDetectBoardActivity();
         }
     }
 
@@ -111,22 +104,6 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         begin.setEnabled(true);
         mAdapter.setmPosition(position);
         mAdapter.notifyDataSetChanged();
-    }
-
-    private void checkCameraPermission() {
-        List<String> neededPermissions = new ArrayList<>();
-        if (ContextCompat.checkSelfPermission(SelectConfigActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            neededPermissions.add(Manifest.permission.CAMERA);
-        }
-        if (ContextCompat.checkSelfPermission(SelectConfigActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            neededPermissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        }
-
-        if (!neededPermissions.isEmpty()) {
-            ActivityCompat.requestPermissions(SelectConfigActivity.this, neededPermissions.toArray(new String[0]), PERMISSION_REQUEST_CODE);
-        } else {
-            startDetectBoardActivity();
-        }
     }
 
     private void startDetectBoardActivity() {
@@ -147,18 +124,6 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
         intent.putExtra("rule", rule);
         intent.putExtra("engine", engine);
         startActivity(intent);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startDetectBoardActivity();
-            } else {
-                ToastUtil.show(this, getResources().getString(R.string.toast_camera_permission));
-            }
-        }
     }
 
     private void addCellDataToList(String jsonData) {

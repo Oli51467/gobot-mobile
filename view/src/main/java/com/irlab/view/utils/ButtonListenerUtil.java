@@ -1,4 +1,4 @@
-package com.irlab.base.utils;
+package com.irlab.view.utils;
 
 import android.content.Context;
 import android.text.Editable;
@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.irlab.base.R;
+import com.irlab.view.impl.IEditTextChangeListener;
 
 public class ButtonListenerUtil {
     static IEditTextChangeListener mChangeListener;

@@ -1,4 +1,4 @@
-package com.irlab.base.watcher;
+package com.irlab.view.watcher;
 
 import android.text.Editable;
 import android.text.TextWatcher;

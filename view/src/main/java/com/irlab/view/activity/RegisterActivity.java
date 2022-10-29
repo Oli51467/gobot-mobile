@@ -16,10 +16,10 @@ import android.widget.ImageView;
 import androidx.annotation.Nullable;
 
 import com.irlab.base.response.ResponseCode;
-import com.irlab.base.utils.ButtonListenerUtil;
+import com.irlab.view.utils.ButtonListenerUtil;
 import com.irlab.base.utils.ToastUtil;
-import com.irlab.base.watcher.HideTextWatcher;
-import com.irlab.base.watcher.ValidationWatcher;
+import com.irlab.view.watcher.HideTextWatcher;
+import com.irlab.view.watcher.ValidationWatcher;
 import com.irlab.view.R;
 import com.irlab.view.impl.DatabaseInterface;
 

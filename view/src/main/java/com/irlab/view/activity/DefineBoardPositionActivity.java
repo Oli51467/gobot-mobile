@@ -6,7 +6,7 @@ import com.chaquo.python.android.AndroidPlatform;
 import com.chaquo.python.Python;
 
 import static com.irlab.base.MyApplication.initEngine;
-import static com.irlab.base.utils.ViewUtil.initWindow;
+import static com.irlab.view.utils.InputUtil.initWindow;
 import static com.irlab.view.utils.ImageUtils.JPEGImageToByteArray;
 
 import android.annotation.SuppressLint;
@@ -61,9 +61,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
             .build();
     public static List<Pair<Double, Double>> corners = new ArrayList<>();
 
-    private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
-    private final int REQUEST_CODE_PERMISSIONS = 101;
-
     private String blackPlayer, whitePlayer, komi, rule, engine, userName;
     private PreviewView previewView;
     private ProcessCameraProvider cameraProvider;
@@ -91,11 +88,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
             engineInterface.clearBoard();
             initEngine = true;
         }
-        if (requestPermissions()) {
-            startCamera();
-        } else {
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
-        }
+        startCamera();
     }
 
     private void initViews() {
@@ -124,28 +117,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
         komi = i.getStringExtra("komi");
         rule = i.getStringExtra("rule");
         engine = i.getStringExtra("engine");
-    }
-
-    private boolean requestPermissions() {
-        for (String permission : REQUIRED_PERMISSIONS) {
-            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (requestPermissions()) {
-                startCamera();
-            } else {
-                ToastUtil.show(this, "Permissions not granted by the user");
-                finish();
-            }
-        }
     }
 
     @SuppressLint("RestrictedApi")

@@ -21,7 +21,7 @@ import android.widget.Spinner;
 import androidx.annotation.NonNull;
 
 import com.irlab.base.MyApplication;
-import com.irlab.base.utils.ButtonListenerUtil;
+import com.irlab.view.utils.ButtonListenerUtil;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
@@ -48,20 +48,12 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
 
     // 分别为选择规则的下拉列表
     private Spinner tSpinner, engineSpinner;
-
     private SharedPreferences preferences;
-
     private Button buttonSave;
-
     private EditText mPlayerBlack, mPlayerWhite, mDescription;
-
     private RadioButton chineseRule, japaneseRule;
-
-    // 0: 中国规则 1: 日本规则
-    private int rule = 0;
-
-    // 选择让几子 0:让先  1:让2子  2:让3子 ...
-    private int posT = 0, posEngine = 0;
+    private int rule = 0;   // 0: 中国规则 1: 日本规则
+    private int posT = 0, posEngine = 0;    // 选择让几子 0:让先  1:让2子  2:让3子 ...
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

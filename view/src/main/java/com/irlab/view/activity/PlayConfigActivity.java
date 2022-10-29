@@ -1,8 +1,6 @@
 package com.irlab.view.activity;
 
 import static com.irlab.base.MyApplication.SERVER;
-import static com.irlab.base.MyApplication.T;
-import static com.irlab.base.utils.ViewUtil.initWindow;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;

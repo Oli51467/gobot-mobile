@@ -27,7 +27,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.irlab.base.MyApplication;
 import com.irlab.base.entity.CellData;
 import com.irlab.base.response.ResponseCode;
-import com.irlab.base.utils.ButtonListenerUtil;
+import com.irlab.view.utils.ButtonListenerUtil;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.view.R;
 import com.irlab.view.utils.JsonUtil;

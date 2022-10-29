@@ -71,6 +71,7 @@ public class BluetoothService {
         // 获取上一次连接的device_address
         SharedPreferences pref = context.getSharedPreferences("data", Context.MODE_PRIVATE);
         String address = pref.getString("last_connected_address", "");
+        if (address.equals("")) return;
 
         BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(address);
         startConnectDevice(bluetoothDevice, MY_BLUETOOTH_UUID, 123);

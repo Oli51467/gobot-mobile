@@ -59,12 +59,12 @@
                 android:textSize="20sp"
                 android:text="悔棋"/>
             <Button
-                android:id="@+id/count_stone"
+                android:id="@+id/save_play"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:textSize="20sp"
-                android:text="数子"/>
+                android:text="保存"/>
             <Button
                 android:id="@+id/btn_exit"
                 android:layout_width="0dp"

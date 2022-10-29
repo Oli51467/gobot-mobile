@@ -71,9 +71,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     public static final int BLANK = 0, BLACK = 1, WHITE = 2, WIDTH = 20, HEIGHT = 20;
     public static final int BOARD_WIDTH = 1000, BOARD_HEIGHT = 1000, INFO_WIDTH = 880, INFO_HEIGHT = 350;
     private static final int THREAD_NUM = 19, TASK_NUM = 19;
-    public static final String Logger = "djnxyxy";
-    public static String[] STONE_CLASSES = new String[]{"black", "blank", "white"};
+    public static final String Logger = DetectBoardActivity.class.getName();
 
+    private final Context mContext = this;
     // 接受下位机通过蓝牙发来的广播
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver(){
         @Override
@@ -84,8 +84,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         }
     };
 
-    private final Context mContext = this;
-
+    public static String[] STONE_CLASSES = new String[]{"black", "blank", "white"};
     public static Drawer drawer;
 
     private String userName, playPosition, blackPlayer, whitePlayer, komi, rule, engine;
@@ -139,11 +138,6 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         unregisterReceiver(broadcastReceiver);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
     public void onClick(View v) {
         int vid = v.getId();
         if (vid == R.id.btn_take_picture) { // 直接拍照
@@ -156,6 +150,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         } else if (vid == R.id.btn_undo) {
             if (board.gameRecord.getSize() == 1) return;
             undo();
+        } else if (vid == R.id.save_play) {
+            engineInterface.getGameAndSave();
+            engineInterface.closeEngine();
         }
     }
 

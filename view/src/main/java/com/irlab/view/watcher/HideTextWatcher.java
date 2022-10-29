@@ -1,18 +1,16 @@
-package com.irlab.base.watcher;
+package com.irlab.view.watcher;
 
 import android.app.Activity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.EditText;
 
-import com.irlab.base.utils.ViewUtil;
+import com.irlab.view.utils.InputUtil;
 
 public class HideTextWatcher implements TextWatcher {
 
     private EditText editText;
-
     private int maxLength;
-
     private Activity activity;
 
     public HideTextWatcher(EditText editText, int maxLength, Activity activity) {
@@ -38,7 +36,7 @@ public class HideTextWatcher implements TextWatcher {
         // 若输入文本的长度等于该文本框限制的最大长度
         if (str.length() == this.maxLength) {
             // 隐藏键盘软输入法
-            ViewUtil.hideInputMethod(this.activity, this.editText);
+            InputUtil.hideInputMethod(this.activity, this.editText);
         }
     }
 }
