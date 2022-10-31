@@ -147,6 +147,9 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
         // 通过bundle向下一个activity传递一个对象 该对象必须先实现序列化接口
         Bundle bundle = new Bundle();
         bundle.putString("code", gameInfo.getCode());
+        bundle.putString("playInfo", gameInfo.getPlayInfo());
+        bundle.putString("result", gameInfo.getResult());
+        bundle.putString("createTime", gameInfo.getCreateTime());
         intent.putExtras(bundle);
         startActivity(intent);
     }

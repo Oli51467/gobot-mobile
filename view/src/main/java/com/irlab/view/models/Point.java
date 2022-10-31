@@ -9,14 +9,21 @@ import java.util.Set;
 // 描述可以放置棋子位置的类 与棋盘关联
 public class Point implements Serializable {
 
-    private final Board board;
-
-    private final int x, y;
-
+    private Board board;
+    private String color;
+    private int x, y;
+    private int step;
     private boolean isPass;
 
     // 描述该点是否在一个组内或属于哪个组
     private Group group;
+
+    public Point(String color, int x, int y, int step) {
+        this.color = color;
+        this.x = x;
+        this.y = y;
+        this.step = step;
+    }
 
     public Point(Board board, int x, int y) {
         this.board = board;
@@ -37,6 +44,14 @@ public class Point implements Serializable {
     public Group getGroup() {
         return group;
     }
+
+    public String getColor() { return color;}
+
+    public void setColor(String color) { this.color = color;}
+
+    public int getStep() { return step;}
+
+    public void setStep(int step) { this.step = step;}
 
     // Group可以为空
     public void setGroup(Group group) {
