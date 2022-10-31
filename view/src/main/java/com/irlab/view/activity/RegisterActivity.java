@@ -16,17 +16,24 @@ import android.widget.ImageView;
 import androidx.annotation.Nullable;
 
 import com.irlab.base.response.ResponseCode;
+import com.irlab.view.api.ApiService;
+import com.irlab.view.bean.UserResponse;
 import com.irlab.view.utils.ButtonListenerUtil;
 import com.irlab.base.utils.ToastUtil;
+import com.irlab.view.utils.JsonUtil;
 import com.irlab.view.watcher.HideTextWatcher;
 import com.irlab.view.watcher.ValidationWatcher;
 import com.irlab.view.R;
-import com.irlab.view.impl.DatabaseInterface;
+import com.sdu.network.NetworkApi;
+import com.sdu.network.observer.BaseObserver;
+import com.sdu.network.utils.KLog;
 
+import okhttp3.RequestBody;
+
+@SuppressLint("checkResult")
 public class RegisterActivity extends Activity implements View.OnClickListener {
 
     public static final String TAG = RegisterActivity.class.getName();
-
     public static final int MAX_LENGTH = 10;
 
     // 声明组件
@@ -35,13 +42,11 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
     private EditText password;
     private EditText passwordConfirm;
     private Button register;
-    private DatabaseInterface databaseInterface;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
-        // 初始化布局元素
         initViews();
         // 设置注册按钮是否可点击
         ButtonListenerUtil.buttonEnabled(register, 2, 8, userName, password, passwordConfirm);
@@ -55,13 +60,11 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
     获取到每个需要用到的控件的实例
     */
     public void initViews() {
-        // 得到所有的组件
         imageView = findViewById(R.id.iv_return);
         userName = this.findViewById(R.id.et_userName);
         password = this.findViewById(R.id.et_psw);
         passwordConfirm = this.findViewById(R.id.et_pswConfirm);
         register = this.findViewById(R.id.btn_register);
-        databaseInterface = new DatabaseInterface(this);
     }
 
     private void setListener() {
@@ -84,21 +87,28 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
                 ToastUtil.show(this, "两次输入的密码不一致!");
                 return;
             }
-            int result = databaseInterface.checkName(userName.getText().toString(), password);
             Message msg = new Message();
             msg.obj = this;
-            if (result == ResponseCode.ADD_USER_SUCCESSFULLY.getCode()) {
-                msg.what = ResponseCode.ADD_USER_SUCCESSFULLY.getCode();
-                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(intent);
-            } else if (result == ResponseCode.USER_ALREADY_REGISTERED.getCode()) {
-                msg.what = ResponseCode.USER_ALREADY_REGISTERED.getCode();
-            } else if (result == ResponseCode.SERVER_FAILED.getCode()) {
-                msg.what = ResponseCode.SERVER_FAILED.getCode();
-            } else if (result == ResponseCode.JSON_EXCEPTION.getCode()) {
-                msg.what = ResponseCode.JSON_EXCEPTION.getCode();
-            }
+            NetworkApi.createService(ApiService.class)
+                    .checkUser(userName.getText().toString())
+                    .compose(NetworkApi.applySchedulers(new BaseObserver<UserResponse>() {
+                        @Override
+                        public void onSuccess(UserResponse userResponse) {
+                            String status = userResponse.getStatus();
+                            // 用户名没有被注册
+                            if (status.equals("nullObject")) {
+                                RequestBody requestBody = JsonUtil.addUser2Json(userName.getText().toString(), password);
+                                addUser(requestBody);
+                            } else {    // 用户名已被注册
+                                msg.what = ResponseCode.USER_ALREADY_REGISTERED.getCode();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Throwable e) {
+                            msg.what = ResponseCode.SERVER_FAILED.getCode();
+                        }
+                    }));
             handler.sendMessage(msg);
         }
         else if (vid == R.id.iv_return) {
@@ -106,6 +116,33 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         }
+    }
+
+    private void addUser(RequestBody requestBody) {
+        Message msg = new Message();
+        msg.obj = RegisterActivity.this;
+        NetworkApi.createService(ApiService.class)
+                .addUser(requestBody)
+                .compose(NetworkApi.applySchedulers(new BaseObserver<UserResponse>() {
+                    @Override
+                    public void onSuccess(UserResponse userResponse) {
+                        String status = userResponse.getStatus();
+                        if (status.equals("success")) {
+                            msg.what = ResponseCode.ADD_USER_SUCCESSFULLY.getCode();
+                            handler.sendMessage(msg);
+                            Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                            startActivity(intent);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable e) {
+                        msg.what = ResponseCode.SERVER_FAILED.getCode();
+                        handler.sendMessage(msg);
+                        KLog.e("RegisterActivity", e.toString());
+                    }
+                }));
     }
 
     @SuppressLint("HandlerLeak")

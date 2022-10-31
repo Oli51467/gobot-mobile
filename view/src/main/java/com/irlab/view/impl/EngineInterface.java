@@ -1,20 +1,14 @@
 package com.irlab.view.impl;
 
 import static com.irlab.base.MyApplication.ENGINE_SERVER;
-import static com.irlab.base.MyApplication.JSON;
-import static com.irlab.base.MyApplication.SERVER;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.HttpUtil;
-import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.utils.JsonUtil;
 
 import org.json.JSONException;
@@ -50,8 +44,7 @@ public class EngineInterface {
      * }
      */
     public void clearBoard() {
-        String json = JsonUtil.getCmd2JsonForm(userName, "clear_board");
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        RequestBody requestBody = JsonUtil.getCmd(userName, "clear_board");
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -83,8 +76,7 @@ public class EngineInterface {
      * }
      */
     public void initEngine() {
-        String json = JsonUtil.getJsonFormOfInitEngine(userName);
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        RequestBody requestBody = JsonUtil.getJsonFormOfInitEngine(userName);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/init", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -118,8 +110,7 @@ public class EngineInterface {
      * }
      */
     public void closeEngine() {
-        String json = JsonUtil.getCmd2JsonForm(userName, "quit");
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        RequestBody requestBody = JsonUtil.getCmd(userName, "quit");
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -151,10 +142,9 @@ public class EngineInterface {
      *     "cmd":"genmove B/W"
      * }
      */
-    public String playGenMove(String jsonInfo) {
+    public String playGenMove(RequestBody requestBody) {
         final String[] result = new String[1];
         CountDownLatch cdl = new CountDownLatch(1);
-        RequestBody requestBody = RequestBody.Companion.create(jsonInfo, JSON);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -180,7 +170,6 @@ public class EngineInterface {
                         if (playPosition.equals("resign")) {
                             Log.d(Logger, "引擎认输");
                             result[0] = "引擎认输";
-                            getGameAndSave();
                         } else if (playPosition.equals("pass")) {
                             Log.d(Logger, "引擎停一手");
                             result[0] = "引擎停一手";
@@ -210,50 +199,6 @@ public class EngineInterface {
     }
 
     /**
-     * 展示棋盘
-     * {
-     *     "username":"xxx",
-     *     "cmd":"showboard"
-     * }
-     */
-    public void showBoard() {
-        CountDownLatch cdl = new CountDownLatch(1);
-        String json = JsonUtil.getCmd2JsonForm(userName, "showboard");
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
-        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.d(Logger, "展示棋盘错误：" + e.getMessage());
-                cdl.countDown();
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = Objects.requireNonNull(response.body()).string();
-                try {
-                    JSONObject jsonObject = new JSONObject(responseData);
-                    Log.d(Logger, "展示棋盘" + jsonObject);
-                    int code = jsonObject.getInt("code");
-                    if (code == 1000) {
-                        String engineBoard = jsonObject.getString("data");
-                        Log.d(Logger, "展示棋盘成功：" + engineBoard);
-                    } else {
-                        Log.d(Logger, "展示棋盘失败");
-                    }
-                } catch (JSONException e) {
-                    Log.d(Logger, "展示棋盘Json异常：" + e.getMessage());
-                } finally {
-                    cdl.countDown();
-                }}
-        });
-        try {
-            cdl.await();
-        } catch (InterruptedException e) {
-            Log.d(Logger, e.getMessage());
-        }
-    }
-
-    /**
      * 设置规则
      * @param rule 规则
      * {
@@ -263,8 +208,7 @@ public class EngineInterface {
      */
     public void setRules(String rule) {
         String cmd = "kata-set-rules " + rule;
-        String json = JsonUtil.getCmd2JsonForm(userName, cmd);
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        RequestBody requestBody = JsonUtil.getCmd(userName, cmd);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -281,7 +225,7 @@ public class EngineInterface {
                         Log.d(Logger, "设置规则成功");
                     }
                 } catch (JSONException e) {
-                    Log.d(Logger, "展示棋盘Json异常：" + e.getMessage());
+                    Log.d(Logger, "设置规则Json异常：" + e.getMessage());
                 }
             }
         });
@@ -293,13 +237,14 @@ public class EngineInterface {
     public String getScore() {
         final String[] result = new String[1];
         String cmd = "final_score";
-        String json = JsonUtil.getCmd2JsonForm(userName, cmd);
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+        CountDownLatch cdl = new CountDownLatch(1);
+        RequestBody requestBody = JsonUtil.getCmd(userName, cmd);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 Log.d(Logger, "数子异常：" + e.getMessage());
                 result[0] = "Error";
+                cdl.countDown();
             }
 
             @Override
@@ -315,47 +260,6 @@ public class EngineInterface {
                 } catch (JSONException e) {
                     Log.d(Logger, "数子Json异常：" + e.getMessage());
                     result[0] = "Error1";
-                }
-            }
-        });
-        return result[0];
-    }
-
-    /**
-     * 得到棋谱文件
-     * {
-     *     "username":"xxx",
-     *     "cmd":"printsgf xxx.sgf"
-     * }
-     */
-    public void getGameAndSave() {
-        String cmd = "printsgf 00001.sgf";
-        String json = JsonUtil.getCmd2JsonForm(userName, cmd);
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
-        CountDownLatch cdl = new CountDownLatch(1);
-        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.d(Logger, "输出棋谱sgf文件错误：" + e.getMessage());
-                cdl.countDown();
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = Objects.requireNonNull(response.body()).string();
-                try {
-                    JSONObject jsonObject = new JSONObject(responseData);
-                    int responseCode = jsonObject.getInt("code");
-                    if (responseCode == 1000) {
-                        Log.d(Logger, "获取棋谱文件成功");
-                        String code = jsonObject.getString("code");
-                        String result = jsonObject.getString("result");
-                        if (result.equals("")) result = "白中盘胜";
-                        String playInfo = "黑方: " + blackPlayer + " " + "白方: " + whitePlayer;
-                        saveGame(code, result, playInfo);
-                    }
-                } catch (JSONException e) {
-                    Log.d(Logger, "展示棋盘Json异常：" + e.getMessage());
                 } finally {
                     cdl.countDown();
                 }
@@ -366,54 +270,6 @@ public class EngineInterface {
         } catch (InterruptedException e) {
             Log.e(Logger, e.getMessage());
         }
+        return result[0];
     }
-
-
-    /**
-     *
-     * @param code SGF码
-     * @param result 结果
-     * @param playInfo 对局双方的信息
-     */
-    public void saveGame(String code, String result, String playInfo) {
-        String json = JsonUtil.getJsonFormOfGame(userName, playInfo, result, code);
-        RequestBody requestBody = RequestBody.Companion.create(json, JSON);
-        HttpUtil.sendOkHttpResponse(SERVER + "/api/saveGame", requestBody, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.e(Logger, "save game failed: " + e.getMessage());
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = Objects.requireNonNull(response.body()).string();
-                try {
-                    JSONObject jsonObject = new JSONObject(responseData);
-                    String status = jsonObject.getString("status");
-                    Message msg = new Message();
-                    msg.obj = context;
-                    if (status.equals("success")) {
-                        msg.what = ResponseCode.SAVE_SGF_SUCCESSFULLY.getCode();
-                    } else {
-                        msg.what = ResponseCode.SERVER_FAILED.getCode();
-                    }
-                    handler.sendMessage(msg);
-                } catch (JSONException e) {
-                    Log.d(Logger, "save game json error:" + e.getMessage());
-                }
-            }
-        });
-    }
-
-    private final Handler handler = new Handler(Looper.getMainLooper()) {
-        @Override
-        public void handleMessage(@NonNull Message msg) {
-            super.handleMessage(msg);
-            if (msg.what == ResponseCode.SAVE_SGF_SUCCESSFULLY.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.SAVE_SGF_SUCCESSFULLY.getMsg());
-            } else if (msg.what == ResponseCode.SERVER_FAILED.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.SERVER_FAILED.getMsg());
-            }
-        }
-    };
 }

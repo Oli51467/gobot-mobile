@@ -161,8 +161,7 @@ public class EditConfigActivity extends AppCompatActivity implements View.OnClic
             String playerWhite = mPlayerWhite.getText().toString();
             String desc = mDescription.getText().toString();
             // 将该配置封装成一个对象插入到数据库
-            String json = JsonUtil.getJsonFormOfPlayConfig(userName, playerBlack, playerWhite, MyApplication.ENGINES[posEngine], desc, posT, rule);
-            RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+            RequestBody requestBody = JsonUtil.getJsonFormOfPlayConfig(userName, playerBlack, playerWhite, MyApplication.ENGINES[posEngine], desc, posT, rule);
             // 插入成功后跳转
             HttpUtil.sendOkHttpResponse(SERVER + "/api/updatePlayConfig?id=" + id, requestBody, new Callback() {
                 @Override

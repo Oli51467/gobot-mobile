@@ -151,8 +151,7 @@ public class AddConfigActivity extends Activity implements View.OnClickListener,
             String playerWhite = this.mPlayerWhite.getText().toString();
             String desc = this.mDescription.getText().toString();
             // 将该配置封装成一个对象插入到数据库
-            String json = JsonUtil.getJsonFormOfPlayConfig(userName, playerBlack, playerWhite, MyApplication.ENGINES[posEngine], desc, posT, rule);
-            RequestBody requestBody = RequestBody.Companion.create(json, JSON);
+            RequestBody requestBody = JsonUtil.getJsonFormOfPlayConfig(userName, playerBlack, playerWhite, MyApplication.ENGINES[posEngine], desc, posT, rule);
             HttpUtil.sendOkHttpResponse(SERVER + "/api/addPlayConfig", requestBody, new Callback() {
                 @Override
                 public void onFailure(@NonNull Call call, @NonNull IOException e) {

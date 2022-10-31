@@ -1,5 +1,6 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.MyApplication.ENGINE_SERVER;
 import static com.irlab.base.MyApplication.threadPool;
 import static com.irlab.view.activity.DefineBoardPositionActivity.corners;
 import static com.irlab.view.activity.DefineBoardPositionActivity.imageCapture;
@@ -18,6 +19,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -38,7 +42,12 @@ import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.irlab.base.MyApplication;
+import com.irlab.base.response.ResponseCode;
+import com.irlab.base.utils.HttpUtil;
+import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
+import com.irlab.view.api.ApiService;
+import com.irlab.view.bean.UserResponse;
 import com.irlab.view.bluetooth.BluetoothService;
 import com.irlab.view.impl.EngineInterface;
 import com.irlab.view.models.Board;
@@ -48,7 +57,11 @@ import com.irlab.view.models.Point;
 import com.irlab.view.process.InitialBoardDetector;
 import com.irlab.view.utils.Drawer;
 import com.irlab.view.utils.JsonUtil;
+import com.sdu.network.NetworkApi;
+import com.sdu.network.observer.BaseObserver;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
@@ -65,6 +78,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class DetectBoardActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -143,15 +161,13 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         if (vid == R.id.btn_take_picture) { // 直接拍照
             getImageAndProcess();
         } else if (vid == R.id.btn_exit) {
-            engineInterface.getGameAndSave();
-            engineInterface.closeEngine();
             Intent intent = new Intent(this, SelectConfigActivity.class);
             startActivity(intent);
         } else if (vid == R.id.btn_undo) {
             if (board.gameRecord.getSize() == 1) return;
             undo();
         } else if (vid == R.id.save_play) {
-            engineInterface.getGameAndSave();
+            getGameAndSave();
             engineInterface.closeEngine();
         }
     }
@@ -302,10 +318,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
      */
     public void conn2Engine() {
         String playCmd = genPlayCmd(lastMove);
-        String jsonInfo = JsonUtil.getCmd2JsonForm(userName, playCmd);
-        Log.d(Logger, "走棋指令json格式的数据: " + jsonInfo);
+        RequestBody requestBody = JsonUtil.getCmd(userName, playCmd);
         // 将指令发送给围棋引擎并返回引擎落子
-        playPosition = engineInterface.playGenMove(jsonInfo);
+        playPosition = engineInterface.playGenMove(requestBody);
         // 引擎没有认输或过一手就将引擎落子位置发送给下位机，并走棋
         if (!playPosition.equals("resign") && !playPosition.equals("pass") && !playPosition.equals("failed") && !playPosition.equals("unplayable")) {
             Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
@@ -461,4 +476,78 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         playerInfoView.setImageBitmap(playerInfo);
         playView.setImageBitmap(playInfo);
     }
+
+    /**
+     * 得到棋谱文件
+     * {
+     *     "username":"xxx",
+     *     "cmd":"printsgf xxx.sgf"
+     * }
+     */
+    public void getGameAndSave() {
+        String cmd = "printsgf 00001.sgf";
+        RequestBody requestBody = JsonUtil.getCmd(userName, cmd);
+        HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.d(Logger, "输出棋谱sgf文件错误：" + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseData = Objects.requireNonNull(response.body()).string();
+                try {
+                    JSONObject jsonObject = new JSONObject(responseData);
+                    int responseCode = jsonObject.getInt("code");
+                    if (responseCode == 1000) {
+                        Log.d(Logger, "获取棋谱文件成功");
+                        JSONObject callBackData = jsonObject.getJSONObject("data");
+                        String code = callBackData.getString("code");
+                        String result = callBackData.getString("result");
+                        if (result.equals("")) result = engineInterface.getScore();
+                        String playInfo = "黑方: " + blackPlayer + " " + "白方: " + whitePlayer;
+                        saveGame(code, result, playInfo);
+                    }
+                } catch (JSONException e) {
+                    Log.d(Logger, "展示棋盘Json异常：" + e.getMessage());
+                }
+            }
+        });
+    }
+
+    @SuppressLint("CheckResult")
+    private void saveGame(String code, String result, String playInfo) {
+        RequestBody requestBody = JsonUtil.getGame(userName, result, playInfo, code);
+        Message msg = new Message();
+        msg.obj = this;
+        NetworkApi.createService(ApiService.class)
+                .saveGame(requestBody)
+                .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
+                    @Override
+                    public void onSuccess(UserResponse userResponse) {
+                        Log.i("save Game", "successfully");
+                        msg.what = ResponseCode.SAVE_SGF_SUCCESSFULLY.getCode();
+                        handler.sendMessage(msg);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable e) {
+                        msg.what = ResponseCode.SERVER_FAILED.getCode();
+                        handler.sendMessage(msg);
+                    }
+                }));
+    }
+
+    @SuppressLint("HandlerLeak")
+    private final Handler handler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == ResponseCode.SAVE_SGF_SUCCESSFULLY.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.SAVE_SGF_SUCCESSFULLY.getMsg());
+            } else if (msg.what == ResponseCode.SERVER_FAILED.getCode()) {
+                ToastUtil.show((Context) msg.obj, ResponseCode.SERVER_FAILED.getMsg());
+            }
+        }
+    };
 }
