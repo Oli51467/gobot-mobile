@@ -1,19 +1,12 @@
 package com.irlab.view.models;
 
-import android.annotation.SuppressLint;
-
 import androidx.annotation.NonNull;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import onion.w4v3xrmknycexlsd.lib.sgfcharm.BuildConfig;
 
 // 棋盘
 public class Board implements Serializable {
@@ -78,10 +71,9 @@ public class Board implements Serializable {
         return initialHandicap;
     }
 
-    public boolean play(Point point, Player player) {
-        // 判断该局部是否是打劫
+    public boolean play(Point point, Player player, boolean handleKo) {
+        GameTurn currentTurn = null;
         boolean ko = false;
-        GameTurn currentTurn;
 
         // 棋子应该在棋盘内
         if (!isInBoard(point)) return false;
@@ -90,8 +82,12 @@ public class Board implements Serializable {
         if (point.getGroup() != null) return false;
 
         // 为判断打劫 要记录吃掉的棋子和吃掉的组
-        capturedStones = new HashSet<>();
-        Set<Group> capturedGroups = new HashSet<>();
+        Set<Point> capturedStones = null;
+        Set<Group> capturedGroups = null;
+        if (handleKo) {
+            capturedStones = new HashSet<>();
+            capturedGroups = new HashSet<>();
+        }
 
         Set<Group> adjGroups = point.getAdjacentGroups();
         Group newGroup = new Group(point, player);
@@ -102,26 +98,30 @@ public class Board implements Serializable {
             } else {
                 group.removeLiberty(point);
                 if (group.getLiberties().size() == 0) {
-                    capturedStones.addAll(group.getStones());
-                    capturedGroups.add(new Group(group));
+                    if (handleKo) {
+                        capturedStones.addAll(group.getStones());
+                        capturedGroups.add(new Group(group));
+                    }
                     group.die();
                 }
             }
         }
 
-        currentTurn = gameRecord.getLastTurn().toNext(point.getX(), point.getY(), player.getIdentifier(), getHandicap(), capturedStones);
-        for (GameTurn turn : gameRecord.getTurns()) {
-            if (turn.equals(currentTurn)) {
-                ko = true;
-                break;
+        if (handleKo) {
+            currentTurn = gameRecord.getLastTurn().toNext(point.getX(), point.getY(), player.getIdentifier(), getHandicap(), capturedStones);
+            for (GameTurn turn : gameRecord.getTurns()) {
+                if (turn.equals(currentTurn)) {
+                    ko = true;
+                    break;
+                }
             }
-        }
-        // 判断打劫
-        if (ko) {
-            for (Group chain : capturedGroups) {
-                chain.getOwner().removeCapturedStones(chain.getStones().size());
-                for (Point stone : chain.getStones()) {
-                    stone.setGroup(chain);
+            // 判断打劫
+            if (ko) {
+                for (Group chain : capturedGroups) {
+                    chain.getOwner().removeCapturedStones(chain.getStones().size());
+                    for (Point stone : chain.getStones()) {
+                        stone.setGroup(chain);
+                    }
                 }
             }
         }
@@ -138,7 +138,9 @@ public class Board implements Serializable {
         for (Point stone : newGroup.getStones()) {
             stone.setGroup(newGroup);
         }
-        gameRecord.apply(currentTurn);
+        if (handleKo) {
+            gameRecord.apply(currentTurn);
+        }
         recordPoints.add(point);
         return true;
     }
@@ -149,7 +151,7 @@ public class Board implements Serializable {
             System.out.println("落子超出棋盘范围了 请重新落子！");
             return false;
         }
-        return play(point, player);
+        return play(point, player, true);
     }
 
     public Player getPlayer() {
@@ -197,24 +199,37 @@ public class Board implements Serializable {
         }
     }
 
+    public boolean redo() {
+        if (gameRecord.hasFollowing()) {
+            gameRecord.redo();
+            GameTurn next = gameRecord.getLastTurn();
+            takeGameTurn(next, P1, P2);
+            nextPlayer();
+            actualPlayer.addCapturedStones(gameRecord.getLastTurn().getCountCapturedStones());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public void takeGameTurn(GameTurn gameTurn, Player one, Player two) {
         this.freeIntersections();
         int[][] boardState = gameTurn.getBoardState();
         for (int x = 1; x <= width; x++) {
             for (int y = 1; y <= height; y++) {
                 int state = boardState[x][y];
-                if (state == 1) {
-                    play(getPoint(x, y), one);
-                } else if (state == 2) {
-                    play(getPoint(x, y), two);
+                if (state == BLACK_STONE) {
+                    play(getPoint(x, y), one, false);
+                } else if (state == WHITE_STONE) {
+                    play(getPoint(x, y), two, false);
                 }
             }
         }
     }
 
     public void freeIntersections() {
-        for (int i = 1; i < width; i ++ ) {
-            for (int j = 1; j < height; j ++ ) {
+        for (int i = 1; i < width; i++) {
+            for (int j = 1; j < height; j++) {
                 Point point = getPoint(i, j);
                 point.setGroup(null);
             }
@@ -237,40 +252,5 @@ public class Board implements Serializable {
             board.append("\n");
         }
         return board.toString();
-    }
-
-    public String generateSgf(String blackPlayer, String whitePlayer, String komi) {
-        StringBuilder sgf = new StringBuilder();
-        writeHeader(sgf, blackPlayer, whitePlayer, komi);
-        for (Point move : recordPoints) {
-            sgf.append(move.sgf());
-        }
-        sgf.append(")");
-        return sgf.toString();
-    }
-
-    private void writeHeader(StringBuilder sgf, String blackPlayer, String whitePlayer, String komi) {
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Calendar c = Calendar.getInstance();
-        String date = sdf.format(new Date(c.getTimeInMillis()));
-
-        sgf.append("(;");
-        writeProperty(sgf, "FF", "4");     // SGF version
-        writeProperty(sgf, "GM", "1");     // Type of game (1 = Go)
-        writeProperty(sgf, "CA", "UTF-8");
-        writeProperty(sgf, "SZ", "" + width);
-        writeProperty(sgf, "DT", date);
-        writeProperty(sgf, "AP", "Kifu Recorder v" + BuildConfig.VERSION_NAME);
-        writeProperty(sgf, "KM", komi);
-        writeProperty(sgf, "PW", whitePlayer);
-        writeProperty(sgf, "PB", blackPlayer);
-        writeProperty(sgf, "Z1", "" + recordPoints.size());
-    }
-
-    private void writeProperty(StringBuilder sgf, String property, String value) {
-        sgf.append(property);
-        sgf.append("[");
-        sgf.append(value);
-        sgf.append("]");
     }
 }

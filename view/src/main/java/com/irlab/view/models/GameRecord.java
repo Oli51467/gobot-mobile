@@ -6,9 +6,9 @@ import java.util.Stack;
 
 public class GameRecord implements Serializable {
 
-    protected final Stack<GameTurn> preceding;
+    public final Stack<GameTurn> preceding;
 
-    private final Stack<GameTurn> following;
+    public final Stack<GameTurn> following;
 
     public GameRecord(int width, int height) {
         preceding = new Stack<>();
@@ -28,6 +28,10 @@ public class GameRecord implements Serializable {
 
     public int nbrPreceding() { return preceding.size() - 1; }
 
+    public boolean hasFollowing() {
+        return following.size() > 0;
+    }
+
     public void undo() throws EmptyStackException {
         if (preceding.size() > 1) {
             following.push(preceding.pop());
@@ -37,6 +41,7 @@ public class GameRecord implements Serializable {
     }
 
     public void redo() throws EmptyStackException {
+        if (following.empty()) return;
         preceding.push(following.pop());
     }
 

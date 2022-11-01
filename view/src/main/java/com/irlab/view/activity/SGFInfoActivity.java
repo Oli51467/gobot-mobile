@@ -34,7 +34,7 @@ public class SGFInfoActivity extends Activity implements View.OnClickListener {
     private int[][] lastBoard;
     private Board board;
     private Point lastMove;
-    private int curPointer = 0;
+    private int curPointer = 0, undoPointer = 0;
     private String playInfo, result, createTime;
 
     @Override
@@ -93,28 +93,48 @@ public class SGFInfoActivity extends Activity implements View.OnClickListener {
         } else if (vid == R.id.iv_undo) {
             if (curPointer <= 0) return;
             undo();
-            curPointer --;
+            undoPointer --;
         } else if (vid == R.id.iv_proceed) {
-            if (curPointer >= moves.size()) return;
-            proceed(curPointer);
-            curPointer ++;
+            if (undoPointer < curPointer) {
+                board.redo();
+                lastBoard = board.gameRecord.preceding.peek().boardState;
+                lastMove = board.getPoint(board.gameRecord.preceding.peek().x, board.gameRecord.preceding.peek().y);
+                undoPointer ++;
+                drawBoard();
+            }
+            else {
+                if (curPointer >= moves.size()) return;
+                proceed(curPointer);
+                curPointer ++;
+                undoPointer ++;
+            }
         } else if (vid == R.id.iv_fast_proceed) {
-            int tempCur;
-            for (tempCur = curPointer; tempCur < moves.size() && tempCur < curPointer + 5; tempCur ++ ) {
-                proceed(tempCur);
+            for(int i = 0; i < 5; i ++ ) {
+                if (undoPointer < curPointer) {
+                    board.redo();
+                    lastBoard = board.gameRecord.preceding.peek().boardState;
+                    lastMove = board.getPoint(board.gameRecord.preceding.peek().x, board.gameRecord.preceding.peek().y);
+                    undoPointer ++;
+                    drawBoard();
+                }
+                else {
+                    if (curPointer >= moves.size()) return;
+                    proceed(curPointer);
+                    curPointer ++;
+                    undoPointer ++;
+                }
             }
-            curPointer = tempCur;
         } else if (vid == R.id.iv_fast_undo) {
-            int tempCur;
-            for (tempCur = curPointer; tempCur > 0 && tempCur > curPointer - 5; tempCur -- ) {
+            for (int i = 0; i < 5; i ++ ) {
+                if (curPointer <= 0) return;
                 undo();
+                undoPointer --;
             }
-            curPointer = tempCur;
         }
     }
 
     public void undo() {
-        if (!board.undo()) return;
+        board.undo();
         lastBoard = board.gameRecord.getLastTurn().boardState;
         lastMove = board.getPoint(board.gameRecord.getLastTurn().x, board.gameRecord.getLastTurn().y);
         drawBoard();
@@ -130,7 +150,9 @@ public class SGFInfoActivity extends Activity implements View.OnClickListener {
     }
 
     private void drawBoard() {
-        Bitmap board = drawer.drawBoard(boardBitmap, lastBoard, lastMove, 0, 0);
-        boardImageView.setImageBitmap(board);
+        runOnUiThread(() -> {
+            Bitmap board = drawer.drawBoard(boardBitmap, lastBoard, lastMove, 0, 0);
+            boardImageView.setImageBitmap(board);
+        });
     }
 }
