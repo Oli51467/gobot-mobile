@@ -26,6 +26,7 @@ import java.util.List;
 
 public class SGFInfoActivity extends Activity implements View.OnClickListener {
 
+    private static final int BOARD_WIDTH = 1000, BOARD_HEIGHT = 1000;
     private List<Point> moves;
     private ImageView boardImageView;
     private final Drawer drawer = new Drawer();
@@ -34,25 +35,32 @@ public class SGFInfoActivity extends Activity implements View.OnClickListener {
     private Board board;
     private Point lastMove;
     private int curPointer = 0;
+    private String playInfo, result, createTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sgfactivity);
+        getInfo();
         initView();
         initBoard();
-        getInfo();
         drawBoard();
     }
 
     private void initView() {
         boardImageView = findViewById(R.id.iv_board);
-        boardBitmap = Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888);
+        boardBitmap = Bitmap.createBitmap(BOARD_WIDTH, BOARD_HEIGHT, Bitmap.Config.ARGB_8888);
         findViewById(R.id.header_back).setOnClickListener(this);
         findViewById(R.id.iv_undo).setOnClickListener(this);
         findViewById(R.id.iv_proceed).setOnClickListener(this);
         findViewById(R.id.iv_fast_proceed).setOnClickListener(this);
         findViewById(R.id.iv_fast_undo).setOnClickListener(this);
+        TextView tv_playInfo = findViewById(R.id.tv_player_info);
+        TextView tv_date = findViewById(R.id.tv_date);
+        TextView tv_result = findViewById(R.id.tv_result);
+        tv_playInfo.setText(playInfo);
+        tv_date.setText(createTime);
+        tv_result.setText(result);
     }
 
     private void getInfo() {
@@ -60,16 +68,18 @@ public class SGFInfoActivity extends Activity implements View.OnClickListener {
         // bundle接收跳转过来的Activity传递来的数据
         Bundle bundle = getIntent().getExtras();
         String code = bundle.getString("code");
-        String playInfo = bundle.getString("playInfo");
-        String result = bundle.getString("result");
-        String createTime = bundle.getString("createTime");
-        TextView tv_playInfo = findViewById(R.id.tv_player_info);
-        TextView tv_date = findViewById(R.id.tv_date);
-        TextView tv_result = findViewById(R.id.tv_result);
-        tv_playInfo.setText(playInfo);
-        tv_date.setText(createTime);
-        tv_result.setText(result);
+        playInfo = bundle.getString("playInfo");
+        result = bundle.getString("result");
+        createTime = bundle.getString("createTime");
         moves = SGFUtil.parseSGF(code);
+    }
+
+    private void initBoard() {
+        lastBoard = new int[WIDTH + 1][HEIGHT + 1];
+        for (int i = 1; i <= WIDTH; i++) {
+            Arrays.fill(lastBoard[i], BLANK);
+        }
+        board = new Board(WIDTH, HEIGHT, 0);
     }
 
     @Override
@@ -85,7 +95,7 @@ public class SGFInfoActivity extends Activity implements View.OnClickListener {
             undo();
             curPointer --;
         } else if (vid == R.id.iv_proceed) {
-            if (curPointer > moves.size()) return;
+            if (curPointer >= moves.size()) return;
             proceed(curPointer);
             curPointer ++;
         } else if (vid == R.id.iv_fast_proceed) {
@@ -103,24 +113,11 @@ public class SGFInfoActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    private void initBoard() {
-        lastBoard = new int[WIDTH + 1][HEIGHT + 1];
-        for (int i = 1; i <= WIDTH; i++) {
-            Arrays.fill(lastBoard[i], BLANK);
-        }
-        board = new Board(20, 20, 0);
-    }
-
     public void undo() {
         if (!board.undo()) return;
         lastBoard = board.gameRecord.getLastTurn().boardState;
         lastMove = board.getPoint(board.gameRecord.getLastTurn().x, board.gameRecord.getLastTurn().y);
         drawBoard();
-    }
-
-    private void drawBoard() {
-        Bitmap board = drawer.drawBoard(boardBitmap, lastBoard, lastMove, 0, 0);
-        boardImageView.setImageBitmap(board);
     }
 
     private void proceed(int cursor) {
@@ -130,5 +127,10 @@ public class SGFInfoActivity extends Activity implements View.OnClickListener {
         lastBoard = board.gameRecord.getLastTurn().boardState;
         lastMove = board.getPoint(board.gameRecord.getLastTurn().x, board.gameRecord.getLastTurn().y);
         drawBoard();
+    }
+
+    private void drawBoard() {
+        Bitmap board = drawer.drawBoard(boardBitmap, lastBoard, lastMove, 0, 0);
+        boardImageView.setImageBitmap(board);
     }
 }

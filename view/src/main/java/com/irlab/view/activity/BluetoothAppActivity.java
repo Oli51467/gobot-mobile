@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -53,7 +54,9 @@ public class BluetoothAppActivity extends AppCompatActivity implements OnClickLi
     @Override
     protected void onStart() {
         super.onStart();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_bluetooth_app);
+        Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
         initLayout();
         initBluetooth();
         initOptionDevices();
