@@ -13,6 +13,7 @@
     <string name="dialog_finish_recording">你想结束录制吗？</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="app_id">a716e470</string>
 
     <string name="toast_restore_original_corner_positions">恢复原有的棋盘位置</string>
     <string name="hint_with_no_item">您没有任何棋谱可以加载</string>
@@ -26,4 +27,67 @@
     <string name="instructions_paragraph6"></string>
     <string name="instructions_paragraph7"></string>
     <string name="setting">设置</string>
+
+    <!-- 语言 -->
+    <string-array name="language_entries">
+        <item>普通话</item>
+        <item>粤语</item>
+        <item>英语</item>
+    </string-array>
+    <string-array name="language_values">
+        <item>mandarin</item>
+        <item>cantonese</item>
+        <item>en_us</item>
+    </string-array>
+
+    <string-array name="stream_entries">
+        <item>通话</item>
+        <item>系统</item>
+        <item>铃声</item>
+        <item>音乐</item>
+        <item>闹铃</item>
+        <item>通知</item>
+    </string-array>
+    <string-array name="stream_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+
+    <!-- 标点符号 -->
+    <string-array name="punc_entries">
+        <item>有标点</item>
+        <item>无标点</item>
+    </string-array>
+    <string-array name="punc_values">
+        <item>1</item>
+        <item>0</item>
+    </string-array>
+    <string-array name="dwa_entries">
+        <item>开启</item>
+        <item>关闭</item>
+    </string-array>
+    <string-array name="iat_language_entries">
+        <item>中文</item>
+        <item>英语</item>
+        <item>日语</item>
+        <item>俄语</item>
+        <item>西班牙语</item>
+        <item>法语</item>
+        <item>韩语</item>
+    </string-array>
+    <string-array name="iat_language_value">
+        <item>zh_cn</item>
+        <item>en_us</item>
+        <item>ja_jp</item>
+        <item>ru-ru</item>
+        <item>es_es</item>
+        <item>fr_fr</item>
+        <item>ko_kr</item>
+    </string-array>
+    <string name="pref_key_iat_show">iat_show</string>
+    <string name="pref_title_iat_show">显示听写界面</string>
 </resources>

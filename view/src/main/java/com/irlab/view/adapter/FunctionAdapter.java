@@ -20,7 +20,7 @@ import com.irlab.view.activity.InstructionActivity;
 import com.irlab.view.activity.PlayConfigActivity;
 import com.irlab.view.activity.SelectConfigActivity;
 import com.irlab.view.activity.TestSpeechActivity;
-import com.irlab.view.models.MyFunction;
+import com.irlab.view.bean.MyFunction;
 
 import java.util.List;
 

@@ -30,7 +30,7 @@ public class InstructionActivity extends AppCompatActivity implements View.OnCli
         int vid = v.getId();
         if (vid == R.id.header_back) {
             Intent intent = new Intent(this, MainView.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
     }

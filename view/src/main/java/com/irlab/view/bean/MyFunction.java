@@ -1,4 +1,4 @@
-package com.irlab.view.models;
+package com.irlab.view.bean;
 
 public class MyFunction {
     private String name;

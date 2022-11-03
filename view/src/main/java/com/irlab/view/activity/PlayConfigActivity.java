@@ -94,13 +94,13 @@ public class PlayConfigActivity extends AppCompatActivity implements View.OnClic
         int vid = v.getId();
         if (vid == R.id.header_add) {
             Intent intent = new Intent(this, AddConfigActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
         else if (vid == R.id.header_back) {
             Intent intent = new Intent(this, MainView.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
-            finish();
         }
     }
 

@@ -1,10 +1,9 @@
 package com.irlab.view.models;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Group implements Serializable {
+public class Group {
     private final Set<Point> stones;
     private final Set<Point> liberties;
     private final Player owner;
@@ -15,17 +14,17 @@ public class Group implements Serializable {
         this.owner = owner;
     }
 
-    public Group(Point Point, Player owner) {
+    public Group(Point point, Player owner) {
         stones = new HashSet<>();
-        stones.add(Point);
+        stones.add(point);
         this.owner = owner;
-        liberties = new HashSet<>(Point.getEmptyNeighbors());
+        liberties = new HashSet<>(point.getEmptyNeighbors());
     }
 
-    public Group(Group Group) {
-        this.stones = new HashSet<Point>(Group.stones);
-        this.liberties = new HashSet<Point>(Group.liberties);
-        this.owner = Group.owner;
+    public Group(Group group) {
+        this.stones = new HashSet<>(group.stones);
+        this.liberties = new HashSet<>(group.liberties);
+        this.owner = group.owner;
     }
 
     public Player getOwner() {
@@ -40,26 +39,24 @@ public class Group implements Serializable {
         return stones;
     }
 
-    public void add(Group Group, Point playedStone) {
-        this.stones.addAll(Group.stones);
-        this.liberties.addAll(Group.liberties);
+    public void add(Group group, Point playedStone) {
+        this.stones.addAll(group.stones);
+        this.liberties.addAll(group.liberties);
         this.liberties.remove(playedStone);
     }
 
-    public Group removeLiberty(Point playedStone) {
+    public void removeLiberty(Point playedStone) {
         Group newGroup = new Group(stones, liberties, owner);
         newGroup.liberties.remove(playedStone);
-        return newGroup;
     }
 
     public void die() {
         for (Point rollingStone : this.stones) {
             rollingStone.setGroup(null);
             Set<Group> adjacentGroups = rollingStone.getAdjacentGroups();
-            for (Group Group : adjacentGroups) {
-                Group.liberties.add(rollingStone);
+            for (Group group : adjacentGroups) {
+                group.liberties.add(rollingStone);
             }
         }
-        this.owner.addCapturedStones(this.stones.size());
     }
 }

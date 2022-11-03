@@ -22,7 +22,6 @@ public class MyApplication extends Application {
             "业余1段", "业余2段", "业余3段", "业余4段", "业余5段", "业余6段", "职业初段", "P2", "P3"};
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     public static final String TAG = MyApplication.class.getName();
-    public static final String appid = "a716e470";
     public static final int THREAD_NUM = 19;
     public static boolean initEngine = false;
     public static ThreadPoolExecutor threadPool;

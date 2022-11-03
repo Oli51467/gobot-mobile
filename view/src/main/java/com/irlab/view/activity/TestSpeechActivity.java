@@ -1,6 +1,5 @@
 package com.irlab.view.activity;
 
-import static com.irlab.base.MyApplication.appid;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,7 +17,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
@@ -36,7 +34,7 @@ import com.irlab.view.R;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Objects;
@@ -83,7 +81,7 @@ public class TestSpeechActivity extends AppCompatActivity implements View.OnClic
         setContentView(R.layout.activity_test_speech);
         Objects.requireNonNull(getSupportActionBar()).hide();
         // appid为在开放平台注册的APPID
-        SpeechUtility.createUtility(TestSpeechActivity.this, "appid=" + appid);
+        SpeechUtility.createUtility(TestSpeechActivity.this, "appid=" + R.string.app_id);
         initComponents();
         // 使用SpeechRecognizer对象, 可根据回调消息自定义界面；
         mIat = SpeechRecognizer.createRecognizer(TestSpeechActivity.this, mInitListener);

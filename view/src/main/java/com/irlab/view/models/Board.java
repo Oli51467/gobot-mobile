@@ -2,14 +2,13 @@ package com.irlab.view.models;
 
 import androidx.annotation.NonNull;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 // 棋盘
-public class Board implements Serializable {
+public class Board {
     public final static int BLACK_STONE = 1;
     public final static int WHITE_STONE = 2;
 
@@ -67,10 +66,6 @@ public class Board implements Serializable {
         }
     }
 
-    public int getHandicap() {
-        return initialHandicap;
-    }
-
     public boolean play(Point point, Player player, boolean handleKo) {
         GameTurn currentTurn = null;
         boolean ko = false;
@@ -108,7 +103,7 @@ public class Board implements Serializable {
         }
 
         if (handleKo) {
-            currentTurn = gameRecord.getLastTurn().toNext(point.getX(), point.getY(), player.getIdentifier(), getHandicap(), capturedStones);
+            currentTurn = gameRecord.getLastTurn().toNext(point.getX(), point.getY(), player.getIdentifier(), capturedStones);
             for (GameTurn turn : gameRecord.getTurns()) {
                 if (turn.equals(currentTurn)) {
                     ko = true;
@@ -118,7 +113,6 @@ public class Board implements Serializable {
             // 判断打劫
             if (ko) {
                 for (Group chain : capturedGroups) {
-                    chain.getOwner().removeCapturedStones(chain.getStones().size());
                     for (Point stone : chain.getStones()) {
                         stone.setGroup(chain);
                     }
@@ -158,21 +152,19 @@ public class Board implements Serializable {
         return actualPlayer;
     }
 
-    public boolean nextPlayer() {
-        return changePlayer(false);
+    public void nextPlayer() {
+        changePlayer(false);
     }
 
-    public boolean precedentPlayer() {
-        return changePlayer(true);
+    public void precedentPlayer() {
+        changePlayer(true);
     }
 
-    public boolean changePlayer(boolean undo) {
+    public void changePlayer(boolean undo) {
         if (handicap < initialHandicap && !undo) {
             handicap++;
-            return false;
         } else if (undo && this.gameRecord.nbrPreceding() < initialHandicap) {
             handicap--;
-            return false;
         } else {
             if (actualPlayer == P1) {
                 actualPlayer = P2;
@@ -181,17 +173,14 @@ public class Board implements Serializable {
                 actualPlayer = P1;
                 System.out.println("Changing player for P1");
             }
-            return true;
         }
     }
 
     public boolean undo() {
         if (gameRecord.hasPreceding()) {
-            GameTurn current = gameRecord.getLastTurn();
             gameRecord.undo();
             GameTurn last = gameRecord.getLastTurn();
             takeGameTurn(last, P1, P2);
-            actualPlayer.removeCapturedStones(current.getCountCapturedStones());
             precedentPlayer();
             return true;
         } else {
@@ -199,16 +188,12 @@ public class Board implements Serializable {
         }
     }
 
-    public boolean redo() {
+    public void redo() {
         if (gameRecord.hasFollowing()) {
             gameRecord.redo();
             GameTurn next = gameRecord.getLastTurn();
             takeGameTurn(next, P1, P2);
             nextPlayer();
-            actualPlayer.addCapturedStones(gameRecord.getLastTurn().getCountCapturedStones());
-            return true;
-        } else {
-            return false;
         }
     }
 
