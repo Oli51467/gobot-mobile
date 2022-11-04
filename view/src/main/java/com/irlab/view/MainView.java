@@ -1,14 +1,18 @@
 package com.irlab.view;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -17,17 +21,26 @@ import android.widget.TextView;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
+import com.iflytek.cloud.SpeechUtility;
 import com.irlab.base.MyApplication;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.bluetooth.BluetoothService;
 import com.irlab.view.fragment.PlayFragment;
 import com.irlab.view.fragment.ArchiveFragment;
+import com.irlab.view.iflytek.speech.XunfeiWakeUp;
+import com.irlab.view.service.SpeechService;
+import com.irlab.view.service.TtsService;
 
 import java.util.Objects;
 
 @Route(path = "/view/main")
 public class MainView extends AppCompatActivity implements View.OnClickListener {
     public static BluetoothService bluetoothService; // 静态变量,供其他Activity调用
+    public static XunfeiWakeUp wakeUp;
+    public static SpeechService speechService;
+    //语音合成
+    public static TtsService ttsService;
+    private static final int WAKEUP_STATE = 0x02;
 
     // 布局界面
     private PlayFragment playFragment = null;
@@ -58,6 +71,7 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.setContentView(R.layout.activity_main_view);
         Objects.requireNonNull(getSupportActionBar()).hide();
+        SpeechUtility.createUtility(this, "appid=" + "1710d024");
         // 注入Arouter
         ARouter.getInstance().inject(this);
         // 拿到SharedPreference
@@ -68,6 +82,7 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         setEvents();
         // 初始化Fragment
         initFragment();
+        initWakeup();
         // 设置默认的显示界面
         setTabSelection(2);
         if (bluetoothService != null) bluetoothService.autoConnect();
@@ -78,18 +93,6 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         super.onStart();
         // 这里初始化Fragment的组件必须在onStart()中进行, 若在onCreate中初始化, 子fragment有可能未初始化完成, 导致找不到对应组件
         initFragmentViewsAndEvents();
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    // TODO: 选择照片时切出应用再切回有主页面Fragment显示错误的bug
-    @Override
-    protected void onPause() {
-        super.onPause();
     }
 
     @Override
@@ -141,6 +144,20 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     public void initFragmentViewsAndEvents() {
         Button logout = findViewById(R.id.btn_logout);
         logout.setOnClickListener(this);
+    }
+
+    private void initWakeup() {
+        // 初始化唤醒词，开启
+        wakeUp = new XunfeiWakeUp(this, handler);
+        wakeUp.startWakeup();
+
+        // 初始化语音转文字
+        speechService = new SpeechService(this,"cloud");
+        speechService.init();
+
+        // 初始化语音合成
+        ttsService = new TtsService(this);
+
     }
 
     @Override
@@ -209,4 +226,23 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
             transaction.hide(archiveFragment);
         }
     }
+
+    private final Handler handler = new Handler(Looper.getMainLooper()) {
+        @SuppressLint("MissingPermission")
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == WAKEUP_STATE) {
+                    Log.d("systemVolume", "handleMessage: " + 7);
+                    MainView.ttsService.tts("我在");
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    speechService.ServiceBegin();
+            }
+        }
+    };
+
 }

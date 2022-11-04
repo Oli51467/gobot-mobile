@@ -81,7 +81,7 @@ public class TestSpeechActivity extends AppCompatActivity implements View.OnClic
         setContentView(R.layout.activity_test_speech);
         Objects.requireNonNull(getSupportActionBar()).hide();
         // appid为在开放平台注册的APPID
-        SpeechUtility.createUtility(TestSpeechActivity.this, "appid=" + R.string.app_id);
+        SpeechUtility.createUtility(TestSpeechActivity.this, "appid=" + "1710d024");
         initComponents();
         // 使用SpeechRecognizer对象, 可根据回调消息自定义界面；
         mIat = SpeechRecognizer.createRecognizer(TestSpeechActivity.this, mInitListener);
