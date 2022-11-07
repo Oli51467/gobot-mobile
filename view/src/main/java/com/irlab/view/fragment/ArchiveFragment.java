@@ -29,7 +29,7 @@ import com.irlab.base.utils.HttpUtil;
 import com.irlab.view.R;
 import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.adapter.ArchiveAdapter;
-import com.irlab.view.api.ApiService;
+import com.irlab.view.network.api.ApiService;
 import com.irlab.view.bean.GameInfo;
 import com.irlab.view.utils.JsonUtil;
 import com.rosefinches.smiledialog.SmileDialog;

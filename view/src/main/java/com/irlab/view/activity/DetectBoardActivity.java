@@ -46,7 +46,7 @@ import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
-import com.irlab.view.api.ApiService;
+import com.irlab.view.network.api.ApiService;
 import com.irlab.view.bean.UserResponse;
 import com.irlab.view.bluetooth.BluetoothService;
 import com.irlab.view.impl.EngineInterface;
@@ -54,7 +54,7 @@ import com.irlab.view.models.Board;
 import com.irlab.view.models.GameTurn;
 import com.irlab.view.models.Player;
 import com.irlab.view.models.Point;
-import com.irlab.view.process.InitialBoardDetector;
+import com.irlab.view.utils.InitialBoardDetector;
 import com.irlab.view.utils.Drawer;
 import com.irlab.view.utils.JsonUtil;
 import com.sdu.network.NetworkApi;
@@ -126,7 +126,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setContentView(R.layout.activity_battle_info);
+        setContentView(R.layout.activity_detect_board);
         Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
         initBoard();
         initLoaders();

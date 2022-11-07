@@ -1,4 +1,4 @@
-package com.irlab.view.api;
+package com.irlab.view.network.api;
 
 import com.google.gson.JsonArray;
 import com.irlab.view.bean.UserResponse;

@@ -16,7 +16,7 @@ import android.widget.ImageView;
 import androidx.annotation.Nullable;
 
 import com.irlab.base.response.ResponseCode;
-import com.irlab.view.api.ApiService;
+import com.irlab.view.network.api.ApiService;
 import com.irlab.view.bean.UserResponse;
 import com.irlab.view.utils.ButtonListenerUtil;
 import com.irlab.base.utils.ToastUtil;
