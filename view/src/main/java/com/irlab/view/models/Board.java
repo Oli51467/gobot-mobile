@@ -77,12 +77,13 @@ public class Board {
         if (point.getGroup() != null) return false;
 
         // 为判断打劫 要记录吃掉的棋子和吃掉的组
-        Set<Point> capturedStones = null;
+        capturedStones = null;
         Set<Group> capturedGroups = null;
         if (handleKo) {
             capturedStones = new HashSet<>();
             capturedGroups = new HashSet<>();
         }
+
 
         Set<Group> adjGroups = point.getAdjacentGroups();
         Group newGroup = new Group(point, player);

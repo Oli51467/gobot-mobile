@@ -1,7 +1,5 @@
 package com.irlab.view.fragment;
 
-import static com.irlab.base.MyApplication.SERVER;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,10 +24,10 @@ import android.widget.AdapterView;
 import com.google.gson.JsonArray;
 import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
-import com.irlab.base.utils.HttpUtil;
 import com.irlab.view.R;
 import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.adapter.ArchiveAdapter;
+import com.irlab.view.bean.UserResponse;
 import com.irlab.view.network.api.ApiService;
 import com.irlab.view.bean.GameInfo;
 import com.irlab.view.utils.JsonUtil;
@@ -42,14 +41,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.RequestBody;
-import okhttp3.Response;
 
 @SuppressLint("checkResult")
 public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick, AdapterView.OnItemClickListener, ArchiveAdapter.setLongClick {
@@ -125,7 +120,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
 
 
     @SuppressLint("HandlerLeak")
-    private final Handler handler = new Handler() {
+    private final Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
@@ -162,7 +157,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
 
     @Override
     public boolean onItemLongClickListener(View view, int position) {
-        @SuppressLint("ResourceAsColor") SmileDialog dialog = new SmileDialogBuilder((AppCompatActivity) this.getActivity(), SmileDialogType.ERROR)
+        SmileDialog dialog = new SmileDialogBuilder((AppCompatActivity) this.getActivity(), SmileDialogType.ERROR)
                 .hideTitle(true)
                 .setContentText("你确定删除吗")
                 .setConformBgResColor(R.color.delete)
@@ -172,18 +167,24 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
                 .setCancelBgResColor(R.color.whiteSmoke)
                 .setWindowAnimations(R.style.dialog_style)
                 .setConformButton("删除", () -> {
-                    GameInfo gameInfo = list.get(position);
-                    int id = gameInfo.getId();
-                    HttpUtil.sendOkHttpDelete(SERVER + "/api/deleteGame?id=" + id, new Callback() {
-                        @Override
-                        public void onFailure(@NonNull Call call, @NonNull IOException e) {}
-                        @Override
-                        public void onResponse(@NonNull Call call, @NonNull Response response) {
+                    int id = list.get(position).getId();
+                    RequestBody requestBody = JsonUtil.id2Json(id);
+                    NetworkApi.createService(ApiService.class)
+                            .deleteGame(requestBody)
+                            .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
+                                @Override
+                                public void onSuccess(UserResponse userResponse) {
+                                    if (userResponse.getStatus().equals("success")) {
+                                        Log.d(Logger, "保存棋谱成功");
+                                    }
+                                }
 
-                        }
-                    });
-                })
-                .build();
+                                @Override
+                                public void onFailure(Throwable e) {
+                                    Log.e(Logger, "保存棋谱失败，服务器异常：" + e.getMessage());
+                                }
+                            }));
+                }).build();
         dialog.show();
         return false;
     }

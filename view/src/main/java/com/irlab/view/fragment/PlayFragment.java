@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PlayFragment extends Fragment implements View.OnClickListener {
+public class PlayFragment extends Fragment {
 
     private final MyFunction[] functions = {
             new MyFunction("开始对弈", R.drawable.play),
@@ -86,10 +86,5 @@ public class PlayFragment extends Fragment implements View.OnClickListener {
         this.view = view;
         showInfo = view.findViewById(R.id.tv_show_username);
         profile = view.findViewById(R.id.iv_profile);
-    }
-
-    @Override
-    public void onClick(View v) {
-
     }
 }

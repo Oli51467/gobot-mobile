@@ -42,5 +42,11 @@ public interface ApiService {
      */
     @HTTP(method = "POST", path = "/api/getGames", hasBody = true)
     Observable<JsonArray> getGames(@Body RequestBody requestBody);
+
+    /**
+     * 获取一个用户的所有对局信息
+     */
+    @HTTP(method = "DELETE", path = "/api/deleteGame", hasBody = true)
+    Observable<UserResponse> deleteGame(@Body RequestBody requestBody);
 }
 

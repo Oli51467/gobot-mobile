@@ -12,23 +12,6 @@ import okhttp3.RequestBody;
 public class JsonUtil {
     public static final String Logger = JsonUtil.class.getName();
 
-    // 将提交到服务器的数据转换为json格式
-    public static RequestBody getJsonFormOfPlayConfig(String userName, String playerBlack, String playerWhite, String engine, int komi, int rule) {
-        JSONObject jsonParam = new JSONObject();
-        try {
-            jsonParam.put("userName", userName);
-            jsonParam.put("playerBlack", playerBlack);
-            jsonParam.put("playerWhite", playerWhite);
-            jsonParam.put("engine", engine);
-            jsonParam.put("rule", komi);
-            jsonParam.put("komi", rule);
-        } catch (JSONException e) {
-            Log.d(Logger, "PlayConfig转换json格式出错, 错误:" + e.getMessage());
-        }
-        RequestBody requestBody = RequestBody.create(JSON, jsonParam.toString());
-        return requestBody;
-    }
-
     public static RequestBody getGame(String userName, String playInfo, String result, String code) {
         JSONObject jsonParam = new JSONObject();
         try {
@@ -73,19 +56,6 @@ public class JsonUtil {
         return requestBody;
     }
 
-    // 将提交到服务器的数据转换为json格式
-    public static RequestBody getJsonFormOfLogin(String userName, String password) {
-        JSONObject jsonParam = new JSONObject();
-        try {
-            jsonParam.put("userName", userName);
-            jsonParam.put("password", password);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        RequestBody requestBody = RequestBody.create(JSON, jsonParam.toString());
-        return requestBody;
-    }
-
     public static RequestBody addUser2Json(String userName, String password) {
         JSONObject jsonParam = new JSONObject();
         try {
@@ -102,6 +72,17 @@ public class JsonUtil {
         JSONObject jsonParam = new JSONObject();
         try {
             jsonParam.put("userName", userName);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RequestBody requestBody = RequestBody.create(JSON, jsonParam.toString());
+        return requestBody;
+    }
+
+    public static RequestBody id2Json(int id) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("id", id);
         } catch (JSONException e) {
             e.printStackTrace();
         }

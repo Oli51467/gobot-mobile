@@ -15,7 +15,6 @@ import okhttp3.MediaType;
 
 public class MyApplication extends Application {
 
-    public static final String SERVER = "http://8.142.10.225:8088";
     public static final String ENGINE_SERVER = "http://8.142.10.225:5000"; // 阿里云服务器
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     public static final String TAG = MyApplication.class.getName();
