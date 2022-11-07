@@ -25,8 +25,11 @@ import com.irlab.view.network.NetworkRequiredInfo;
 import com.irlab.view.utils.ButtonListenerUtil;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
+import com.irlab.view.utils.JsonUtil;
 import com.sdu.network.NetworkApi;
 import com.sdu.network.observer.BaseObserver;
+
+import okhttp3.RequestBody;
 
 @SuppressLint("CheckResult")
 @Route(path = "/auth/login")
@@ -81,10 +84,11 @@ public class LoginActivity extends Activity implements View.OnClickListener{
         else if(vid == R.id.btn_login) {
             String userName = this.userName.getText().toString();
             String password = this.password.getText().toString();
+            RequestBody requestBody = JsonUtil.addUser2Json(userName, password);
             Message msg = new Message();
             msg.obj = this;
             NetworkApi.createService(ApiService.class)
-                    .checkUserInfo(userName, password)
+                    .checkUserInfo(requestBody)
                     .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
                         @Override
                         public void onSuccess(UserResponse userResponse) {

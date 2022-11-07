@@ -89,16 +89,16 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
             }
             Message msg = new Message();
             msg.obj = this;
+            RequestBody requestBody = JsonUtil.userName2Json(userName.getText().toString());
             NetworkApi.createService(ApiService.class)
-                    .checkUser(userName.getText().toString())
+                    .checkUser(requestBody)
                     .compose(NetworkApi.applySchedulers(new BaseObserver<UserResponse>() {
                         @Override
                         public void onSuccess(UserResponse userResponse) {
                             String status = userResponse.getStatus();
                             // 用户名没有被注册
                             if (status.equals("nullObject")) {
-                                RequestBody requestBody = JsonUtil.addUser2Json(userName.getText().toString(), password);
-                                addUser(requestBody);
+                                addUser(userName.getText().toString(), password);
                             } else {    // 用户名已被注册
                                 msg.what = ResponseCode.USER_ALREADY_REGISTERED.getCode();
                             }
@@ -118,12 +118,13 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    private void addUser(RequestBody requestBody) {
+    private void addUser(String userName, String password) {
         Message msg = new Message();
         msg.obj = RegisterActivity.this;
+        RequestBody requestBody = JsonUtil.addUser2Json(userName, password);
         NetworkApi.createService(ApiService.class)
                 .addUser(requestBody)
-                .compose(NetworkApi.applySchedulers(new BaseObserver<UserResponse>() {
+                .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
                     @Override
                     public void onSuccess(UserResponse userResponse) {
                         String status = userResponse.getStatus();

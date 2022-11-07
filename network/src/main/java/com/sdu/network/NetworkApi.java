@@ -32,7 +32,7 @@ public class NetworkApi {
     // 获取APP运行状态及版本信息，用于日志打印
     private static INetworkRequiredInfo iNetworkRequiredInfo;
     private static OkHttpClient okHttpClient;   // OkHttp客户端
-    private static String mBaseUrl, engineUrl;             // API访问地址
+    private static String mBaseUrl;             // API访问地址
     private static HashMap<String, Retrofit> retrofitHashMap = new HashMap<>();
 
     /**
@@ -133,8 +133,7 @@ public class NetworkApi {
      */
     public static void init(INetworkRequiredInfo networkRequiredInfo) {
         iNetworkRequiredInfo = networkRequiredInfo;
-        mBaseUrl = "http://8.142.10.225:8081";
-        engineUrl = "http://8.142.10.225:5000";
+        mBaseUrl = "http://8.142.10.225:8088";
     }
 
     /**

@@ -22,15 +22,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 
+import com.google.gson.JsonArray;
 import com.irlab.base.MyApplication;
-import com.irlab.base.entity.GameInfo;
+import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.HttpUtil;
 import com.irlab.view.R;
 import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.adapter.ArchiveAdapter;
+import com.irlab.view.api.ApiService;
+import com.irlab.view.bean.GameInfo;
+import com.irlab.view.utils.JsonUtil;
 import com.rosefinches.smiledialog.SmileDialog;
 import com.rosefinches.smiledialog.SmileDialogBuilder;
 import com.rosefinches.smiledialog.enums.SmileDialogType;
+import com.sdu.network.NetworkApi;
+import com.sdu.network.observer.BaseObserver;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,27 +45,22 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
+@SuppressLint("checkResult")
 public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick, AdapterView.OnItemClickListener, ArchiveAdapter.setLongClick {
 
-    public static final String TAG = ArchiveFragment.class.getName();
+    public static final String Logger = ArchiveFragment.class.getName();
 
     RecyclerView mRecyclerView = null;
-
     ArchiveAdapter mAdapter = null;
-
     LinearLayoutManager linearLayoutManager = null;
-
     View view;
-
-    // map存放数据
     private List<GameInfo> list = new ArrayList<>();
-
     private String userName;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -81,18 +82,23 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
     // 从SDCard读取数据并放到list中
     private void initData(Context context) {
         list = new ArrayList<>();
-        HttpUtil.sendOkHttpRequest(SERVER + "/api/getGames?userName=" + userName, new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+        RequestBody requestBody = JsonUtil.userName2Json(userName);
+        Message msg = new Message();
+        NetworkApi.createService(ApiService.class)
+                .getGames(requestBody)
+                .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
+                    @Override
+                    public void onSuccess(JsonArray gameInfo) {
+                        addDataToMap(gameInfo.toString(), context);
+                    }
 
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                String responseData = Objects.requireNonNull(response.body()).string();
-                addDataToMap(responseData, context);
-            }
-        });
+                    @Override
+                    public void onFailure(Throwable e) {
+                        Log.e(Logger, "get games onFailure:" + e.getMessage());
+                        msg.what = ResponseCode.SERVER_FAILED.getCode();
+                        handler.sendMessage(msg);
+                    }
+                }));
     }
 
     private void addDataToMap(String jsonData, Context context) {
@@ -100,11 +106,11 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
             JSONArray jsonArray = new JSONArray(jsonData);
             for (int i = jsonArray.length() - 1; i >= 0; i -- ) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
-                Long gid = jsonObject.getLong("id");
-                String gPlayInfo = jsonObject.getString("playInfo");
+                int gid = jsonObject.getInt("id");
+                String gPlayInfo = jsonObject.getString("play_info");
                 String gResult = jsonObject.getString("result");
                 String gCode = jsonObject.getString("code");
-                String gCreateTime = jsonObject.getString("createTime");
+                String gCreateTime = jsonObject.getString("create_time");
                 GameInfo gameInfo = new GameInfo(gid, gPlayInfo, gResult, gCode, gCreateTime);
                 list.add(gameInfo);
             }
@@ -113,7 +119,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
             msg.obj = context;
             handler.sendMessage(msg);
         } catch (JSONException e) {
-            Log.d(TAG, e.toString());
+            Log.d(Logger, e.toString());
         }
     }
 
@@ -167,7 +173,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
                 .setWindowAnimations(R.style.dialog_style)
                 .setConformButton("删除", () -> {
                     GameInfo gameInfo = list.get(position);
-                    Long id = gameInfo.getId();
+                    int id = gameInfo.getId();
                     HttpUtil.sendOkHttpDelete(SERVER + "/api/deleteGame?id=" + id, new Callback() {
                         @Override
                         public void onFailure(@NonNull Call call, @NonNull IOException e) {}

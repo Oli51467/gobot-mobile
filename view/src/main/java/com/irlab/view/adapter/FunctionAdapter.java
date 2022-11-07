@@ -16,8 +16,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.irlab.view.R;
 import com.irlab.view.activity.BluetoothAppActivity;
+import com.irlab.view.activity.DefineBoardPositionActivity;
 import com.irlab.view.activity.InstructionActivity;
-import com.irlab.view.activity.PlayConfigActivity;
 import com.irlab.view.activity.SelectConfigActivity;
 import com.irlab.view.activity.TestSpeechActivity;
 import com.irlab.view.bean.MyFunction;
@@ -62,11 +62,11 @@ public class FunctionAdapter extends RecyclerView.Adapter<FunctionAdapter.ViewHo
             int position = holder.getBindingAdapterPosition();
             MyFunction function = funcList.get(position);
             if (function.getName().equals("开始对弈")) {
-                Intent intent = new Intent(context, SelectConfigActivity.class);
+                Intent intent = new Intent(context, DefineBoardPositionActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 context.startActivity(intent);
-            } else if (function.getName().equals("规则设置")) {
-                Intent intent = new Intent(context, PlayConfigActivity.class);
+            } else if (function.getName().equals("选择棋力")) {
+                Intent intent = new Intent(context, SelectConfigActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 context.startActivity(intent);
             } else if (function.getName().equals("蓝牙连接")) {

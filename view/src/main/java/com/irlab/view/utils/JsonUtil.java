@@ -13,7 +13,7 @@ public class JsonUtil {
     public static final String Logger = JsonUtil.class.getName();
 
     // 将提交到服务器的数据转换为json格式
-    public static RequestBody getJsonFormOfPlayConfig(String userName, String playerBlack, String playerWhite, String engine, String description, int komi, int rule) {
+    public static RequestBody getJsonFormOfPlayConfig(String userName, String playerBlack, String playerWhite, String engine, int komi, int rule) {
         JSONObject jsonParam = new JSONObject();
         try {
             jsonParam.put("userName", userName);
@@ -22,7 +22,6 @@ public class JsonUtil {
             jsonParam.put("engine", engine);
             jsonParam.put("rule", komi);
             jsonParam.put("komi", rule);
-            jsonParam.put("desc", description);
         } catch (JSONException e) {
             Log.d(Logger, "PlayConfig转换json格式出错, 错误:" + e.getMessage());
         }
@@ -92,6 +91,17 @@ public class JsonUtil {
         try {
             jsonParam.put("userName", userName);
             jsonParam.put("password", password);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RequestBody requestBody = RequestBody.create(JSON, jsonParam.toString());
+        return requestBody;
+    }
+
+    public static RequestBody userName2Json(String userName) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("userName", userName);
         } catch (JSONException e) {
             e.printStackTrace();
         }

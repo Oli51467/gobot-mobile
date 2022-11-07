@@ -16,6 +16,7 @@ import com.iflytek.cloud.SpeechConstant;
 import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.irlab.base.utils.JsonUtil;
+import com.irlab.view.activity.DefineBoardPositionActivity;
 import com.irlab.view.activity.SelectConfigActivity;
 import com.irlab.view.iflytek.speech.setting.IatSettings;
 
@@ -123,7 +124,7 @@ public class SpeechService {
                 if (!order.equals("")) {
                     Log.d("order", "order is not null ");
                     if (order.equals("下棋")) {
-                        Intent intent = new Intent(context, SelectConfigActivity.class);
+                        Intent intent = new Intent(context, DefineBoardPositionActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                         context.startActivity(intent);
                     }

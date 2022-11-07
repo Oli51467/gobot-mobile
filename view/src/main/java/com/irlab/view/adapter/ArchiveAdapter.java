@@ -9,8 +9,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.irlab.base.entity.GameInfo;
 import com.irlab.view.R;
+import com.irlab.view.bean.GameInfo;
 
 import java.util.List;
 

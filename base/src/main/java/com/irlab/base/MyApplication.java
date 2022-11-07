@@ -15,11 +15,8 @@ import okhttp3.MediaType;
 
 public class MyApplication extends Application {
 
-    public static final String SERVER = "http://8.142.10.225:8081";
+    public static final String SERVER = "http://8.142.10.225:8088";
     public static final String ENGINE_SERVER = "http://8.142.10.225:5000"; // 阿里云服务器
-    public static final String[] T = {"让先", "让2子", "让3子", "让4子", "让5子", "让6子", "让7子", "让8子", "让9子"};
-    public static final String[] ENGINES = {"10级", "9级", "8级", "7级", "6级", "5级", "4级", "3级", "2级", "1级",
-            "业余1段", "业余2段", "业余3段", "业余4段", "业余5段", "业余6段", "职业初段", "P2", "P3"};
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     public static final String TAG = MyApplication.class.getName();
     public static final int THREAD_NUM = 19;

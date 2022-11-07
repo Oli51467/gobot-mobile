@@ -12,7 +12,6 @@ import static com.irlab.view.utils.ImageUtils.JPEGImageToByteArray;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
@@ -34,13 +33,13 @@ import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.ToastUtil;
+import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.impl.EngineInterface;
 
@@ -61,7 +60,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
             .build();
     public static List<Pair<Double, Double>> corners = new ArrayList<>();
 
-    private String blackPlayer, whitePlayer, komi, rule, engine, userName;
+    private String blackPlayer, whitePlayer, komi, engine, userName;
     private PreviewView previewView;
     private ProcessCameraProvider cameraProvider;
     public static ExecutorService mExecutorService; // 声明一个线程池对象
@@ -75,20 +74,22 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
         userName = MyApplication.getInstance().preferences.getString("userName", null); // 获取 username 作为连接引擎的唯一主键
         initWindow(this);
         initViews();
-        getInfoFromActivity();
+        initInfo();
         initPython();
         if (!initEngine) {
             EngineInterface engineInterface = new EngineInterface(userName, this, blackPlayer, whitePlayer);
             engineInterface.initEngine();
-            if (rule.equals("中国规则")) {
-                engineInterface.setRules("chinese");
-            } else {
-                engineInterface.setRules("japanese");
-            }
             engineInterface.clearBoard();
             initEngine = true;
         }
         startCamera();
+    }
+
+    private void initInfo() {
+        blackPlayer = userName;
+        whitePlayer = "kataGo";
+        komi = "黑贴7.5目";
+        engine = MyApplication.getInstance().preferences.getString("level", null);
     }
 
     private void initViews() {
@@ -108,15 +109,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
             Python.start(new AndroidPlatform(this));
         }
         py = Python.getInstance();
-    }
-
-    private void getInfoFromActivity() {
-        Intent i = getIntent();
-        blackPlayer = i.getStringExtra("blackPlayer");
-        whitePlayer = i.getStringExtra("whitePlayer");
-        komi = i.getStringExtra("komi");
-        rule = i.getStringExtra("rule");
-        engine = i.getStringExtra("engine");
     }
 
     @SuppressLint("RestrictedApi")
@@ -207,7 +199,6 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                             intent.putExtra("blackPlayer", blackPlayer);
                             intent.putExtra("whitePlayer", whitePlayer);
                             intent.putExtra("komi", komi);
-                            intent.putExtra("rule", rule);
                             intent.putExtra("engine", engine);
                             startActivity(intent);
                         }
@@ -220,8 +211,8 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
                     }
             );
         } else if (vid == R.id.btn_return) {
-            Intent intent = new Intent(this, SelectConfigActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            Intent intent = new Intent(this, MainView.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         }
     }

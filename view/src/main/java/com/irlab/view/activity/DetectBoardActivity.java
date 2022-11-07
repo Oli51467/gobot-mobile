@@ -434,7 +434,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         blackPlayer = intent.getStringExtra("blackPlayer");
         whitePlayer = intent.getStringExtra("whitePlayer");
         komi = intent.getStringExtra("komi");
-        rule = intent.getStringExtra("rule");
+        rule = "中国规则";
         engine = intent.getStringExtra("engine");
         userName = MyApplication.getInstance().preferences.getString("userName", null).replaceAll("\n", "");
         previewView = findViewById(R.id.previewView);
@@ -517,9 +517,9 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
 
     @SuppressLint("CheckResult")
     private void saveGame(String code, String result, String playInfo) {
-        RequestBody requestBody = JsonUtil.getGame(userName, result, playInfo, code);
         Message msg = new Message();
         msg.obj = this;
+        RequestBody requestBody = JsonUtil.getGame(userName, playInfo, result, code);
         NetworkApi.createService(ApiService.class)
                 .saveGame(requestBody)
                 .compose(NetworkApi.applySchedulers(new BaseObserver<>() {

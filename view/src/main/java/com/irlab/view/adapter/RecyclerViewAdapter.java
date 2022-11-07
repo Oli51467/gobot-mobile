@@ -9,7 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.irlab.base.entity.CellData;
+import com.irlab.base.MyApplication;
 import com.irlab.view.R;
 
 import java.util.List;
@@ -17,11 +17,18 @@ import java.util.List;
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> implements View.OnClickListener, View.OnLongClickListener {
 
     // 数据容器
-    private List<CellData> configList;
+    private final List<String> configList;
+    private static final String[] LEVELS = {"10级", "9级", "8级", "7级", "6级", "5级", "4级", "3级", "2级", "1级",
+            "业余1段", "业余2段", "业余3段", "业余4段", "业余5段", "业余6段", "业余强豪", "职业棋手", "全国冠军", "世界冠军"};
+    public static final int[] LEVEL_ICONS = {R.drawable.level_1, R.drawable.level_2,
+            R.drawable.level_3, R.drawable.level_4, R.drawable.level_5, R.drawable.level_6, R.drawable.level_7,
+            R.drawable.level_8, R.drawable.level_9, R.drawable.level_10, R.drawable.level_11, R.drawable.level_12,
+            R.drawable.level_13, R.drawable.level_14, R.drawable.level_15, R.drawable.level_16, R.drawable.level_17,
+            R.drawable.level_18, R.drawable.level_19, R.drawable.level_20};
 
-    private int mPosition = -1;
+    private int mPosition = 0;
 
-    public RecyclerViewAdapter(List<CellData> configList) {
+    public RecyclerViewAdapter(List<String> configList) {
         this.configList = configList;
     }
 
@@ -31,18 +38,16 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     // 内部类实现viewHolder 拿到cardView中的布局元素
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        private final ImageView check;
-        private final TextView playerBlack, playerWhite, level, rule;
+        private final ImageView check, level_icon;
+        private final TextView level;
         private final View root;
 
         public ViewHolder(View root) {
             super(root);
             this.root = root;
             check = root.findViewById(R.id.iv_check);
-            playerBlack = root.findViewById(R.id.tv_player_black);
-            playerWhite = root.findViewById(R.id.tv_player_white);
-            rule = root.findViewById(R.id.tv_rule);
-            level = root.findViewById(R.id.tv_level);
+            level = root.findViewById(R.id.level);
+            level_icon = root.findViewById(R.id.level_icon);
         }
     }
 
@@ -58,13 +63,9 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     // 绑定视图管理者
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        // 双方信息
-        holder.playerBlack.setText(configList.get(position).getPlayerBlack().trim());
-        holder.playerWhite.setText(configList.get(position).getPlayerWhite().trim());
-        // 段位信息
-        holder.level.setText(configList.get(position).getEngine().trim());
-        // 规则
-        holder.rule.setText(configList.get(position).getRule() == 0 ? "中国规则" : "日本规则");
+        mPosition = MyApplication.getInstance().preferences.getInt("level_position", 0);
+        holder.level_icon.setImageResource(LEVEL_ICONS[position]);
+        holder.level.setText(LEVELS[position]);
         // 设置tag
         holder.root.setTag(position);
         if (position == getmPosition()) {

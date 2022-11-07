@@ -1,13 +1,12 @@
 package com.irlab.view.api;
 
+import com.google.gson.JsonArray;
 import com.irlab.view.bean.UserResponse;
 
 import io.reactivex.Observable;
 import okhttp3.RequestBody;
 import retrofit2.http.Body;
-import retrofit2.http.GET;
-import retrofit2.http.POST;
-import retrofit2.http.Query;
+import retrofit2.http.HTTP;
 
 /**
  * ApiService接口 统一管理应用所有的接口
@@ -17,25 +16,31 @@ public interface ApiService {
     /**
      * 检查用户名是否被注册
      */
-    @GET("/api/getUserByName")
-    Observable<UserResponse> checkUser(@Query("userName") String userName);
+    @HTTP(method = "POST", path = "/api/getUserByName", hasBody = true)
+    Observable<UserResponse> checkUser(@Body RequestBody requestBody);
 
     /**
      * 添加一个用户
      */
-    @POST("/api/addUser")
+    @HTTP(method = "POST", path = "/api/addUser", hasBody = true)
     Observable<UserResponse> addUser(@Body RequestBody requestBody);
 
     /**
      * 检查用户信息
      */
-    @GET("/api/checkUserInfo")
-    Observable<UserResponse> checkUserInfo(@Query("userName") String userName, @Query("password") String password);
+    @HTTP(method = "POST", path = "/api/checkUserInfo", hasBody = true)
+    Observable<UserResponse> checkUserInfo(@Body RequestBody requestBody);
 
     /**
      * 保存对局信息
      */
-    @POST("/api/saveGame")
+    @HTTP(method = "POST", path = "/api/saveGame", hasBody = true)
     Observable<UserResponse> saveGame(@Body RequestBody requestBody);
+
+    /**
+     * 获取一个用户的所有对局信息
+     */
+    @HTTP(method = "POST", path = "/api/getGames", hasBody = true)
+    Observable<JsonArray> getGames(@Body RequestBody requestBody);
 }
 

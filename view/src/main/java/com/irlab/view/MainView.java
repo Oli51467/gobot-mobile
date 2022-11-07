@@ -28,8 +28,10 @@ import com.irlab.view.bluetooth.BluetoothService;
 import com.irlab.view.fragment.PlayFragment;
 import com.irlab.view.fragment.ArchiveFragment;
 import com.irlab.view.iflytek.speech.XunfeiWakeUp;
+import com.irlab.view.network.NetworkRequiredInfo;
 import com.irlab.view.service.SpeechService;
 import com.irlab.view.service.TtsService;
+import com.sdu.network.NetworkApi;
 
 import java.util.Objects;
 
@@ -85,6 +87,8 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         initWakeup();
         // 设置默认的显示界面
         setTabSelection(2);
+        // 初始化network
+        NetworkApi.init(new NetworkRequiredInfo(MyApplication.getInstance()));
         if (bluetoothService != null) bluetoothService.autoConnect();
     }
 

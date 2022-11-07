@@ -26,7 +26,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="选择对局设置"
+            android:text="选择棋力"
             android:textColor="@color/black"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -42,21 +42,6 @@
             android:id="@+id/play_setting_item"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-
-        <Button
-            android:id="@+id/btn_begin"
-            android:layout_width="320dp"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_centerInParent="true"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/btn_not_focus"
-            android:enabled="false"
-            android:text="开始"
-            android:textColor="@color/white"
-            android:textSize="24sp" />
     </RelativeLayout>
-
-
 
 </LinearLayout>
