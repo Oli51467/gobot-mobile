@@ -326,7 +326,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             Pair<Integer, Integer> enginePlay = transformIndex(playPosition);
             Log.d(Logger, "转换后的落子坐标:" + enginePlay.first + " " + enginePlay.second);
             // 将引擎下的棋走上 并更新棋盘信息
-            board.play(enginePlay.second, enginePlay.first, board.getPlayer());
+            board.play(enginePlay.first, enginePlay.second, board.getPlayer());
             GameTurn lastTurn = board.gameRecord.getLastTurn();
             lastBoard = lastTurn.boardState;
             Log.d(Logger, "lastMove上一步：" + lastTurn.x + " " + lastTurn.y);
@@ -485,7 +485,11 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
      * }
      */
     public void getGameAndSave() {
-        String cmd = "printsgf 00001.sgf";
+        String code = board.saveGame();
+        String result = engineInterface.getScore();
+        String playInfo = "黑方: " + blackPlayer + " " + "白方: " + whitePlayer;
+        saveGame(code, result, playInfo);
+        /*String cmd = "printsgf 00001.sgf";
         RequestBody requestBody = JsonUtil.getCmd(userName, cmd);
         HttpUtil.sendOkHttpResponse(ENGINE_SERVER + "/exec", requestBody, new Callback() {
             @Override
@@ -512,7 +516,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
                     Log.d(Logger, "展示棋盘Json异常：" + e.getMessage());
                 }
             }
-        });
+        });*/
     }
 
     @SuppressLint("CheckResult")

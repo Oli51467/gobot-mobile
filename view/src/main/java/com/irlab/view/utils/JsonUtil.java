@@ -19,6 +19,7 @@ public class JsonUtil {
             jsonParam.put("playInfo", playInfo);
             jsonParam.put("result", result);
             jsonParam.put("code", code);
+            jsonParam.put("source", 0);
         } catch (JSONException e) {
             Log.e(Logger, "Game的json格式转化错误：" + e.getMessage());
         }

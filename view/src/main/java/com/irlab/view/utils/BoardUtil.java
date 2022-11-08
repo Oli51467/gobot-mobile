@@ -37,6 +37,6 @@ public class BoardUtil {
             if (String.valueOf(c).equals(alpha)) break;
             cnt ++;
         }
-        return new Pair<>(cnt, 20 - Integer.parseInt(number));
+        return new Pair<>(20 - Integer.parseInt(number), cnt);
     }
 }

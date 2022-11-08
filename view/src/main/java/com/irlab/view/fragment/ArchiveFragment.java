@@ -97,6 +97,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
     }
 
     private void addDataToMap(String jsonData, Context context) {
+        list.clear();
         try {
             JSONArray jsonArray = new JSONArray(jsonData);
             for (int i = jsonArray.length() - 1; i >= 0; i -- ) {
@@ -106,7 +107,8 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
                 String gResult = jsonObject.getString("result");
                 String gCode = jsonObject.getString("code");
                 String gCreateTime = jsonObject.getString("create_time");
-                GameInfo gameInfo = new GameInfo(gid, gPlayInfo, gResult, gCode, gCreateTime);
+                int gSource = jsonObject.getInt("source");
+                GameInfo gameInfo = new GameInfo(gid, gPlayInfo, gResult, gCode, gCreateTime, gSource);
                 list.add(gameInfo);
             }
             Message msg = new Message();
@@ -139,6 +141,14 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
         }
     };
 
+    /**
+     * 通过选中的棋谱list, 通过getItemAtPosition获取到对应的map数据
+     * 再通过get("id")获取到附加在该list上的sgf的数据库索引信息
+     * 再通过查找对应id获取该list对应的SGF
+     * 将该SGF的棋谱信息码code通过bundle传递到展示棋谱的界面中, 该界面只有一个, 根据每次的入参code的不同展示不同的棋谱
+     * @param view 视图
+     * @param position 选中的位置
+     */
     @Override
     public void onItemClickListener(View view, int position) {
         // 根据点击的位置 拿到该配置信息的code
@@ -151,6 +161,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
         bundle.putString("playInfo", gameInfo.getPlayInfo());
         bundle.putString("result", gameInfo.getResult());
         bundle.putString("createTime", gameInfo.getCreateTime());
+        bundle.putInt("source", gameInfo.getSource());
         intent.putExtras(bundle);
         startActivity(intent);
     }
@@ -189,28 +200,6 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
         return false;
     }
 
-    /**
-     * 通过选中的棋谱list, 通过getItemAtPosition获取到对应的map数据
-     * 再通过get("id")获取到附加在该list上的sgf的数据库索引信息
-     * 再通过查找对应id获取该list对应的SGF
-     * 将该SGF的棋谱信息码code通过bundle传递到展示棋谱的界面中, 该界面只有一个, 根据每次的入参code的不同展示不同的棋谱
-     * @param adapterView 适配器
-     * @param view 视图
-     * @param pos 选中的位置
-     */
     @Override
-    public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-        // 拿到对应item的map信息
-        GameInfo gameInfo = (GameInfo) adapterView.getItemAtPosition(pos);
-        // 获取该条目的id 该id即对应SGF的id
-        String code = gameInfo.getCode();
-        // 跳转
-        Intent intent = new Intent(this.getActivity(), SGFInfoActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        // 在bundle中传递SGF的code给展示activity
-        Bundle bundle = new Bundle();
-        bundle.putString("code", code);
-        intent.putExtras(bundle);
-        startActivity(intent);
-    }
+    public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {}
 }

@@ -6,16 +6,18 @@ public class GameInfo implements Serializable {
     String code;
     String create_time;
     int id;
+    int source;
     String play_info;
     String result;
     String user_name;
 
-    public GameInfo(int id, String play_info, String result, String code, String create_time) {
+    public GameInfo(int id, String play_info, String result, String code, String create_time, int source) {
         this.id = id;
         this.play_info = play_info;
         this.result = result;
         this.code = code;
         this.create_time = create_time;
+        this.source = source;
     }
 
     public int getId() {
@@ -80,5 +82,13 @@ public class GameInfo implements Serializable {
 
     public void setUser_name(String user_name) {
         this.user_name = user_name;
+    }
+
+    public int getSource() {
+        return source;
+    }
+
+    public void setSource(int source) {
+        this.source = source;
     }
 }

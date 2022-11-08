@@ -34,7 +34,7 @@ public class SGFInfoActivity extends Activity implements View.OnClickListener {
     private int[][] lastBoard;
     private Board board;
     private Point lastMove;
-    private int curPointer = 0, undoPointer = 0;
+    private int curPointer = 0, undoPointer = 0, source;
     private String playInfo, result, createTime;
 
     @Override
@@ -71,7 +71,8 @@ public class SGFInfoActivity extends Activity implements View.OnClickListener {
         playInfo = bundle.getString("playInfo");
         result = bundle.getString("result");
         createTime = bundle.getString("createTime");
-        moves = SGFUtil.parseSGF(code);
+        source = bundle.getInt("source");
+        moves = SGFUtil.parseSGF(code, source);
     }
 
     private void initBoard() {

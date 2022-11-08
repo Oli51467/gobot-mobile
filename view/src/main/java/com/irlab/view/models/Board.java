@@ -1,5 +1,7 @@
 package com.irlab.view.models;
 
+import static com.irlab.view.utils.BoardUtil.getPositionByIndex;
+
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
@@ -220,6 +222,16 @@ public class Board {
                 point.setGroup(null);
             }
         }
+    }
+
+    public String saveGame() {
+        StringBuilder game = new StringBuilder();
+        String which = "B";
+        for (GameTurn gameTurn : this.gameRecord.preceding) {
+            game.append(";").append(which).append(getPositionByIndex(gameTurn.x, gameTurn.y));
+            which = (which.equals("B") ? "W" : "B");
+        }
+        return game.toString();
     }
 
     @NonNull
