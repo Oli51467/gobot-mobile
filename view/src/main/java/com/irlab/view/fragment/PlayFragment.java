@@ -5,6 +5,7 @@ import static android.app.Activity.RESULT_OK;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
@@ -37,6 +38,7 @@ import com.irlab.base.response.ResponseCode;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 import com.irlab.view.activity.BluetoothAppActivity;
+import com.irlab.view.activity.UserInfoActivity;
 import com.irlab.view.adapter.FunctionAdapter;
 import com.irlab.view.bean.UserResponse;
 import com.irlab.view.bluetooth.BluetoothService;
@@ -62,7 +64,7 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
             new MyFunction("选择棋力", R.drawable.icon_set_level),
             new MyFunction("我的对局", R.drawable.icon_mygame),
             new MyFunction("蓝牙连接", R.drawable.ic_bluetooth),
-            new MyFunction("下棋说明", R.drawable.introduction),
+            new MyFunction("下棋说明", R.drawable.icon_introduction),
     };
     private final List<MyFunction> funcList = new ArrayList<>();
 
@@ -78,6 +80,7 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
     private ActivityResultLauncher<Intent> openAlbumLauncher;
 
 
+    @SuppressLint("NewApi")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_play, container, false);
@@ -85,19 +88,24 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
         RequestBody requestBody = JsonUtil.userName2Json(userName);
         Message msg = new Message();
         msg.obj = this.getActivity();
+        String base64_str = MyApplication.getInstance().preferences.getString("avatar", null);
+        if (base64_str != null) {
+            setAvatar(base64_str);
+            return view;
+        }
         NetworkApi.createService(ApiService.class)
                 .loadAvatar(requestBody)
                 .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
-                    @RequiresApi(api = Build.VERSION_CODES.O)
                     @Override
                     public void onSuccess(UserResponse userResponse) {
                         int code = userResponse.getCode();
                         String base64_code = userResponse.getStatus();
+                        SharedPreferences.Editor editor = MyApplication.getInstance().preferences.edit();
+                        editor.putString("avatar", base64_code);
+                        editor.apply();
                         if (code == 200) {
                             msg.what = ResponseCode.LOAD_AVATAR_SUCCESSFULLY.getCode();
-                            byte [] input = Base64.getDecoder().decode(base64_code);
-                            Bitmap bitmap = BitmapFactory.decodeByteArray(input, 0, input.length);
-                            Glide.with(PlayFragment.this).load(bitmap).into(profile);
+                            setAvatar(base64_code);
                         } else if (code == 404) {
                             msg.what = ResponseCode.RESOURCE_NOT_FOUND.getCode();
                         } else if (code == 502) {
@@ -146,11 +154,19 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
         bluetoothService = BluetoothAppActivity.bluetoothService;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void setAvatar(String base64_code) {
+        byte [] input = Base64.getMimeDecoder().decode(base64_code);
+        Bitmap bitmap = BitmapFactory.decodeByteArray(input, 0, input.length);
+        Glide.with(PlayFragment.this).load(bitmap).into(profile);
+    }
+
     private void setView(View view) {
         this.view = view;
         showInfo = view.findViewById(R.id.tv_show_username);
         profile = view.findViewById(R.id.iv_profile);
         profile.setOnClickListener(this);
+        view.findViewById(R.id.personal_info).setOnClickListener(this);
     }
 
     private void initLauncher() {
@@ -186,6 +202,10 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
             // 取消
             tvCancel.setOnClickListener(v1 -> bottomSheetDialog.cancel());
             bottomSheetDialog.show();
+        } else if (vid == R.id.personal_info) {
+            Intent intent = new Intent(this.getActivity(), UserInfoActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
         }
     }
 
@@ -204,6 +224,9 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
             Glide.with(this).load(imagePath).into(profile);
             try {
                 String base64Image = ImageUtils.bitmapToString(imagePath);
+                SharedPreferences.Editor editor = MyApplication.getInstance().preferences.edit();
+                editor.putString("avatar", base64Image);
+                editor.apply();
                 RequestBody requestBody = JsonUtil.image2Json(userName, base64Image);
                 updateAvatar(requestBody);
             } catch (Exception e) {
@@ -216,7 +239,6 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
     }
 
     private void updateAvatar(RequestBody requestBody) {
-        // 将该配置封装成一个对象插入到数据库
         Message msg = new Message();
         msg.obj = this.getActivity();
         NetworkApi.createService(ApiService.class)

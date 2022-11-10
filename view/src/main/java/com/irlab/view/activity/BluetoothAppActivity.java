@@ -38,8 +38,6 @@ public class BluetoothAppActivity extends AppCompatActivity implements OnClickLi
     public static boolean connect_status = false;
 
     private Toast mToast;
-    private ListView lvDevices;
-    private ListView pairedDevices;
     private LVDevicesAdapter lvDevicesAdapter;
     private LVDevicesAdapter pairedDevicesAdapter;
     private TimerTask timerTaskConnectDevice; // 获取当前是否连接，在textView中显示
@@ -106,15 +104,20 @@ public class BluetoothAppActivity extends AppCompatActivity implements OnClickLi
      * 初始化蓝牙
      */
     public void initBluetooth() {
-        lvDevicesAdapter = new LVDevicesAdapter(BluetoothAppActivity.this);
         pairedDevicesAdapter = new LVDevicesAdapter(BluetoothAppActivity.this);
-
         // 使用MainView中的BluetoothService，或者初始化之
-        bluetoothService = Objects.requireNonNullElseGet(MainView.bluetoothService, () -> new BluetoothService(BluetoothAppActivity.this, lvDevicesAdapter, handler));
+        if (MainView.bluetoothService == null) {
+            lvDevicesAdapter = new LVDevicesAdapter(BluetoothAppActivity.this);
+            bluetoothService = new BluetoothService(BluetoothAppActivity.this, lvDevicesAdapter, handler);
+        } else {
+            bluetoothService = MainView.bluetoothService;
+            lvDevicesAdapter = MainView.lvDevicesAdapter;
+        }
 
         MainView.bluetoothService = bluetoothService; // 初始化ShowActivity.bluetoothService
+        MainView.lvDevicesAdapter = lvDevicesAdapter;
         bluetoothService.initBluetooth();
-        // bluetoothService.getBluetoothDevices();
+        bluetoothService.getBluetoothDevices();
         bluetoothService.RegisterBroadcast();
 
     }
@@ -125,7 +128,7 @@ public class BluetoothAppActivity extends AppCompatActivity implements OnClickLi
     public void initOptionDevices() {
         //获取蓝牙列表
         lvDevicesAdapter.clear();
-        lvDevices = findViewById(R.id.option_devices);
+        ListView lvDevices = findViewById(R.id.option_devices);
         // TODO 获取extra device
 
         lvDevices.setAdapter(lvDevicesAdapter);
@@ -154,7 +157,7 @@ public class BluetoothAppActivity extends AppCompatActivity implements OnClickLi
     public void initPairedDevices() {
         pairedDevicesAdapter.clear();
         Set<BluetoothDevice> bluetoothDevices = bluetoothService.getBluetoothDevices();
-        pairedDevices = findViewById(R.id.paired_device);
+        ListView pairedDevices = findViewById(R.id.paired_device);
         Log.d("BluetoothDeviceSet", bluetoothDevices + "");
         if (bluetoothDevices.size() > 0) {
             for (BluetoothDevice bluetoothDevice : bluetoothDevices) {

@@ -125,7 +125,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="#C7C7C7"
-                app:cardCornerRadius="12dp">
+                app:cardCornerRadius="10dp">
 
                 <TextView
                     android:id="@+id/UnderLine0"
@@ -138,7 +138,7 @@
                 <ListView
                     android:id="@+id/paired_device"
                     android:layout_width="wrap_content"
-                    android:layout_height="173dp"
+                    android:layout_height="180dp"
                     android:backgroundTint="#CCC9C9"
                     tools:layout_editor_absoluteX="1dp"
                     tools:layout_editor_absoluteY="85dp" />
@@ -186,7 +186,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="#C7C7C7"
-                app:cardCornerRadius="12dp">
+                app:cardCornerRadius="10dp">
 
                 <TextView
                     android:id="@+id/UnderLine1"
@@ -198,7 +198,7 @@
                 <ListView
                     android:id="@+id/option_devices"
                     android:layout_width="wrap_content"
-                    android:layout_height="246dp"
+                    android:layout_height="250dp"
                     tools:layout_editor_absoluteX="3dp"
                     tools:layout_editor_absoluteY="327dp" />
             </androidx.cardview.widget.CardView>

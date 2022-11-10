@@ -1,5 +1,6 @@
 package com.irlab.view;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -8,6 +9,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -24,6 +26,7 @@ import com.alibaba.android.arouter.launcher.ARouter;
 import com.iflytek.cloud.SpeechUtility;
 import com.irlab.base.MyApplication;
 import com.irlab.base.utils.ToastUtil;
+import com.irlab.view.adapter.LVDevicesAdapter;
 import com.irlab.view.bluetooth.BluetoothService;
 import com.irlab.view.fragment.PlayFragment;
 import com.irlab.view.fragment.ArchiveFragment;
@@ -36,8 +39,10 @@ import com.sdu.network.NetworkApi;
 import java.util.Objects;
 
 @Route(path = "/view/main")
+@SuppressLint("StaticFieldLeak")
 public class MainView extends AppCompatActivity implements View.OnClickListener {
     public static BluetoothService bluetoothService; // 静态变量,供其他Activity调用
+    public static LVDevicesAdapter lvDevicesAdapter = null;
     public static XunfeiWakeUp wakeUp;
     public static SpeechService speechService;
     //语音合成
@@ -56,39 +61,27 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     private TextView playText = null;
     private TextView archiveText = null;
 
-    @Override
-    public boolean navigateUpTo(Intent upIntent) {
-        return super.navigateUpTo(upIntent);
-    }
-
     // 用于对 Fragment进行管理
     public FragmentManager fragmentManager = null;
 
-    SharedPreferences preferences = null;
+    protected SharedPreferences preferences = null;
 
+    @SuppressLint("NewApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 要求窗口没有 title
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.setContentView(R.layout.activity_main_view);
-        Objects.requireNonNull(getSupportActionBar()).hide();
+        Objects.requireNonNull(getSupportActionBar()).hide();   // 要求窗口没有 title
         SpeechUtility.createUtility(this, "appid=" + "1710d024");
-        // 注入Arouter
-        ARouter.getInstance().inject(this);
-        // 拿到SharedPreference
-        preferences = MyApplication.getInstance().preferences;
-        // 初始化布局元素
-        initViews();
-        // 设置监听事件
-        setEvents();
-        // 初始化Fragment
-        initFragment();
-        initWakeup();
-        // 设置默认的显示界面
-        setTabSelection(2);
-        // 初始化network
-        NetworkApi.init(new NetworkRequiredInfo(MyApplication.getInstance()));
+        ARouter.getInstance().inject(this); // 注入Arouter
+        preferences = MyApplication.getInstance().preferences;  // 拿到SharedPreference
+        initViews();    // 初始化布局元素
+        setEvents();    // 设置监听事件
+        initFragment(); // 初始化Fragment
+        initWakeup();   // 初始化语音唤醒
+        setTabSelection(2); // 设置默认的显示界面
+        NetworkApi.init(new NetworkRequiredInfo(MyApplication.getInstance()));  // 初始化network
         if (bluetoothService != null) bluetoothService.autoConnect();
     }
 
@@ -97,6 +90,18 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         super.onStart();
         // 这里初始化Fragment的组件必须在onStart()中进行, 若在onCreate中初始化, 子fragment有可能未初始化完成, 导致找不到对应组件
         initFragmentViewsAndEvents();
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        if (bluetoothService != null) bluetoothService.autoConnect();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        bluetoothService.deleteBroadcast();
     }
 
     @Override
@@ -132,6 +137,7 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         archiveLayout.setOnClickListener(this);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void initFragment() {
         // 开启一个Fragment事务
         FragmentTransaction transaction = fragmentManager.beginTransaction();

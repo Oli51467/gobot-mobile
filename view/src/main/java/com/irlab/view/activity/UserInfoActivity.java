@@ -2,15 +2,36 @@ package com.irlab.view.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 
+import com.irlab.view.MainView;
 import com.irlab.view.R;
 
-public class UserInfoActivity extends AppCompatActivity {
+import java.util.Objects;
+
+public class UserInfoActivity extends AppCompatActivity implements View.OnClickListener{
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_info);
+        Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
+        initViews();
+    }
+
+    private void initViews() {
+        findViewById(R.id.header_back).setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        int vid = v.getId();
+        if (vid == R.id.header_back) {
+            Intent intent = new Intent(this, MainView.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+        }
     }
 }
