@@ -2,10 +2,11 @@ package com.irlab.view.fragment;
 
 import static android.app.Activity.RESULT_OK;
 
+import static com.irlab.base.utils.SPUtils.saveString;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
@@ -33,8 +34,8 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.imageview.ShapeableImageView;
-import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
+import com.irlab.base.utils.SPUtils;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 import com.irlab.view.activity.BluetoothAppActivity;
@@ -88,7 +89,7 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
         RequestBody requestBody = JsonUtil.userName2Json(userName);
         Message msg = new Message();
         msg.obj = this.getActivity();
-        String base64_str = MyApplication.getInstance().preferences.getString("avatar", null);
+        String base64_str = SPUtils.getString("avatar");
         if (base64_str != null) {
             setAvatar(base64_str);
             return view;
@@ -100,9 +101,7 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
                     public void onSuccess(UserResponse userResponse) {
                         int code = userResponse.getCode();
                         String base64_code = userResponse.getStatus();
-                        SharedPreferences.Editor editor = MyApplication.getInstance().preferences.edit();
-                        editor.putString("avatar", base64_code);
-                        editor.apply();
+                        saveString("avatar", base64_code);
                         if (code == 200) {
                             msg.what = ResponseCode.LOAD_AVATAR_SUCCESSFULLY.getCode();
                             setAvatar(base64_code);
@@ -126,7 +125,7 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        userName = MyApplication.getInstance().preferences.getString("userName", null);
+        userName = SPUtils.getString("userName");
         bluetoothService = BluetoothAppActivity.bluetoothService;
         initLauncher();
     }
@@ -224,9 +223,7 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
             Glide.with(this).load(imagePath).into(profile);
             try {
                 String base64Image = ImageUtils.bitmapToString(imagePath);
-                SharedPreferences.Editor editor = MyApplication.getInstance().preferences.edit();
-                editor.putString("avatar", base64Image);
-                editor.apply();
+                saveString("avatar", base64Image);
                 RequestBody requestBody = JsonUtil.image2Json(userName, base64Image);
                 updateAvatar(requestBody);
             } catch (Exception e) {

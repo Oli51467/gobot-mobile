@@ -1,17 +1,18 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.utils.SPUtils.saveInt;
+import static com.irlab.base.utils.SPUtils.saveString;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 
-import com.irlab.base.MyApplication;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.adapter.RecyclerViewAdapter;
@@ -79,10 +80,8 @@ public class SelectConfigActivity extends AppCompatActivity implements View.OnCl
     public void onItemClickListener(View view, int position) {
         mAdapter.setmPosition(position);
         mAdapter.notifyDataSetChanged();
-        SharedPreferences.Editor editor = MyApplication.getInstance().preferences.edit();
-        editor.putInt("level_position", position);
-        editor.putString("level", configList.get(mAdapter.getmPosition()));
-        editor.apply();
+        saveString("level", configList.get(mAdapter.getmPosition()));
+        saveInt("level_position", position);
         Intent intent = new Intent(this, MainView.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);

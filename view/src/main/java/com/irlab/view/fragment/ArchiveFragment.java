@@ -22,8 +22,8 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 
 import com.google.gson.JsonArray;
-import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
+import com.irlab.base.utils.SPUtils;
 import com.irlab.view.R;
 import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.adapter.ArchiveAdapter;
@@ -60,7 +60,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_archive, container, false);
-        userName = MyApplication.getInstance().preferences.getString("userName", null);
+        userName = SPUtils.getString("userName");
         // 获取棋谱
         // 初始化数据
         initData(this.getActivity());

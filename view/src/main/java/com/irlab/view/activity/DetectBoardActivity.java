@@ -1,6 +1,5 @@
 package com.irlab.view.activity;
 
-import static com.irlab.base.MyApplication.ENGINE_SERVER;
 import static com.irlab.base.MyApplication.threadPool;
 import static com.irlab.view.activity.DefineBoardPositionActivity.corners;
 import static com.irlab.view.activity.DefineBoardPositionActivity.imageCapture;
@@ -41,9 +40,8 @@ import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
-import com.irlab.base.utils.HttpUtil;
+import com.irlab.base.utils.SPUtils;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.R;
 import com.irlab.view.network.api.ApiService;
@@ -60,8 +58,6 @@ import com.irlab.view.utils.JsonUtil;
 import com.sdu.network.NetworkApi;
 import com.sdu.network.observer.BaseObserver;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
@@ -79,10 +75,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class DetectBoardActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -337,7 +330,12 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
             // TODO:将吃子位置传给下位机
             if (bluetoothService != null) {
                 Log.d(Logger, "将引擎落子通过蓝牙发给下位机， data: " + "L" + playPosition + "Z");
-                bluetoothService.sendData("L" + playPosition + "Z", false);
+                boolean result = bluetoothService.sendData("L" + playPosition + "Z", false);
+                if (!result) {
+                    Log.e(Logger, "send play position failed");
+                } else {
+                    Log.i(Logger, "send play position success");
+                }
             } else {
                 Log.d(Logger, "落子位置发给下位机失败！");
             }
@@ -436,7 +434,7 @@ public class DetectBoardActivity extends AppCompatActivity implements View.OnCli
         komi = intent.getStringExtra("komi");
         rule = "中国规则";
         engine = intent.getStringExtra("engine");
-        userName = MyApplication.getInstance().preferences.getString("userName", null).replaceAll("\n", "");
+        userName = SPUtils.getString("userName").replaceAll("\n", "");
         previewView = findViewById(R.id.previewView);
     }
 

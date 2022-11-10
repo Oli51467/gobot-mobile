@@ -23,9 +23,6 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".activity.TestSpeechActivity"
-            android:exported="false" />
-        <activity
             android:name=".activity.DefineBoardPositionActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape" />

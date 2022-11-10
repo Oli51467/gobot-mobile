@@ -21,6 +21,7 @@ import android.widget.AdapterView;
 import com.google.gson.JsonArray;
 import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
+import com.irlab.base.utils.SPUtils;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
 import com.irlab.view.adapter.ArchiveAdapter;
@@ -62,7 +63,7 @@ public class GameRecordActivity extends AppCompatActivity implements ArchiveAdap
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_game_record);
         Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
-        userName = MyApplication.getInstance().preferences.getString("userName", null);
+        userName = SPUtils.getString("userName");
         findViewById(R.id.header_back).setOnClickListener(this);
         loadData(this);
     }

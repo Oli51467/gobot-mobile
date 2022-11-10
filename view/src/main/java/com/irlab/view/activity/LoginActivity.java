@@ -1,10 +1,11 @@
 package com.irlab.view.activity;
 
+import static com.irlab.base.utils.SPUtils.saveString;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -41,19 +42,13 @@ public class LoginActivity extends Activity implements View.OnClickListener{
     private EditText userName;
     private EditText password;
     private Button login;
-    private SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        // 注入Router
         ARouter.getInstance().inject(this);
-        // 获得SharedPreferences文件
-        preferences = MyApplication.getInstance().preferences;
-        // 初始化
         initView();
-        // 设置事件
         setEvent();
         // 初始化network
         NetworkApi.init(new NetworkRequiredInfo(MyApplication.getInstance()));
@@ -94,9 +89,7 @@ public class LoginActivity extends Activity implements View.OnClickListener{
                         public void onSuccess(UserResponse userResponse) {
                             String status = userResponse.getStatus();
                             if (status.equals("success")) {
-                                SharedPreferences.Editor editor = preferences.edit();
-                                editor.putString("userName", userName);
-                                editor.apply();
+                                saveString("userName", userName);
                                 msg.what = ResponseCode.LOGIN_SUCCESSFULLY.getCode();
                             } else if (status.equals("userNameNotExist")) {
                                 msg.what = ResponseCode.USER_NAME_NOT_REGISTER.getCode();

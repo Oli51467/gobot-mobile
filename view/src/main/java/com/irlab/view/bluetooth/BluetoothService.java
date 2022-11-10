@@ -1,5 +1,7 @@
 package com.irlab.view.bluetooth;
 
+import static com.irlab.base.utils.SPUtils.getString;
+import static com.irlab.base.utils.SPUtils.saveString;
 import static com.irlab.view.activity.BluetoothAppActivity.MY_BLUETOOTH_UUID;
 import static com.irlab.view.utils.BluetoothUtil.bytes2HexString;
 import static com.irlab.view.utils.BluetoothUtil.hexString2Bytes;
@@ -12,7 +14,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -69,12 +70,11 @@ public class BluetoothService {
     // 自动连接
     public void autoConnect() {
         // 获取上一次连接的device_address
-        SharedPreferences pref = context.getSharedPreferences("data", Context.MODE_PRIVATE);
-        String address = pref.getString("last_connected_address", "");
+        String address = getString("last_connected_address");
         if (address.equals("")) return;
 
         BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(address);
-        startConnectDevice(bluetoothDevice, MY_BLUETOOTH_UUID, 123);
+        startConnectDevice(bluetoothDevice, MY_BLUETOOTH_UUID);
     }
 
     // 打开蓝牙
@@ -120,11 +120,11 @@ public class BluetoothService {
         bluetoothIntent.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         Log.d("Register", "广播信息过滤注册");
         context.registerReceiver(broadcastReceiver, bluetoothIntent);
-        Boolean b = bluetoothAdapter.startDiscovery();
+        boolean b = bluetoothAdapter.startDiscovery();
         if (b) {
             Log.d("Register", "广播蓝牙开启搜索");
         } else {
-            Log.d("Register", b + " 启动蓝牙广播失败");
+            Log.e("Register", "启动蓝牙广播失败");
         }
     }
 
@@ -137,16 +137,16 @@ public class BluetoothService {
             return;
         }
         context.unregisterReceiver(broadcastReceiver);
-        Boolean b = bluetoothAdapter.cancelDiscovery();
+        boolean b = bluetoothAdapter.cancelDiscovery();
         if (b) {
             Log.d("Register", "广播蓝牙关闭搜索");
         } else {
-            Log.d("Register", b + "");
+            Log.e("Register", "广播蓝牙关闭搜索失败");
         }
     }
 
     // 利用线程连接蓝牙设备
-    public void startConnectDevice(final BluetoothDevice bluetoothDevice, String uuid, long conOutTime) {
+    public void startConnectDevice(final BluetoothDevice bluetoothDevice, String uuid) {
         if (bluetoothDevice == null) {
             Log.e("startConnectDevice", "startConnectDevice-->bluetoothDevice == null");
             return;
@@ -178,9 +178,7 @@ public class BluetoothService {
                 message.what = CONNECTED_SUCCESS_STATUE;
                 handler.sendMessage(message);
                 // 数据库存储蓝牙设备信息
-                SharedPreferences.Editor editor = context.getSharedPreferences("data", Context.MODE_PRIVATE).edit();
-                editor.putString("last_connected_address", bluetoothDevice.getAddress().toString());
-                editor.apply();
+                saveString("last_connected_address", bluetoothDevice.getAddress());
             }
 
             @Override
@@ -224,7 +222,12 @@ public class BluetoothService {
                 BluetoothAppActivity.connect_status = true;
                 // 落子成功
                 if (buffer[0] == 76) {
-                    sendData("WZ", false);
+                    boolean result = sendData("WZ", false);
+                    if (!result) {
+                        Log.e("onReceiveDataSuccess", "send 76 failed");
+                    } else {
+                        Log.i("onReceiveDataSuccess", "send 76 success");
+                    }
                 } else if (buffer[0] == 65) {   // 按键落子
                     try {
                         Intent intent = new Intent("play");
@@ -234,7 +237,12 @@ public class BluetoothService {
                         Log.e("onReceiveDataSuccess", "调用方法错误: " + e.getMessage());
                     }
                 } else if (buffer[0] == 67) {   // 没有棋子或者棋子不透光:收到C 返回发送CZ
-                    sendData("CZ", false);
+                    boolean result = sendData("CZ", false);
+                    if (!result) {
+                        Log.e("onReceiveDataSuccess", "send 67 failed");
+                    } else {
+                        Log.i("onReceiveDataSuccess", "send 67 success");
+                    }
                 }
             }
 

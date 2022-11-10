@@ -1,5 +1,7 @@
 package com.irlab.view.adapter;
 
+import static com.irlab.base.utils.SPUtils.getInt;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,7 +11,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.irlab.base.MyApplication;
 import com.irlab.view.R;
 
 import java.util.List;
@@ -63,7 +64,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     // 绑定视图管理者
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        mPosition = MyApplication.getInstance().preferences.getInt("level_position", 0);
+        mPosition = getInt("level_position");
         holder.level_icon.setImageResource(LEVEL_ICONS[position]);
         holder.level.setText(LEVELS[position]);
         // 设置tag

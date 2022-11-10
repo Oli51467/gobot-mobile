@@ -38,6 +38,7 @@ import androidx.core.content.ContextCompat;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
+import com.irlab.base.utils.SPUtils;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
@@ -71,7 +72,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_define_board_position);
-        userName = MyApplication.getInstance().preferences.getString("userName", null); // 获取 username 作为连接引擎的唯一主键
+        userName = SPUtils.getString("userName"); // 获取 username 作为连接引擎的唯一主键
         initWindow(this);
         initViews();
         initInfo();
@@ -89,7 +90,7 @@ public class DefineBoardPositionActivity extends AppCompatActivity implements Vi
         blackPlayer = userName;
         whitePlayer = "kataGo";
         komi = "黑贴7.5目";
-        engine = MyApplication.getInstance().preferences.getString("level", null);
+        engine = SPUtils.getString("level");
     }
 
     private void initViews() {

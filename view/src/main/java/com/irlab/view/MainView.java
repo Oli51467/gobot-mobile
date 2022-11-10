@@ -1,5 +1,7 @@
 package com.irlab.view;
 
+import static com.irlab.base.utils.SPUtils.remove;
+
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
@@ -7,7 +9,6 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -64,8 +65,6 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     // 用于对 Fragment进行管理
     public FragmentManager fragmentManager = null;
 
-    protected SharedPreferences preferences = null;
-
     @SuppressLint("NewApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +74,6 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         Objects.requireNonNull(getSupportActionBar()).hide();   // 要求窗口没有 title
         SpeechUtility.createUtility(this, "appid=" + "1710d024");
         ARouter.getInstance().inject(this); // 注入Arouter
-        preferences = MyApplication.getInstance().preferences;  // 拿到SharedPreference
         initViews();    // 初始化布局元素
         setEvents();    // 设置监听事件
         initFragment(); // 初始化Fragment
@@ -179,9 +177,7 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
             setTabSelection(1);
         } else if (vid == R.id.btn_logout) {
             // 退出登录时, 清空SharedPreferences中保存的用户信息, 下次登录时不再自动登录
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.remove("userName");
-            editor.apply();
+            remove("userName");
             ToastUtil.show(this, "退出登录");
             // 跳转到登录界面
             ARouter.getInstance().build("/auth/login")

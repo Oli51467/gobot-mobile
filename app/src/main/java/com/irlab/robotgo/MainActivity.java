@@ -1,30 +1,24 @@
 package com.irlab.robotgo;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationManagerCompat;
 
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
-import com.irlab.base.MyApplication;
 import com.irlab.base.utils.PermissionUtil;
+import com.irlab.base.utils.SPUtils;
 
 @Route(path = "/app/main")
 public class MainActivity extends Activity {
 
-    private SharedPreferences preferences;
     private Context mContext;
     private final int PERMISSION_REQUEST_CODE = 0x183;
     private final String[] permissions = {
@@ -45,7 +39,6 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
-        preferences = MyApplication.getInstance().preferences;
         ARouter.getInstance().inject(this);
     }
 
@@ -106,7 +99,7 @@ public class MainActivity extends Activity {
         if (!PermissionUtil.isGranted(mContext, permissions)) {
             requestPermissions();
         } else {
-            if (preferences.getString("userName", null) != null) {
+            if (SPUtils.getString("userName") != null) {
                 ARouter.getInstance()
                         .build("/view/main")
                         .withFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)

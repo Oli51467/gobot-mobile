@@ -175,7 +175,7 @@ public class BluetoothAppActivity extends AppCompatActivity implements OnClickLi
                 showTip("断开连接！");
             } else {
                 // 开始配对
-                bluetoothService.startConnectDevice(bluetoothDevice, MY_BLUETOOTH_UUID, 123);
+                bluetoothService.startConnectDevice(bluetoothDevice, MY_BLUETOOTH_UUID);
                 Log.e("ConnectSuccess", bluetoothService.getCurConnState() + "");
             }
         });
