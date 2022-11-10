@@ -28,19 +28,19 @@ import com.sdu.network.NetworkApi;
 import com.sdu.network.observer.BaseObserver;
 import com.sdu.network.utils.KLog;
 
+import java.util.regex.Pattern;
+
 import okhttp3.RequestBody;
 
 @SuppressLint("checkResult")
 public class RegisterActivity extends Activity implements View.OnClickListener {
 
     public static final String TAG = RegisterActivity.class.getName();
-    public static final int MAX_LENGTH = 10;
+    public static final int MAX_LENGTH = 11;
 
     // 声明组件
     private ImageView imageView;
-    private EditText userName;
-    private EditText password;
-    private EditText passwordConfirm;
+    private EditText userName, password, passwordConfirm, phoneNumber;
     private Button register;
 
     @Override
@@ -49,9 +49,9 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         setContentView(R.layout.activity_register);
         initViews();
         // 设置注册按钮是否可点击
-        ButtonListenerUtil.buttonEnabled(register, 2, 8, userName, password, passwordConfirm);
+        ButtonListenerUtil.buttonEnabled(2, 11, register, userName, password, passwordConfirm, phoneNumber);
         // 监听按钮变色
-        ButtonListenerUtil.buttonChangeColor(2, 8, this, register, userName, password, passwordConfirm); // 监听登录按钮变色
+        ButtonListenerUtil.buttonChangeColor(2, 11, this, register, userName, password, passwordConfirm, phoneNumber);
         // 设置点击事件
         setListener();
     }
@@ -61,10 +61,11 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
     */
     public void initViews() {
         imageView = findViewById(R.id.iv_return);
-        userName = this.findViewById(R.id.et_userName);
-        password = this.findViewById(R.id.et_psw);
-        passwordConfirm = this.findViewById(R.id.et_pswConfirm);
-        register = this.findViewById(R.id.btn_register);
+        userName = findViewById(R.id.et_userName);
+        password = findViewById(R.id.et_psw);
+        passwordConfirm = findViewById(R.id.et_pswConfirm);
+        register = findViewById(R.id.btn_register);
+        phoneNumber = findViewById(R.id.et_phone);
     }
 
     private void setListener() {
@@ -72,9 +73,11 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         imageView.setOnClickListener(this);
         userName.addTextChangedListener(new HideTextWatcher(userName, MAX_LENGTH, this));
         password.addTextChangedListener(new HideTextWatcher(password, MAX_LENGTH, this));
+        phoneNumber.addTextChangedListener(new HideTextWatcher(phoneNumber, MAX_LENGTH, this));
         passwordConfirm.addTextChangedListener(new HideTextWatcher(passwordConfirm, MAX_LENGTH, this));
         userName.addTextChangedListener(new ValidationWatcher(userName, 3,8, "用户名"));
         password.addTextChangedListener(new ValidationWatcher(password, 3, 8,"密码"));
+        phoneNumber.addTextChangedListener(new ValidationWatcher(phoneNumber, 0, 11, "手机号"));
     }
 
     @Override
@@ -83,8 +86,12 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         if (vid == R.id.btn_register) {
             String password = this.password.getText().toString();
             String passwordConfirm = this.passwordConfirm.getText().toString();
+            String phoneNum = this.phoneNumber.getText().toString();
             if (!password.equals(passwordConfirm)) {
                 ToastUtil.show(this, "两次输入的密码不一致!");
+                return;
+            } else if (!isValidPhoneNumber(phoneNum)) {
+                ToastUtil.show(this, "手机号格式不正确!");
                 return;
             }
             Message msg = new Message();
@@ -92,13 +99,13 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
             RequestBody requestBody = JsonUtil.userName2Json(userName.getText().toString());
             NetworkApi.createService(ApiService.class)
                     .checkUser(requestBody)
-                    .compose(NetworkApi.applySchedulers(new BaseObserver<UserResponse>() {
+                    .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
                         @Override
                         public void onSuccess(UserResponse userResponse) {
-                            String status = userResponse.getStatus();
+                            int code = userResponse.getCode();
                             // 用户名没有被注册
-                            if (status.equals("nullObject")) {
-                                addUser(userName.getText().toString(), password);
+                            if (code == 404) {
+                                addUser(userName.getText().toString(), password, phoneNum);
                             } else {    // 用户名已被注册
                                 msg.what = ResponseCode.USER_ALREADY_REGISTERED.getCode();
                             }
@@ -118,10 +125,18 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    private void addUser(String userName, String password) {
+    private boolean isValidPhoneNumber(String phoneNumber) {
+        if ((phoneNumber != null) && (!phoneNumber.isEmpty())) {
+            return Pattern.matches("^1[3-9]\\d{9}$", phoneNumber);
+        }
+        return false;
+    }
+
+
+    private void addUser(String userName, String password, String phoneNum) {
         Message msg = new Message();
         msg.obj = RegisterActivity.this;
-        RequestBody requestBody = JsonUtil.addUser2Json(userName, password);
+        RequestBody requestBody = JsonUtil.Register2Json(userName, password, phoneNum);
         NetworkApi.createService(ApiService.class)
                 .addUser(requestBody)
                 .compose(NetworkApi.applySchedulers(new BaseObserver<>() {

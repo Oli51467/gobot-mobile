@@ -1,35 +1,32 @@
-package com.irlab.view.fragment;
+package com.irlab.view.activity;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 
 import com.google.gson.JsonArray;
 import com.irlab.base.MyApplication;
 import com.irlab.base.response.ResponseCode;
+import com.irlab.view.MainView;
 import com.irlab.view.R;
-import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.adapter.ArchiveAdapter;
+import com.irlab.view.bean.GameInfo;
 import com.irlab.view.bean.UserResponse;
 import com.irlab.view.network.api.ApiService;
-import com.irlab.view.bean.GameInfo;
 import com.irlab.view.utils.JsonUtil;
 import com.rosefinches.smiledialog.SmileDialog;
 import com.rosefinches.smiledialog.SmileDialogBuilder;
@@ -43,40 +40,43 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import okhttp3.RequestBody;
 
 @SuppressLint("checkResult")
-public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick, AdapterView.OnItemClickListener, ArchiveAdapter.setLongClick {
+public class GameRecordActivity extends AppCompatActivity implements ArchiveAdapter.setClick,
+        AdapterView.OnItemClickListener, ArchiveAdapter.setLongClick, View.OnClickListener {
 
-    public static final String Logger = ArchiveFragment.class.getName();
+    public static final String Logger = GameRecordActivity.class.getName();
 
     RecyclerView mRecyclerView = null;
     ArchiveAdapter mAdapter = null;
     LinearLayoutManager linearLayoutManager = null;
-    View view;
     private List<GameInfo> list = new ArrayList<>();
     private String userName;
 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.fragment_archive, container, false);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setContentView(R.layout.activity_game_record);
+        Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
         userName = MyApplication.getInstance().preferences.getString("userName", null);
-        // 获取棋谱
-        // 初始化数据
-        initData(this.getActivity());
-        return view;
+        findViewById(R.id.header_back).setOnClickListener(this);
+        loadData(this);
     }
 
     private void initViews() {
-        mRecyclerView = view.findViewById(R.id.archive_item);
-        linearLayoutManager = new LinearLayoutManager(this.getActivity(), LinearLayoutManager.VERTICAL, false);
+        mRecyclerView = findViewById(R.id.archive_item);
+        linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         mAdapter.setOnItemClickListener(this);
         mAdapter.setOnItemLongClickListener(this);
     }
 
-    private void initData(Context context) {
+    private void loadData(Context context) {
         list = new ArrayList<>();
-        RequestBody requestBody = JsonUtil.userName2Json("");
+        RequestBody requestBody = JsonUtil.userName2Json(userName);
         Message msg = new Message();
         NetworkApi.createService(ApiService.class)
                 .getGames(requestBody)
@@ -105,7 +105,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
                 String gPlayInfo = jsonObject.getString("play_info");
                 String gResult = jsonObject.getString("result");
                 String gCode = jsonObject.getString("code");
-                String gCreateTime = jsonObject.getString("create_time");
+                String gCreateTime = jsonObject.getString("end_time");
                 int gSource = jsonObject.getInt("source");
                 GameInfo gameInfo = new GameInfo(gid, gPlayInfo, gResult, gCode, gCreateTime, gSource);
                 list.add(gameInfo);
@@ -152,7 +152,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
     public void onItemClickListener(View view, int position) {
         // 根据点击的位置 拿到该配置信息的code
         GameInfo gameInfo = list.get(position);
-        Intent intent = new Intent(this.getActivity(), SGFInfoActivity.class);
+        Intent intent = new Intent(this, SGFInfoActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         // 通过bundle向下一个activity传递一个对象 该对象必须先实现序列化接口
         Bundle bundle = new Bundle();
@@ -167,7 +167,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
 
     @Override
     public boolean onItemLongClickListener(View view, int position) {
-        SmileDialog dialog = new SmileDialogBuilder((AppCompatActivity) this.getActivity(), SmileDialogType.ERROR)
+        SmileDialog dialog = new SmileDialogBuilder(this, SmileDialogType.ERROR)
                 .hideTitle(true)
                 .setContentText("你确定删除吗")
                 .setConformBgResColor(R.color.delete)
@@ -201,4 +201,14 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {}
+
+    @Override
+    public void onClick(View v) {
+        int vid = v.getId();
+        if (vid == R.id.header_back) {
+            Intent intent = new Intent(this, MainView.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+        }
+    }
 }

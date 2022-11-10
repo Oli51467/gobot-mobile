@@ -17,9 +17,9 @@ import com.bumptech.glide.Glide;
 import com.irlab.view.R;
 import com.irlab.view.activity.BluetoothAppActivity;
 import com.irlab.view.activity.DefineBoardPositionActivity;
+import com.irlab.view.activity.GameRecordActivity;
 import com.irlab.view.activity.InstructionActivity;
 import com.irlab.view.activity.SelectConfigActivity;
-import com.irlab.view.activity.TestSpeechActivity;
 import com.irlab.view.bean.MyFunction;
 
 import java.util.List;
@@ -77,9 +77,9 @@ public class FunctionAdapter extends RecyclerView.Adapter<FunctionAdapter.ViewHo
                 Intent intent = new Intent(context, InstructionActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 context.startActivity(intent);
-            } else if (function.getName().equals("语音测试")) {
-                Intent intent = new Intent(context, TestSpeechActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            } else if (function.getName().equals("我的对局")) {
+                Intent intent = new Intent(context, GameRecordActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 context.startActivity(intent);
             }
         });

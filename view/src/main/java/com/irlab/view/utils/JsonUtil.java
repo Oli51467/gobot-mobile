@@ -57,6 +57,19 @@ public class JsonUtil {
         return requestBody;
     }
 
+    public static RequestBody Register2Json(String userName, String password, String phoneNumber) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("userName", userName);
+            jsonParam.put("password", password);
+            jsonParam.put("phoneNumber", phoneNumber);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RequestBody requestBody = RequestBody.create(JSON, jsonParam.toString());
+        return requestBody;
+    }
+
     public static RequestBody addUser2Json(String userName, String password) {
         JSONObject jsonParam = new JSONObject();
         try {
@@ -84,6 +97,18 @@ public class JsonUtil {
         JSONObject jsonParam = new JSONObject();
         try {
             jsonParam.put("id", id);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RequestBody requestBody = RequestBody.create(JSON, jsonParam.toString());
+        return requestBody;
+    }
+
+    public static RequestBody image2Json(String userName, String base64) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("userName", userName);
+            jsonParam.put("baseCode", base64);
         } catch (JSONException e) {
             e.printStackTrace();
         }

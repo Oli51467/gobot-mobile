@@ -5,6 +5,7 @@ public enum ResponseCode {
 
     SERVER_FAILED(400, "服务器异常"),
     JSON_EXCEPTION(401, "Json解析错误"),
+    RESOURCE_NOT_FOUND(404, "未找到资源"),
     FIND_MARKER(1000, "已确定棋盘位置"),
     NOT_FIND_MARKER(1001, "未确定棋盘位置，请调整后重试"),
 
@@ -19,6 +20,8 @@ public enum ResponseCode {
     LOAD_CONFIG_SUCCESSFULLY(20009, "加载配置数据成功"),
     LOGIN_SUCCESSFULLY(20010, "登录成功"),
     ADD_USER_SUCCESSFULLY(20011, "注册成功"),
+    UPDATE_AVATAR_SUCCESSFULLY(20012, "上传成功"),
+    LOAD_AVATAR_SUCCESSFULLY(20013, "加载成功"),
 
     ENGINE_CONNECT_FAILED(40001, "引擎连接失败"),
     PLAY_PASS_TO_ENGINE_FAILED(40002, "落子传递引擎失败"),
@@ -29,7 +32,9 @@ public enum ResponseCode {
     WRONG_PASSWORD(40007, "用户名或密码错误"),
     ADD_USER_ON_FAILURE(40008, "注册用户异常"),
     ADD_USER_SERVER_EXCEPTION(40009, "注册用户服务器异常"),
-    USER_ALREADY_REGISTERED(40010, "用户已注册"),
+    USER_ALREADY_REGISTERED(40010, "用户名或手机号已被注册"),
+    UPDATE_AVATAR_FAILED(40011, "上传失败"),
+    LOAD_AVATAR_FAILED(40012, "加载失败"),
 
     BLUETOOTH_SERVICE_FAILED(50001, "蓝牙服务获取失败"),
 

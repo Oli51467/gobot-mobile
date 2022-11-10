@@ -69,7 +69,7 @@ public class LoginActivity extends Activity implements View.OnClickListener{
     private void setEvent() {
         login.setOnClickListener(this);
         register.setOnClickListener(this);
-        ButtonListenerUtil.buttonEnabled(login, 2, 8, userName, password);
+        ButtonListenerUtil.buttonEnabled(2, 8, login, userName, password);
         ButtonListenerUtil.buttonChangeColor(2, 8, this, login, userName, password);
     }
 

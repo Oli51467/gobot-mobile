@@ -7,11 +7,7 @@ import android.widget.EditText;
 public class ValidationWatcher implements TextWatcher {
 
     private EditText editText;
-
-    private int minLength;
-
-    private int maxLength;
-
+    private int minLength, maxLength;
     private String hint;
 
     public ValidationWatcher(EditText editText, int minLength, int maxLength, String hint) {
@@ -34,7 +30,9 @@ public class ValidationWatcher implements TextWatcher {
     @Override
     public void afterTextChanged(Editable s) {
         String str = s.toString();
-        if (str.length() < minLength || str.length() > maxLength) {
+        if (maxLength == 11 && str.length() != maxLength) {
+            this.editText.setError("请输入" + maxLength + "位的" + hint);
+        } else if (str.length() < minLength || str.length() > maxLength) {
             this.editText.setError("请输入" + minLength + "-" + maxLength + "位的" + hint);
         }
     }

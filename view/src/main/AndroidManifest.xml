@@ -8,7 +8,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Robotgo"
         tools:remove="android:appComponentFactory">
-
+        <activity
+            android:name=".activity.UserInfoActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
+            android:name=".activity.GameRecordActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
         <activity
             android:name=".activity.TestSpeechActivity"
             android:exported="false" />
@@ -35,18 +48,6 @@
         <activity
             android:name=".activity.RegisterActivity"
             android:exported="true"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".activity.EditConfigActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".activity.AddConfigActivity"
-            android:exported="false"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".activity.PlayConfigActivity"
-            android:exported="false"
             android:screenOrientation="portrait" />
         <activity
             android:name=".activity.SGFInfoActivity"

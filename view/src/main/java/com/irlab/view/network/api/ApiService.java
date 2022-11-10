@@ -44,9 +44,15 @@ public interface ApiService {
     Observable<JsonArray> getGames(@Body RequestBody requestBody);
 
     /**
-     * 获取一个用户的所有对局信息
+     * 删除一个用户的某个对局信息
      */
     @HTTP(method = "DELETE", path = "/api/deleteGame", hasBody = true)
     Observable<UserResponse> deleteGame(@Body RequestBody requestBody);
+
+    @HTTP(method = "POST", path = "/api/updateAvatar", hasBody = true)
+    Observable<UserResponse> updateAvatar(@Body RequestBody requestBody);
+
+    @HTTP(method = "POST", path = "/api/loadAvatar", hasBody = true)
+    Observable<UserResponse> loadAvatar(@Body RequestBody requestBody);
 }
 

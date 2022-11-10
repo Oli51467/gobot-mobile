@@ -18,7 +18,7 @@ public class ButtonListenerUtil {
     }
 
     // 根据传来的EditText是否为空设置按钮可以被点击
-    public static void buttonEnabled(Button button, int minLen, int maxLen, EditText... editTexts) {
+    public static void buttonEnabled(int minLen, int maxLen, Button button, EditText... editTexts) {
         for (EditText editText : editTexts) {
             if (editText == null) break;
             String content = editText.getText().toString();
