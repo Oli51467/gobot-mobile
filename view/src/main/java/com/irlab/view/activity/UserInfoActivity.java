@@ -30,7 +30,6 @@ import okhttp3.RequestBody;
 @SuppressLint("checkResult")
 public class UserInfoActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private String phone, userName;
     private EditText et_phone, et_username;
     private final AppCompatActivity mContext = this;
 
@@ -39,7 +38,6 @@ public class UserInfoActivity extends AppCompatActivity implements View.OnClickL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_info);
         Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
-        initParams();
         initViews();
     }
 
@@ -49,13 +47,16 @@ public class UserInfoActivity extends AppCompatActivity implements View.OnClickL
         findViewById(R.id.btn_update_password).setOnClickListener(this);
         et_phone = findViewById(R.id.et_phone);
         et_username = findViewById(R.id.et_username);
-        et_phone.setText(phone);
-        et_username.setText(userName);
+        et_phone.setText(SPUtils.getString("phone_number"));
+        et_username.setText(SPUtils.getString("userName"));
     }
 
-    private void initParams() {
-        phone = SPUtils.getString("phone_number");
-        userName = SPUtils.getString("userName");
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        et_phone.setText(SPUtils.getString("phone_number"));
+        et_username.setText(SPUtils.getString("userName"));
     }
 
     @Override
@@ -70,58 +71,36 @@ public class UserInfoActivity extends AppCompatActivity implements View.OnClickL
                 Intent intent = new Intent(this, MainView.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
-            }
-            String newName = et_username.getText().toString();
-            String newPhone = et_phone.getText().toString();
-            RequestBody requestBody = JsonUtil.userNamePhoneNumber2Json(newName, newPhone);
-            Message msg = new Message();
-            NetworkApi.createService(ApiService.class)
-                    .checkUser(requestBody)
-                    .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
-                        @Override
-                        public void onSuccess(UserResponse userResponse) {
-                            int code = userResponse.getCode();
-                            // 用户名或手机号没有被注册
-                            if (code == 404) {
-                                RequestBody requestBody = JsonUtil.updateUser2Json(userName, newName, newPhone);
-                                NetworkApi.createService(ApiService.class)
-                                        .updateUser(requestBody)
-                                        .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
-                                            @Override
-                                            public void onSuccess(UserResponse userResponse) {
-                                                String status = userResponse.getStatus();
-                                                if (status.equals("success")) {
-                                                    SPUtils.saveString("phone_number", newPhone);
-                                                    SPUtils.saveString("userName", newName);
-                                                    Message msg = new Message();
-                                                    msg.obj = mContext;
-                                                    msg.what = ResponseCode.UPDATE_USER_SUCCESSFULLY.getCode();
-                                                    handler.sendMessage(msg);
-                                                }
-                                            }
+            } else {
+                String newName = et_username.getText().toString();
+                String newPhone = et_phone.getText().toString();
+                RequestBody requestBody = JsonUtil.userNamePhoneNumber2Json(SPUtils.getString("userName"),
+                        SPUtils.getString("phone_number"), newName, newPhone);
+                Message msg = new Message();
+                NetworkApi.createService(ApiService.class)
+                        .checkUser(requestBody)
+                        .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
+                            @Override
+                            public void onSuccess(UserResponse userResponse) {
+                                int code = userResponse.getCode();
+                                // 用户名或手机号没有被注册
+                                if (code == 404) {
+                                    updateUserInfo();
+                                } else {    // 用户名或手机号已被注册
+                                    msg.obj = mContext;
+                                    msg.what = ResponseCode.USER_ALREADY_REGISTERED.getCode();
+                                    handler.sendMessage(msg);
+                                }
+                            }
 
-                                            @Override
-                                            public void onFailure(Throwable e) {
-                                                Message msg = new Message();
-                                                msg.what = ResponseCode.SERVER_FAILED.getCode();
-                                                msg.obj = mContext;
-                                                handler.sendMessage(msg);
-                                            }
-                                        }));
-                            } else {    // 用户名或手机号已被注册
+                            @Override
+                            public void onFailure(Throwable e) {
+                                msg.what = ResponseCode.SERVER_FAILED.getCode();
                                 msg.obj = mContext;
-                                msg.what = ResponseCode.USER_ALREADY_REGISTERED.getCode();
                                 handler.sendMessage(msg);
                             }
-                        }
-
-                        @Override
-                        public void onFailure(Throwable e) {
-                            msg.what = ResponseCode.SERVER_FAILED.getCode();
-                            msg.obj = mContext;
-                            handler.sendMessage(msg);
-                        }
-                    }));
+                        }));
+            }
         } else if (vid == R.id.btn_update_password) {
             CircleDialog.Builder inputPassword = new CircleDialog.Builder()
                     .setInputHint("请输入新密码")   // 提示
@@ -171,8 +150,7 @@ public class UserInfoActivity extends AppCompatActivity implements View.OnClickL
                     .setPositiveInput("确定", (text, editText) -> {
                         if (!editText.getText().toString().equals(SPUtils.getString("email"))) {
                             ToastUtil.show(mContext, 2, "邮箱错误，请重试");
-                        }
-                        else {
+                        } else {
                             inputPassword.show(getSupportFragmentManager());
                         }
                         return true;
@@ -183,7 +161,38 @@ public class UserInfoActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private boolean checkInfoChanged() {
-        return !et_username.getText().toString().equals(userName) || !et_phone.getText().toString().equals(phone);
+        return !et_username.getText().toString().equals(SPUtils.getString("userName"))
+                || !et_phone.getText().toString().equals(SPUtils.getString("phone_number"));
+    }
+
+    private void updateUserInfo() {
+        String newName = et_username.getText().toString();
+        String newPhone = et_phone.getText().toString();
+        RequestBody requestBody = JsonUtil.updateUser2Json(SPUtils.getString("userName"), newName, newPhone);
+        NetworkApi.createService(ApiService.class)
+                .updateUser(requestBody)
+                .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
+                    @Override
+                    public void onSuccess(UserResponse userResponse) {
+                        String status = userResponse.getStatus();
+                        if (status.equals("success")) {
+                            SPUtils.saveString("phone_number", newPhone);
+                            SPUtils.saveString("userName", newName);
+                            Message msg = new Message();
+                            msg.obj = mContext;
+                            msg.what = ResponseCode.UPDATE_USER_SUCCESSFULLY.getCode();
+                            handler.sendMessage(msg);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable e) {
+                        Message msg = new Message();
+                        msg.what = ResponseCode.SERVER_FAILED.getCode();
+                        msg.obj = mContext;
+                        handler.sendMessage(msg);
+                    }
+                }));
     }
 
     @SuppressLint("HandlerLeak")

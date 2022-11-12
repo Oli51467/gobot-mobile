@@ -52,7 +52,7 @@
             <EditText
                 android:id="@+id/et_username"
                 android:hint="请填写用户名"
-                android:inputType="phone"
+                android:inputType="text"
                 android:background="@drawable/shape_input"
                 style="@style/edittext_style"
                 android:maxLength="11"/>

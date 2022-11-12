@@ -117,9 +117,10 @@ public class JsonUtil {
         return requestBody;
     }
 
-    public static RequestBody userNamePhoneNumber2Json(String userName, String phoneNumber) {
+    public static RequestBody userNamePhoneNumber2Json(String oldName, String oldPhone, String userName, String phoneNumber) {
         JSONObject jsonParam = new JSONObject();
         try {
+            jsonParam.put("userId", oldName + oldPhone);
             jsonParam.put("userName", userName);
             jsonParam.put("phoneNumber", phoneNumber);
         } catch (JSONException e) {
@@ -133,6 +134,18 @@ public class JsonUtil {
         JSONObject jsonParam = new JSONObject();
         try {
             jsonParam.put("oldName", oldName);
+            jsonParam.put("userName", userName);
+            jsonParam.put("phoneNumber", phoneNumber);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RequestBody requestBody = RequestBody.create(JSON, jsonParam.toString());
+        return requestBody;
+    }
+
+    public static RequestBody register2Json(String userName, String phoneNumber) {
+        JSONObject jsonParam = new JSONObject();
+        try {
             jsonParam.put("userName", userName);
             jsonParam.put("phoneNumber", phoneNumber);
         } catch (JSONException e) {

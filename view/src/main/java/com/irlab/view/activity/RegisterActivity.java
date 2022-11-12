@@ -105,7 +105,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             }
             Message msg = new Message();
             msg.obj = this;
-            RequestBody requestBody = JsonUtil.userNamePhoneNumber2Json(userName.getText().toString(), phoneNum);
+            RequestBody requestBody = JsonUtil.register2Json(userName.getText().toString(), phoneNum);
             NetworkApi.createService(ApiService.class)
                     .checkUser(requestBody)
                     .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
