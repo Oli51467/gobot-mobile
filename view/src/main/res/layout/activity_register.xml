@@ -55,6 +55,23 @@
             android:theme="@style/MyEditText" />
         <!--输入框-->
         <EditText
+            android:id="@+id/et_email"
+            android:layout_width="320dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp"
+            android:hint="请输入邮箱以找回密码(选填)"
+            android:inputType="textEmailAddress"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:maxLines="1"
+            android:maxLength="64"
+            android:textColor="@color/black"
+            android:textColorHint="@color/lightGray"
+            android:textSize="20sp"
+            android:theme="@style/MyEditText" />
+        <!--输入框-->
+        <EditText
             android:id="@+id/et_psw"
             android:layout_width="320dp"
             android:layout_height="wrap_content"

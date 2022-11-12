@@ -26,6 +26,7 @@ import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
 import com.iflytek.cloud.SpeechUtility;
 import com.irlab.base.MyApplication;
+import com.irlab.base.utils.SPUtils;
 import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.adapter.LVDevicesAdapter;
 import com.irlab.view.bluetooth.BluetoothService;
@@ -54,16 +55,14 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     private PlayFragment playFragment = null;
     private ArchiveFragment archiveFragment = null;
     // 显示布局
-    private View playLayout = null;
-    private View archiveLayout = null;
+    private View playLayout = null, archiveLayout = null;
     // 声明组件变量
-    private ImageView playImg = null;
-    private ImageView archiveImg = null;
-    private TextView playText = null;
-    private TextView archiveText = null;
+    private ImageView playImg = null, archiveImg = null;
+    private TextView playText = null, archiveText = null, showInfo = null;
 
     // 用于对 Fragment进行管理
     public FragmentManager fragmentManager = null;
+    private String userName;
 
     @SuppressLint("NewApi")
     @Override
@@ -74,6 +73,7 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
         Objects.requireNonNull(getSupportActionBar()).hide();   // 要求窗口没有 title
         SpeechUtility.createUtility(this, "appid=" + "1710d024");
         ARouter.getInstance().inject(this); // 注入Arouter
+        userName = SPUtils.getString("userName");
         initViews();    // 初始化布局元素
         setEvents();    // 设置监听事件
         initFragment(); // 初始化Fragment
@@ -99,7 +99,14 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        bluetoothService.deleteBroadcast();
+        if (bluetoothService != null) bluetoothService.deleteBroadcast();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        userName = SPUtils.getString("userName");
+        showInfo.setText(userName);
     }
 
     @Override
@@ -151,6 +158,8 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
     // 初始化fragment中的控件并设置监听事件
     public void initFragmentViewsAndEvents() {
         Button logout = findViewById(R.id.btn_logout);
+        showInfo = findViewById(R.id.tv_show_username);
+        showInfo.setText(userName);
         logout.setOnClickListener(this);
     }
 
@@ -181,8 +190,9 @@ public class MainView extends AppCompatActivity implements View.OnClickListener 
             ToastUtil.show(this, "退出登录");
             // 跳转到登录界面
             ARouter.getInstance().build("/auth/login")
-                    .withFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    .withFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     .navigation();
+            finish();
         }
     }
 

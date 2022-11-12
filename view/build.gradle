@@ -100,6 +100,8 @@ dependencies {
     // pytorch
     implementation 'org.pytorch:pytorch_android_lite:1.9.0'
     implementation 'org.pytorch:pytorch_android_torchvision:1.9.0'
+    // Circle-Dialog
+    implementation 'com.github.mylhyl:Android-CircleDialog:5.3.8'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

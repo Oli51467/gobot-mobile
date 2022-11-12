@@ -31,7 +31,77 @@
             android:textColor="@color/black"
             android:textSize="18sp"
             android:textStyle="bold" />
-
     </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:id="@+id/tv_username"
+                android:text="用户名 "
+                style="@style/textview_style"/>
+
+            <EditText
+                android:id="@+id/et_username"
+                android:hint="请填写用户名"
+                android:inputType="phone"
+                android:background="@drawable/shape_input"
+                style="@style/edittext_style"
+                android:maxLength="11"/>
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:id="@+id/tv_phone"
+                android:text="手机号 "
+                style="@style/textview_style"/>
+
+            <EditText
+                android:id="@+id/et_phone"
+                android:hint="请填写手机号"
+                android:inputType="phone"
+                android:background="@drawable/shape_input"
+                style="@style/edittext_style"
+                android:maxLength="11"/>
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="128dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/btn_login_normal"
+            android:text="更新信息"
+            android:textColor="@color/white"
+            android:textSize="16sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_update_password"
+        android:layout_width="128dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/btn_update"
+        android:text="更换密码"
+        android:textColor="@color/white"
+        android:textSize="16sp" />
 
 </LinearLayout>

@@ -1,7 +1,6 @@
 package com.irlab.view.activity;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,8 +13,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.irlab.base.response.ResponseCode;
+import com.irlab.base.utils.SPUtils;
 import com.irlab.view.network.api.ApiService;
 import com.irlab.view.bean.UserResponse;
 import com.irlab.view.utils.ButtonListenerUtil;
@@ -28,25 +29,28 @@ import com.sdu.network.NetworkApi;
 import com.sdu.network.observer.BaseObserver;
 import com.sdu.network.utils.KLog;
 
+import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import okhttp3.RequestBody;
 
 @SuppressLint("checkResult")
-public class RegisterActivity extends Activity implements View.OnClickListener {
+public class RegisterActivity extends AppCompatActivity implements View.OnClickListener {
 
     public static final String TAG = RegisterActivity.class.getName();
     public static final int MAX_LENGTH = 11;
 
     // 声明组件
     private ImageView imageView;
-    private EditText userName, password, passwordConfirm, phoneNumber;
+    private EditText userName, password, passwordConfirm, phoneNumber, email;
     private Button register;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
+        Objects.requireNonNull(getSupportActionBar()).hide();
         initViews();
         // 设置注册按钮是否可点击
         ButtonListenerUtil.buttonEnabled(2, 11, register, userName, password, passwordConfirm, phoneNumber);
@@ -66,6 +70,7 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         passwordConfirm = findViewById(R.id.et_pswConfirm);
         register = findViewById(R.id.btn_register);
         phoneNumber = findViewById(R.id.et_phone);
+        email = findViewById(R.id.et_email);
     }
 
     private void setListener() {
@@ -87,16 +92,20 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
             String password = this.password.getText().toString();
             String passwordConfirm = this.passwordConfirm.getText().toString();
             String phoneNum = this.phoneNumber.getText().toString();
+            String email = this.email.getText().toString();
             if (!password.equals(passwordConfirm)) {
                 ToastUtil.show(this, "两次输入的密码不一致!");
                 return;
             } else if (!isValidPhoneNumber(phoneNum)) {
                 ToastUtil.show(this, "手机号格式不正确!");
                 return;
+            } else if (!isValidEmail(email)) {
+                ToastUtil.show(this, "邮箱格式不正确!");
+                return;
             }
             Message msg = new Message();
             msg.obj = this;
-            RequestBody requestBody = JsonUtil.userName2Json(userName.getText().toString());
+            RequestBody requestBody = JsonUtil.userNamePhoneNumber2Json(userName.getText().toString(), phoneNum);
             NetworkApi.createService(ApiService.class)
                     .checkUser(requestBody)
                     .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
@@ -105,18 +114,19 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
                             int code = userResponse.getCode();
                             // 用户名没有被注册
                             if (code == 404) {
-                                addUser(userName.getText().toString(), password, phoneNum);
+                                addUser(userName.getText().toString(), password, phoneNum, email);
                             } else {    // 用户名已被注册
                                 msg.what = ResponseCode.USER_ALREADY_REGISTERED.getCode();
+                                handler.sendMessage(msg);
                             }
                         }
 
                         @Override
                         public void onFailure(Throwable e) {
                             msg.what = ResponseCode.SERVER_FAILED.getCode();
+                            handler.sendMessage(msg);
                         }
                     }));
-            handler.sendMessage(msg);
         }
         else if (vid == R.id.iv_return) {
             Intent intent = new Intent(this, LoginActivity.class);
@@ -132,11 +142,24 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         return false;
     }
 
+    /**
+     * 判断输入的邮箱格式是否正确
+     * @param str 输入的邮箱地址
+     * @return 返回邮箱地址是否正确
+     */
+    public static boolean isValidEmail(String str) {
+        String regEx1 = "^([a-z0-9A-Z]+[-|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$";
+        Pattern p;
+        Matcher m;
+        p = Pattern.compile(regEx1);
+        m = p.matcher(str);
+        return m.matches();
+    }
 
-    private void addUser(String userName, String password, String phoneNum) {
+    private void addUser(String userName, String password, String phoneNum, String email) {
         Message msg = new Message();
-        msg.obj = RegisterActivity.this;
-        RequestBody requestBody = JsonUtil.Register2Json(userName, password, phoneNum);
+        msg.obj = this;
+        RequestBody requestBody = JsonUtil.Register2Json(userName, password, phoneNum, email);
         NetworkApi.createService(ApiService.class)
                 .addUser(requestBody)
                 .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
@@ -144,11 +167,14 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
                     public void onSuccess(UserResponse userResponse) {
                         String status = userResponse.getStatus();
                         if (status.equals("success")) {
+                            SPUtils.saveInt("play_level", 1);
+                            SPUtils.saveString("phone_number", phoneNum);
+                            SPUtils.saveString("password", password);
+                            SPUtils.saveString("email", email);
+                            SPUtils.saveInt("win", 0);
+                            SPUtils.saveInt("lose", 0);
                             msg.what = ResponseCode.ADD_USER_SUCCESSFULLY.getCode();
                             handler.sendMessage(msg);
-                            Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                            startActivity(intent);
                         }
                     }
 
@@ -167,13 +193,21 @@ public class RegisterActivity extends Activity implements View.OnClickListener {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             if (msg.what == ResponseCode.USER_ALREADY_REGISTERED.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.USER_ALREADY_REGISTERED.getMsg());
+                ToastUtil.show((AppCompatActivity) msg.obj, 1, ResponseCode.USER_ALREADY_REGISTERED.getMsg());
             } else if (msg.what == ResponseCode.SERVER_FAILED.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.SERVER_FAILED.getMsg());
+                ToastUtil.show((AppCompatActivity) msg.obj, 2, ResponseCode.SERVER_FAILED.getMsg());
             } else if (msg.what == ResponseCode.JSON_EXCEPTION.getCode()) {
                 ToastUtil.show((Context) msg.obj, ResponseCode.JSON_EXCEPTION.getMsg());
             } else if (msg.what == ResponseCode.ADD_USER_SUCCESSFULLY.getCode()) {
-                ToastUtil.show((Context) msg.obj, ResponseCode.ADD_USER_SUCCESSFULLY.getMsg());
+                ToastUtil.show((AppCompatActivity) msg.obj, 0, ResponseCode.ADD_USER_SUCCESSFULLY.getMsg());
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
             }
         }
     };

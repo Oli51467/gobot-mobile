@@ -57,12 +57,13 @@ public class JsonUtil {
         return requestBody;
     }
 
-    public static RequestBody Register2Json(String userName, String password, String phoneNumber) {
+    public static RequestBody Register2Json(String userName, String password, String phoneNumber, String email) {
         JSONObject jsonParam = new JSONObject();
         try {
             jsonParam.put("userName", userName);
             jsonParam.put("password", password);
             jsonParam.put("phoneNumber", phoneNumber);
+            jsonParam.put("email", email);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -109,6 +110,31 @@ public class JsonUtil {
         try {
             jsonParam.put("userName", userName);
             jsonParam.put("baseCode", base64);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RequestBody requestBody = RequestBody.create(JSON, jsonParam.toString());
+        return requestBody;
+    }
+
+    public static RequestBody userNamePhoneNumber2Json(String userName, String phoneNumber) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("userName", userName);
+            jsonParam.put("phoneNumber", phoneNumber);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        RequestBody requestBody = RequestBody.create(JSON, jsonParam.toString());
+        return requestBody;
+    }
+
+    public static RequestBody updateUser2Json(String oldName, String userName, String phoneNumber) {
+        JSONObject jsonParam = new JSONObject();
+        try {
+            jsonParam.put("oldName", oldName);
+            jsonParam.put("userName", userName);
+            jsonParam.put("phoneNumber", phoneNumber);
         } catch (JSONException e) {
             e.printStackTrace();
         }

@@ -23,7 +23,6 @@ public class SPUtils {
         editor.apply();
     }
 
-
     public static int getInt(String key) {
         return preferences.getInt(key, 1);
     }

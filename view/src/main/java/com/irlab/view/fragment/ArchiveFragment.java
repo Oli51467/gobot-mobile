@@ -3,11 +3,9 @@ package com.irlab.view.fragment;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,17 +21,12 @@ import android.widget.AdapterView;
 
 import com.google.gson.JsonArray;
 import com.irlab.base.response.ResponseCode;
-import com.irlab.base.utils.SPUtils;
 import com.irlab.view.R;
 import com.irlab.view.activity.SGFInfoActivity;
 import com.irlab.view.adapter.ArchiveAdapter;
-import com.irlab.view.bean.UserResponse;
 import com.irlab.view.network.api.ApiService;
 import com.irlab.view.bean.GameInfo;
 import com.irlab.view.utils.JsonUtil;
-import com.rosefinches.smiledialog.SmileDialog;
-import com.rosefinches.smiledialog.SmileDialogBuilder;
-import com.rosefinches.smiledialog.enums.SmileDialogType;
 import com.sdu.network.NetworkApi;
 import com.sdu.network.observer.BaseObserver;
 
@@ -47,7 +40,7 @@ import java.util.List;
 import okhttp3.RequestBody;
 
 @SuppressLint("checkResult")
-public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick, AdapterView.OnItemClickListener, ArchiveAdapter.setLongClick {
+public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick, AdapterView.OnItemClickListener {
 
     public static final String Logger = ArchiveFragment.class.getName();
 
@@ -56,11 +49,9 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
     LinearLayoutManager linearLayoutManager = null;
     View view;
     private List<GameInfo> list = new ArrayList<>();
-    private String userName;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_archive, container, false);
-        userName = SPUtils.getString("userName");
         // 获取棋谱
         // 初始化数据
         initData(this.getActivity());
@@ -71,7 +62,6 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
         mRecyclerView = view.findViewById(R.id.archive_item);
         linearLayoutManager = new LinearLayoutManager(this.getActivity(), LinearLayoutManager.VERTICAL, false);
         mAdapter.setOnItemClickListener(this);
-        mAdapter.setOnItemLongClickListener(this);
     }
 
     private void initData(Context context) {
@@ -105,7 +95,7 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
                 String gPlayInfo = jsonObject.getString("play_info");
                 String gResult = jsonObject.getString("result");
                 String gCode = jsonObject.getString("code");
-                String gCreateTime = jsonObject.getString("create_time");
+                String gCreateTime = jsonObject.getString("end_time");
                 int gSource = jsonObject.getInt("source");
                 GameInfo gameInfo = new GameInfo(gid, gPlayInfo, gResult, gCode, gCreateTime, gSource);
                 list.add(gameInfo);
@@ -119,8 +109,6 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
         }
     }
 
-
-    @SuppressLint("HandlerLeak")
     private final Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(@NonNull Message msg) {
@@ -163,40 +151,6 @@ public class ArchiveFragment extends Fragment implements ArchiveAdapter.setClick
         bundle.putInt("source", gameInfo.getSource());
         intent.putExtras(bundle);
         startActivity(intent);
-    }
-
-    @Override
-    public boolean onItemLongClickListener(View view, int position) {
-        SmileDialog dialog = new SmileDialogBuilder((AppCompatActivity) this.getActivity(), SmileDialogType.ERROR)
-                .hideTitle(true)
-                .setContentText("你确定删除吗")
-                .setConformBgResColor(R.color.delete)
-                .setConformTextColor(Color.WHITE)
-                .setCancelTextColor(Color.BLACK)
-                .setCancelButton("取消")
-                .setCancelBgResColor(R.color.whiteSmoke)
-                .setWindowAnimations(R.style.dialog_style)
-                .setConformButton("删除", () -> {
-                    int id = list.get(position).getId();
-                    RequestBody requestBody = JsonUtil.id2Json(id);
-                    NetworkApi.createService(ApiService.class)
-                            .deleteGame(requestBody)
-                            .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
-                                @Override
-                                public void onSuccess(UserResponse userResponse) {
-                                    if (userResponse.getStatus().equals("success")) {
-                                        Log.d(Logger, "保存棋谱成功");
-                                    }
-                                }
-
-                                @Override
-                                public void onFailure(Throwable e) {
-                                    Log.e(Logger, "保存棋谱失败，服务器异常：" + e.getMessage());
-                                }
-                            }));
-                }).build();
-        dialog.show();
-        return false;
     }
 
     @Override

@@ -16,7 +16,7 @@ public interface ApiService {
     /**
      * 检查用户名是否被注册
      */
-    @HTTP(method = "POST", path = "/api/getUserByName", hasBody = true)
+    @HTTP(method = "POST", path = "/api/checkUser", hasBody = true)
     Observable<UserResponse> checkUser(@Body RequestBody requestBody);
 
     /**
@@ -36,6 +36,18 @@ public interface ApiService {
      */
     @HTTP(method = "POST", path = "/api/saveGame", hasBody = true)
     Observable<UserResponse> saveGame(@Body RequestBody requestBody);
+
+    /**
+     * 更新用户信息
+     */
+    @HTTP(method = "POST", path = "/api/updateUser", hasBody = true)
+    Observable<UserResponse> updateUser(@Body RequestBody requestBody);
+
+    /**
+     * 更新用户密码
+     */
+    @HTTP(method = "POST", path = "/api/updatePassword", hasBody = true)
+    Observable<UserResponse> updatePassword(@Body RequestBody requestBody);
 
     /**
      * 获取一个用户的所有对局信息

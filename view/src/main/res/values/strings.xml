@@ -2,7 +2,8 @@
 <resources>
     <string name="delete">删除</string>
     <string name="edit">退出</string>
-    <string name="share">分享</string>
+    <string name="play_level">棋力</string>
+    <string name="play_title">对弈</string>
     <string name="toast_camera_permission">访问相机的权限被拒绝。这个应用程序需要使用相机才能工作。</string>
     <string name="lbl_instructions">当提示初始化完成并检测到棋盘后，点击捕获棋盘</string>
     <string name="btn_start_recording">开始记录</string>

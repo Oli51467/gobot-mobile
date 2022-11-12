@@ -2,6 +2,7 @@ package com.irlab.view.fragment;
 
 import static android.app.Activity.RESULT_OK;
 
+import static com.irlab.base.utils.SPUtils.getInt;
 import static com.irlab.base.utils.SPUtils.saveString;
 
 import android.annotation.SuppressLint;
@@ -65,7 +66,7 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
             new MyFunction("选择棋力", R.drawable.icon_set_level),
             new MyFunction("我的对局", R.drawable.icon_mygame),
             new MyFunction("蓝牙连接", R.drawable.ic_bluetooth),
-            new MyFunction("下棋说明", R.drawable.icon_introduction),
+            new MyFunction("下棋说明", R.drawable.icon_introduction)
     };
     private final List<MyFunction> funcList = new ArrayList<>();
 
@@ -74,7 +75,6 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
     // 控件
     private View view;
     ShapeableImageView profile;
-    TextView showInfo;
     private String userName;
     protected BluetoothService bluetoothService;    // 蓝牙服务
     private BottomSheetDialog bottomSheetDialog;    // 底部弹窗
@@ -131,6 +131,12 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        userName = SPUtils.getString("userName");
+    }
+
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         initFunction();
@@ -149,7 +155,6 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
     @Override
     public void onStart() {
         super.onStart();
-        showInfo.setText(userName);
         bluetoothService = BluetoothAppActivity.bluetoothService;
     }
 
@@ -162,9 +167,17 @@ public class PlayFragment extends Fragment implements View.OnClickListener{
 
     private void setView(View view) {
         this.view = view;
-        showInfo = view.findViewById(R.id.tv_show_username);
+        userName = SPUtils.getString("userName");
+        TextView playLevel = view.findViewById(R.id.play_level);
+        TextView battleRecord = view.findViewById(R.id.battle_record);
         profile = view.findViewById(R.id.iv_profile);
         profile.setOnClickListener(this);
+        StringBuilder pl = new StringBuilder();
+        pl.append("棋力：等级").append(getInt("play_level"));
+        playLevel.setText(pl);
+        StringBuilder br = new StringBuilder();
+        br.append("战绩：").append(getInt("win")).append("胜  ").append(getInt("lose")).append("负");
+        battleRecord.setText(br);
         view.findViewById(R.id.personal_info).setOnClickListener(this);
     }
 

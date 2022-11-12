@@ -99,7 +99,7 @@ public class MainActivity extends Activity {
         if (!PermissionUtil.isGranted(mContext, permissions)) {
             requestPermissions();
         } else {
-            if (SPUtils.getString("userName") != null) {
+            if (SPUtils.getString("userName") != null && !SPUtils.getString("userName").equals("")) {
                 ARouter.getInstance()
                         .build("/view/main")
                         .withFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)

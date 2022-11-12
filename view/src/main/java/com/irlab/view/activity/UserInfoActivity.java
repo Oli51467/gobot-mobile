@@ -2,27 +2,60 @@ package com.irlab.view.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.View;
+import android.widget.EditText;
 
+import com.irlab.base.response.ResponseCode;
+import com.irlab.base.utils.SPUtils;
+import com.irlab.base.utils.ToastUtil;
 import com.irlab.view.MainView;
 import com.irlab.view.R;
+import com.irlab.view.bean.UserResponse;
+import com.irlab.view.network.api.ApiService;
+import com.irlab.view.utils.JsonUtil;
+import com.mylhyl.circledialog.CircleDialog;
+import com.sdu.network.NetworkApi;
+import com.sdu.network.observer.BaseObserver;
 
 import java.util.Objects;
 
-public class UserInfoActivity extends AppCompatActivity implements View.OnClickListener{
+import okhttp3.RequestBody;
+
+@SuppressLint("checkResult")
+public class UserInfoActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private String phone, userName;
+    private EditText et_phone, et_username;
+    private final AppCompatActivity mContext = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_info);
         Objects.requireNonNull(getSupportActionBar()).hide();   // 去掉导航栏
+        initParams();
         initViews();
     }
 
     private void initViews() {
         findViewById(R.id.header_back).setOnClickListener(this);
+        findViewById(R.id.btn_save).setOnClickListener(this);
+        findViewById(R.id.btn_update_password).setOnClickListener(this);
+        et_phone = findViewById(R.id.et_phone);
+        et_username = findViewById(R.id.et_username);
+        et_phone.setText(phone);
+        et_username.setText(userName);
+    }
+
+    private void initParams() {
+        phone = SPUtils.getString("phone_number");
+        userName = SPUtils.getString("userName");
     }
 
     @Override
@@ -32,6 +65,139 @@ public class UserInfoActivity extends AppCompatActivity implements View.OnClickL
             Intent intent = new Intent(this, MainView.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
+        } else if (vid == R.id.btn_save) {
+            if (!checkInfoChanged()) {  // 用户信息没有改变
+                Intent intent = new Intent(this, MainView.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            }
+            String newName = et_username.getText().toString();
+            String newPhone = et_phone.getText().toString();
+            RequestBody requestBody = JsonUtil.userNamePhoneNumber2Json(newName, newPhone);
+            Message msg = new Message();
+            NetworkApi.createService(ApiService.class)
+                    .checkUser(requestBody)
+                    .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
+                        @Override
+                        public void onSuccess(UserResponse userResponse) {
+                            int code = userResponse.getCode();
+                            // 用户名或手机号没有被注册
+                            if (code == 404) {
+                                RequestBody requestBody = JsonUtil.updateUser2Json(userName, newName, newPhone);
+                                NetworkApi.createService(ApiService.class)
+                                        .updateUser(requestBody)
+                                        .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
+                                            @Override
+                                            public void onSuccess(UserResponse userResponse) {
+                                                String status = userResponse.getStatus();
+                                                if (status.equals("success")) {
+                                                    SPUtils.saveString("phone_number", newPhone);
+                                                    SPUtils.saveString("userName", newName);
+                                                    Message msg = new Message();
+                                                    msg.obj = mContext;
+                                                    msg.what = ResponseCode.UPDATE_USER_SUCCESSFULLY.getCode();
+                                                    handler.sendMessage(msg);
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onFailure(Throwable e) {
+                                                Message msg = new Message();
+                                                msg.what = ResponseCode.SERVER_FAILED.getCode();
+                                                msg.obj = mContext;
+                                                handler.sendMessage(msg);
+                                            }
+                                        }));
+                            } else {    // 用户名或手机号已被注册
+                                msg.obj = mContext;
+                                msg.what = ResponseCode.USER_ALREADY_REGISTERED.getCode();
+                                handler.sendMessage(msg);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Throwable e) {
+                            msg.what = ResponseCode.SERVER_FAILED.getCode();
+                            msg.obj = mContext;
+                            handler.sendMessage(msg);
+                        }
+                    }));
+        } else if (vid == R.id.btn_update_password) {
+            CircleDialog.Builder inputPassword = new CircleDialog.Builder()
+                    .setInputHint("请输入新密码")   // 提示
+                    .setInputHeight(24)     // 输入框高度
+                    .setInputCounter(20)    // 输入框的最大字符数
+                    .setInputShowKeyboard(true)     // 自动弹出键盘
+                    .setPositiveInput("确定", (text, editText) -> {
+                        String oldPassword = SPUtils.getString("password");
+                        String newPassword = editText.getText().toString();
+                        if (newPassword.equals(oldPassword)) {
+                            ToastUtil.show(mContext, 1, "新旧密码一致，请重新输入");
+                            return false;
+                        } else {
+                            RequestBody requestBody = JsonUtil.addUser2Json(SPUtils.getString("userName"), newPassword);
+                            NetworkApi.createService(ApiService.class)
+                                    .updatePassword(requestBody)
+                                    .compose(NetworkApi.applySchedulers(new BaseObserver<>() {
+                                        @Override
+                                        public void onSuccess(UserResponse userResponse) {
+                                            String status = userResponse.getStatus();
+                                            if (status.equals("success")) {
+                                                SPUtils.saveString("password", newPassword);
+                                                Message msg = new Message();
+                                                msg.obj = mContext;
+                                                msg.what = ResponseCode.UPDATE_USER_SUCCESSFULLY.getCode();
+                                                handler.sendMessage(msg);
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onFailure(Throwable e) {
+                                            Message msg = new Message();
+                                            msg.what = ResponseCode.SERVER_FAILED.getCode();
+                                            msg.obj = mContext;
+                                            handler.sendMessage(msg);
+                                        }
+                                    }));
+                            return true;
+                        }
+                    })
+                    .setNegative("取消", v1 -> true);
+            new CircleDialog.Builder()
+                    .setInputHint("请输入邮箱以验证")   // 提示
+                    .setInputHeight(24)     // 输入框高度
+                    .setInputCounter(64)    // 输入框的最大字符数
+                    .setInputShowKeyboard(true)     // 自动弹出键盘
+                    .setPositiveInput("确定", (text, editText) -> {
+                        if (!editText.getText().toString().equals(SPUtils.getString("email"))) {
+                            ToastUtil.show(mContext, 2, "邮箱错误，请重试");
+                        }
+                        else {
+                            inputPassword.show(getSupportFragmentManager());
+                        }
+                        return true;
+                    })
+                    .setNegative("取消", v1 -> true)
+                    .show(getSupportFragmentManager());
         }
     }
+
+    private boolean checkInfoChanged() {
+        return !et_username.getText().toString().equals(userName) || !et_phone.getText().toString().equals(phone);
+    }
+
+    @SuppressLint("HandlerLeak")
+    private final Handler handler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == ResponseCode.SERVER_FAILED.getCode()) {
+                ToastUtil.show((AppCompatActivity) msg.obj, 2, ResponseCode.SERVER_FAILED.getMsg());
+            } else if (msg.what == ResponseCode.USER_ALREADY_REGISTERED.getCode()) {
+                ToastUtil.show((AppCompatActivity) msg.obj, 1, ResponseCode.USER_ALREADY_REGISTERED.getMsg());
+            } else if (msg.what == ResponseCode.UPDATE_USER_SUCCESSFULLY.getCode()) {
+                ToastUtil.show((AppCompatActivity) msg.obj, 0, ResponseCode.UPDATE_USER_SUCCESSFULLY.getMsg());
+            }
+        }
+    };
 }
