@@ -18,6 +18,7 @@ public class SGFUtil {
         List<Point> moves = new ArrayList<>();
         // 取出所有的黑棋落子
         List<String> blackMoves = getStrContainData(content, ";B\\[", "\\]");
+        List<String> whiteMoves = getStrContainData(content, ";W\\[", "\\]");
         int i = 0, j = 0;
         if (source == 0) {
             for (String str : blackMoves) {
@@ -29,8 +30,6 @@ public class SGFUtil {
                 i++;
             }
 
-            // 取出所有的白棋落子
-            List<String> whiteMoves = getStrContainData(content, ";W\\[", "\\]");
             for (String str : whiteMoves) {
                 Pair<Integer, Integer> move = transformIndex(str);
                 int x = move.first;
@@ -48,8 +47,6 @@ public class SGFUtil {
                 i++;
             }
 
-            // 取出所有的白棋落子
-            List<String> whiteMoves = getStrContainData(content, ";W\\[", "\\]");
             for (String str : whiteMoves) {
                 int x = s.indexOf(str.charAt(0));
                 int y = s.indexOf(str.charAt(1));

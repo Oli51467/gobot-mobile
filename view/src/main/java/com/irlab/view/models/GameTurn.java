@@ -1,18 +1,21 @@
 package com.irlab.view.models;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 public class GameTurn {
     public final int[][] boardState;
     public final int x, y;
     private final int hashCode;
+    private Set<Point> capturedStones;
 
     public GameTurn(int width, int height) {
         boardState = new int[width + 1][height + 1];
         x = -1;
         y = -1;
         hashCode = Arrays.deepHashCode(boardState);
+        this.capturedStones = new HashSet<>();
     }
 
     private GameTurn(GameTurn prev, int x, int y, int playerId, Set<Point> freedPoint) {
@@ -34,6 +37,7 @@ public class GameTurn {
             boardState[point.getX()][point.getY()] = 0;
         }
         hashCode = Arrays.deepHashCode(boardState);
+        this.capturedStones = freedPoint;
     }
 
     public GameTurn toNext(int x, int y, int playerId, Set<Point> freedPoint) {
